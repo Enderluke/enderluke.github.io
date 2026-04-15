@@ -1,128 +1,162 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sorcerer Build Game</title>
+  <title>Sorcerer Build Draft+</title>
+
   <style>
     body {
       font-family: Arial;
-      background: #111;
+      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
       color: white;
       text-align: center;
       padding: 20px;
     }
 
-    h1 { margin-bottom: 10px; }
+    h1 { margin-bottom: 5px; }
+
+    #progress {
+      height: 10px;
+      background: #333;
+      border-radius: 10px;
+      margin: 15px auto;
+      width: 60%;
+      overflow: hidden;
+    }
+
+    #bar {
+      height: 100%;
+      width: 0%;
+      background: #00d4ff;
+      transition: 0.4s;
+    }
 
     .card {
       display: inline-block;
       background: #222;
       padding: 15px;
       margin: 10px;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
-      width: 180px;
-      transition: 0.2s;
+      width: 200px;
+      transition: 0.25s;
+      border: 2px solid transparent;
     }
 
     .card:hover {
-      background: #333;
-      transform: scale(1.05);
+      transform: scale(1.08);
+      border-color: #00d4ff;
     }
+
+    .rare { border-color: gold; }
+    .epic { border-color: violet; }
 
     button {
-      margin-top: 10px;
+      margin-top: 15px;
       padding: 10px 20px;
-      cursor: pointer;
       font-size: 16px;
+      cursor: pointer;
     }
 
-    .hidden {
-      display: none;
+    .fade {
+      animation: fadeIn 0.4s;
     }
 
-    ul {
-      list-style: none;
-      padding: 0;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px);}
+      to { opacity: 1; transform: translateY(0);}
     }
+
+    ul { list-style: none; padding: 0; }
   </style>
 </head>
+
 <body>
 
-<h1>Sorcerer Build Draft ⚔️</h1>
+<h1>Sorcerer Build Draft ⚔️+</h1>
+<h3 id="trait"></h3>
 
-<h2 id="trait">Trait: Loading...</h2>
+<div id="progress"><div id="bar"></div></div>
 
 <div id="choices"></div>
 
-<h3>Your Build:</h3>
+<h3>Your Build</h3>
 <ul id="picked"></ul>
 
-<div id="result" class="hidden"></div>
+<div id="result"></div>
 
 <script>
 const traits = [
   "Technique", "Domain", "Speed", "IQ", "Durability",
-  "Cursed Energy", "Battle Sense", "Reflexes", "Power", "Control"
+  "Energy", "Battle Sense", "Reflexes", "Power", "Control"
 ];
 
-// NOTE: These are ORIGINAL “anime-style archetypes”
-// You can rename them later to anything you want.
 const sorcerers = [
-  { name: "Satoru Gojo", technique: 10, domain: 10, speed: 8, iq: 9, durability: 7 },
-  { name: "Ryomen Sukuna", technique: 9, domain: 9, speed: 7, iq: 8, durability: 10 },
-  { name: "Megumi Fushiguro", technique: 8, domain: 7, speed: 9, iq: 8, durability: 7 },
-  { name: "Toji Fushiguro", technique: 6, domain: 5, speed: 10, iq: 7, durability: 10 },
-  { name: "Mahito", technique: 9, domain: 8, speed: 7, iq: 8, durability: 8 },
-  { name: "Shoko Ierie", technique: 7, domain: 8, speed: 6, iq: 9, durability: 9 },
-  { name: "Tengen", technique: 8, domain: 10, speed: 6, iq: 9, durability: 7 },
-  { name: "Kusakabe", technique: 7, domain: 6, speed: 10, iq: 7, durability: 8 },
-  { name: "Yuta Okkotsu", technique: 8, domain: 8, speed: 8, iq: 8, durability: 7 }
+  { name: "Gojo", stats: {tech:10, dom:10, spd:8, iq:9, dur:7}, rarity:"epic" },
+  { name: "Sukuna", stats: {tech:9, dom:9, spd:7, iq:8, dur:10}, rarity:"epic" },
+  { name: "Megumi", stats: {tech:8, dom:7, spd:9, iq:8, dur:7}, rarity:"rare" },
+  { name: "Toji", stats: {tech:6, dom:5, spd:10, iq:7, dur:10}, rarity:"rare" },
+  { name: "Mahito", stats: {tech:9, dom:8, spd:7, iq:8, dur:8}, rarity:"rare" },
+  { name: "Shoko", stats: {tech:7, dom:8, spd:6, iq:9, dur:9}, rarity:"common" },
+  { name: "Tengen", stats: {tech:8, dom:10, spd:6, iq:9, dur:7}, rarity:"rare" },
+  { name: "Kusakabe", stats: {tech:7, dom:6, spd:10, iq:7, dur:8}, rarity:"common" },
+  { name: "Yuta", stats: {tech:8, dom:8, spd:8, iq:8, dur:7}, rarity:"epic" }
 ];
 
 let currentTrait = 0;
 let picked = [];
+let totalStats = {
+  tech:0, dom:0, spd:0, iq:0, dur:0
+};
 
-function getRandomChoices() {
-  let shuffled = [...sorcerers].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 3);
+function getChoices() {
+  return [...sorcerers].sort(() => Math.random() - 0.5).slice(0, 3);
+}
+
+function updateProgress() {
+  let percent = (currentTrait / traits.length) * 100;
+  document.getElementById("bar").style.width = percent + "%";
 }
 
 function renderChoices() {
+  updateProgress();
+
   document.getElementById("trait").innerText =
-    "Trait: " + traits[currentTrait];
+    "Pick for: " + traits[currentTrait];
 
-  let choicesDiv = document.getElementById("choices");
-  choicesDiv.innerHTML = "";
+  let container = document.getElementById("choices");
+  container.innerHTML = "";
 
-  let options = getRandomChoices();
-
-  options.forEach(char => {
+  getChoices().forEach(char => {
     let div = document.createElement("div");
-    div.className = "card";
+    div.className = "card fade " + char.rarity;
 
     div.innerHTML = `
-      <b>${char.name}</b>
+      <b>${char.name}</b><br>
+      <small>${char.rarity.toUpperCase()}</small>
       <hr>
-      ⚡ Tech: ${char.technique}<br>
-      🌌 Domain: ${char.domain}<br>
-      🏃 Speed: ${char.speed}<br>
-      🧠 IQ: ${char.iq}<br>
-      🛡 Durability: ${char.durability}
+      ⚡ ${char.stats.tech}
+      🌌 ${char.stats.dom}
+      🏃 ${char.stats.spd}
+      🧠 ${char.stats.iq}
+      🛡 ${char.stats.dur}
     `;
 
     div.onclick = () => select(char);
 
-    choicesDiv.appendChild(div);
+    container.appendChild(div);
   });
 }
 
 function select(char) {
   picked.push(char);
 
-  let list = document.getElementById("picked");
+  for (let key in totalStats) {
+    totalStats[key] += char.stats[key];
+  }
+
   let li = document.createElement("li");
   li.innerText = traits[currentTrait] + ": " + char.name;
-  list.appendChild(li);
+  document.getElementById("picked").appendChild(li);
 
   currentTrait++;
 
@@ -133,37 +167,44 @@ function select(char) {
   }
 }
 
+function getGrade(avg) {
+  if (avg >= 9) return "Special Grade ⚡";
+  if (avg >= 7.5) return "Grade 1";
+  if (avg >= 6) return "Grade 2";
+  if (avg >= 4.5) return "Grade 3";
+  return "Grade 4";
+}
+
+function getSynergy() {
+  if (totalStats.tech > 80 && totalStats.dom > 80)
+    return "Domain Master 🌀";
+  if (totalStats.spd > 85)
+    return "Speed Demon ⚡";
+  if (totalStats.dur > 85)
+    return "Immortal Tank 🛡";
+  return "Balanced Build";
+}
+
 function showResult() {
   document.getElementById("choices").innerHTML = "";
-  document.getElementById("trait").innerText = "Build Complete!";
+  document.getElementById("trait").innerText = "Build Complete";
 
-  let total = 0;
-
-  picked.forEach(p => {
-    total += (p.technique + p.domain + p.speed + p.iq + p.durability);
-  });
-
-  let avg = total / picked.length;
-
-  let grade = "";
-
-  if (avg >= 9) grade = "Special Grade ⚡";
-  else if (avg >= 7.5) grade = "Grade 1";
-  else if (avg >= 6) grade = "Grade 2";
-  else if (avg >= 4.5) grade = "Grade 3";
-  else grade = "Grade 4";
-
-  document.getElementById("result").classList.remove("hidden");
+  let sum = Object.values(totalStats).reduce((a,b)=>a+b,0);
+  let avg = sum / picked.length;
 
   document.getElementById("result").innerHTML = `
-    <h2>Your Final Sorcerer Build</h2>
-    <h1>${grade}</h1>
-    <p>Average Power: ${avg.toFixed(2)}</p>
+    <h2>${getGrade(avg)}</h2>
+    <h3>${getSynergy()}</h3>
+    <p>Avg Power: ${avg.toFixed(2)}</p>
 
-    <h3>Final Build:</h3>
-    <ul>
-      ${picked.map(p => `<li>${p.name}</li>`).join("")}
-    </ul>
+    <h3>Stats:</h3>
+    <p>
+      Tech: ${totalStats.tech} |
+      Domain: ${totalStats.dom} |
+      Speed: ${totalStats.spd} |
+      IQ: ${totalStats.iq} |
+      Durability: ${totalStats.dur}
+    </p>
 
     <button onclick="location.reload()">Play Again</button>
   `;
