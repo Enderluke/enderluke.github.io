@@ -1,216 +1,235 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sorcerer Build Draft+</title>
+  <title>Sorcerer Draft: Ascension</title>
 
   <style>
     body {
       font-family: Arial;
-      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+      background: #0c0c0c;
       color: white;
       text-align: center;
-      padding: 20px;
     }
 
     h1 { margin-bottom: 5px; }
 
-    #progress {
-      height: 10px;
-      background: #333;
-      border-radius: 10px;
-      margin: 15px auto;
-      width: 60%;
-      overflow: hidden;
-    }
-
-    #bar {
-      height: 100%;
-      width: 0%;
-      background: #00d4ff;
-      transition: 0.4s;
-    }
-
     .card {
       display: inline-block;
-      background: #222;
+      background: #1a1a1a;
       padding: 15px;
       margin: 10px;
       border-radius: 12px;
+      width: 220px;
       cursor: pointer;
-      width: 200px;
-      transition: 0.25s;
-      border: 2px solid transparent;
+      transition: 0.2s;
     }
 
     .card:hover {
       transform: scale(1.08);
-      border-color: #00d4ff;
+      background: #2a2a2a;
     }
 
-    .rare { border-color: gold; }
-    .epic { border-color: violet; }
+    .epic { border: 2px solid violet; }
+    .rare { border: 2px solid gold; }
+
+    #bars {
+      width: 60%;
+      margin: auto;
+      text-align: left;
+    }
+
+    .bar {
+      background: #333;
+      margin: 5px 0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 10px;
+      background: #00d4ff;
+    }
 
     button {
-      margin-top: 15px;
       padding: 10px 20px;
-      font-size: 16px;
+      margin-top: 20px;
       cursor: pointer;
     }
-
-    .fade {
-      animation: fadeIn 0.4s;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px);}
-      to { opacity: 1; transform: translateY(0);}
-    }
-
-    ul { list-style: none; padding: 0; }
   </style>
 </head>
 
 <body>
 
-<h1>Sorcerer Build Draft ⚔️+</h1>
+<h1>Sorcerer Draft: Ascension ⚔️</h1>
 <h3 id="trait"></h3>
-
-<div id="progress"><div id="bar"></div></div>
 
 <div id="choices"></div>
 
-<h3>Your Build</h3>
-<ul id="picked"></ul>
+<h3>Your Stats</h3>
+<div id="bars"></div>
+
+<h3>Abilities</h3>
+<ul id="abilities"></ul>
 
 <div id="result"></div>
 
 <script>
-const traits = [
-  "Technique", "Domain", "Speed", "IQ", "Durability",
-  "Energy", "Battle Sense", "Reflexes", "Power", "Control"
-];
+const traits = ["tech","dom","spd","iq","dur"];
 
 const sorcerers = [
-  { name: "Gojo", stats: {tech:10, dom:10, spd:8, iq:9, dur:7}, rarity:"epic" },
-  { name: "Sukuna", stats: {tech:9, dom:9, spd:7, iq:8, dur:10}, rarity:"epic" },
-  { name: "Megumi", stats: {tech:8, dom:7, spd:9, iq:8, dur:7}, rarity:"rare" },
-  { name: "Toji", stats: {tech:6, dom:5, spd:10, iq:7, dur:10}, rarity:"rare" },
-  { name: "Mahito", stats: {tech:9, dom:8, spd:7, iq:8, dur:8}, rarity:"rare" },
-  { name: "Shoko", stats: {tech:7, dom:8, spd:6, iq:9, dur:9}, rarity:"common" },
-  { name: "Tengen", stats: {tech:8, dom:10, spd:6, iq:9, dur:7}, rarity:"rare" },
-  { name: "Kusakabe", stats: {tech:7, dom:6, spd:10, iq:7, dur:8}, rarity:"common" },
-  { name: "Yuta", stats: {tech:8, dom:8, spd:8, iq:8, dur:7}, rarity:"epic" }
+  {
+    name: "Gojo",
+    rarity: "epic",
+    stats: {tech:10, dom:10, spd:8, iq:9, dur:7},
+    ability: (stats)=> stats.tech += 2
+  },
+  {
+    name: "Sukuna",
+    rarity: "epic",
+    stats: {tech:9, dom:9, spd:7, iq:8, dur:10},
+    ability: (stats)=> stats.dur += 3
+  },
+  {
+    name: "Megumi",
+    rarity: "rare",
+    stats: {tech:8, dom:7, spd:9, iq:8, dur:7},
+    ability: (stats)=> stats.spd += 2
+  },
+  {
+    name: "Toji",
+    rarity: "rare",
+    stats: {tech:6, dom:5, spd:10, iq:7, dur:10},
+    ability: (stats)=> stats.spd += 3
+  },
+  {
+    name: "Mahito",
+    rarity: "rare",
+    stats: {tech:9, dom:8, spd:7, iq:8, dur:8},
+    ability: (stats)=> stats.dom += 2
+  },
+  {
+    name: "Shoko",
+    rarity: "common",
+    stats: {tech:7, dom:8, spd:6, iq:9, dur:9},
+    ability: (stats)=> stats.dur += 2
+  },
+  {
+    name: "Yuta",
+    rarity: "epic",
+    stats: {tech:8, dom:8, spd:8, iq:8, dur:7},
+    ability: (stats)=> {
+      for (let k in stats) stats[k] += 1;
+    }
+  }
 ];
 
-let currentTrait = 0;
-let picked = [];
-let totalStats = {
-  tech:0, dom:0, spd:0, iq:0, dur:0
-};
+let current = 0;
+let total = {tech:0, dom:0, spd:0, iq:0, dur:0};
+let abilities = [];
+
+function weightedRandom() {
+  let pool = [];
+  sorcerers.forEach(s => {
+    let weight = s.rarity === "epic" ? 1 :
+                 s.rarity === "rare" ? 2 : 4;
+    for (let i=0;i<weight;i++) pool.push(s);
+  });
+  return pool[Math.floor(Math.random()*pool.length)];
+}
 
 function getChoices() {
-  return [...sorcerers].sort(() => Math.random() - 0.5).slice(0, 3);
+  return [weightedRandom(), weightedRandom(), weightedRandom()];
 }
 
-function updateProgress() {
-  let percent = (currentTrait / traits.length) * 100;
-  document.getElementById("bar").style.width = percent + "%";
-}
+function renderBars() {
+  let bars = document.getElementById("bars");
+  bars.innerHTML = "";
 
-function renderChoices() {
-  updateProgress();
-
-  document.getElementById("trait").innerText =
-    "Pick for: " + traits[currentTrait];
-
-  let container = document.getElementById("choices");
-  container.innerHTML = "";
-
-  getChoices().forEach(char => {
+  for (let key in total) {
     let div = document.createElement("div");
-    div.className = "card fade " + char.rarity;
+    div.innerHTML = `
+      ${key.toUpperCase()}
+      <div class="bar">
+        <div class="fill" style="width:${total[key]*5}px"></div>
+      </div>
+    `;
+    bars.appendChild(div);
+  }
+}
+
+function render() {
+  document.getElementById("trait").innerText =
+    "Draft for: " + traits[current].toUpperCase();
+
+  let choices = document.getElementById("choices");
+  choices.innerHTML = "";
+
+  getChoices().forEach(c => {
+    let div = document.createElement("div");
+    div.className = "card " + c.rarity;
 
     div.innerHTML = `
-      <b>${char.name}</b><br>
-      <small>${char.rarity.toUpperCase()}</small>
-      <hr>
-      ⚡ ${char.stats.tech}
-      🌌 ${char.stats.dom}
-      🏃 ${char.stats.spd}
-      🧠 ${char.stats.iq}
-      🛡 ${char.stats.dur}
-    `;
+      <b>${c.name}</b><br>
+      ${c.rarity}<hr>
+      Tech:${c.stats.tech} |
+      Dom:${c.stats.dom}<br>
+      Spd:${c.stats.spd} |
+      IQ:${c.stats.iq}<br>
+      Dur:${c.stats.dur}
+   `;
 
-    div.onclick = () => select(char);
-
-    container.appendChild(div);
+    div.onclick = ()=> pick(c);
+    choices.appendChild(div);
   });
 }
 
-function select(char) {
-  picked.push(char);
+function pick(c) {
+  for (let k in total) total[k] += c.stats[k];
 
-  for (let key in totalStats) {
-    totalStats[key] += char.stats[key];
-  }
+  c.ability(total);
+  abilities.push(c.name);
 
   let li = document.createElement("li");
-  li.innerText = traits[currentTrait] + ": " + char.name;
-  document.getElementById("picked").appendChild(li);
+  li.innerText = c.name;
+  document.getElementById("abilities").appendChild(li);
 
-  currentTrait++;
+  current++;
 
-  if (currentTrait >= traits.length) {
-    showResult();
-  } else {
-    renderChoices();
-  }
+  renderBars();
+
+  if (current >= traits.length) end();
+  else render();
 }
 
-function getGrade(avg) {
-  if (avg >= 9) return "Special Grade ⚡";
-  if (avg >= 7.5) return "Grade 1";
-  if (avg >= 6) return "Grade 2";
-  if (avg >= 4.5) return "Grade 3";
-  return "Grade 4";
+function synergyScore() {
+  let score = 0;
+
+  if (total.tech > 40 && total.dom > 40) score += 20;
+  if (total.spd > 45) score += 15;
+  if (total.dur > 45) score += 15;
+
+  return score;
 }
 
-function getSynergy() {
-  if (totalStats.tech > 80 && totalStats.dom > 80)
-    return "Domain Master 🌀";
-  if (totalStats.spd > 85)
-    return "Speed Demon ⚡";
-  if (totalStats.dur > 85)
-    return "Immortal Tank 🛡";
-  return "Balanced Build";
-}
-
-function showResult() {
+function end() {
   document.getElementById("choices").innerHTML = "";
-  document.getElementById("trait").innerText = "Build Complete";
 
-  let sum = Object.values(totalStats).reduce((a,b)=>a+b,0);
-  let avg = sum / picked.length;
+  let base = Object.values(total).reduce((a,b)=>a+b,0);
+  let final = base + synergyScore();
+
+  let rank = final > 250 ? "SPECIAL GRADE ⚡" :
+             final > 200 ? "GRADE 1" :
+             final > 160 ? "GRADE 2" : "LOW GRADE";
 
   document.getElementById("result").innerHTML = `
-    <h2>${getGrade(avg)}</h2>
-    <h3>${getSynergy()}</h3>
-    <p>Avg Power: ${avg.toFixed(2)}</p>
-
-    <h3>Stats:</h3>
-    <p>
-      Tech: ${totalStats.tech} |
-      Domain: ${totalStats.dom} |
-      Speed: ${totalStats.spd} |
-      IQ: ${totalStats.iq} |
-      Durability: ${totalStats.dur}
-    </p>
-
-    <button onclick="location.reload()">Play Again</button>
+    <h2>${rank}</h2>
+    <p>Battle Score: ${final}</p>
+    <button onclick="location.reload()">Retry</button>
   `;
 }
 
-renderChoices();
+render();
+renderBars();
 </script>
 
 </body>
