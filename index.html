@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sorcerer Draft Game</title>
+  <title>Sorcerer Build Game</title>
   <style>
     body {
       font-family: Arial;
@@ -11,6 +11,8 @@
       padding: 20px;
     }
 
+    h1 { margin-bottom: 10px; }
+
     .card {
       display: inline-block;
       background: #222;
@@ -18,33 +20,41 @@
       margin: 10px;
       border-radius: 10px;
       cursor: pointer;
-      width: 150px;
+      width: 180px;
+      transition: 0.2s;
     }
 
     .card:hover {
       background: #333;
+      transform: scale(1.05);
     }
 
     button {
       margin-top: 10px;
       padding: 10px 20px;
       cursor: pointer;
+      font-size: 16px;
     }
 
     .hidden {
       display: none;
     }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
   </style>
 </head>
 <body>
 
-<h1>Sorcerer Draft Game ⚡</h1>
+<h1>Sorcerer Build Draft ⚔️</h1>
 
-<h2 id="trait">Trait: Technique</h2>
+<h2 id="trait">Trait: Loading...</h2>
 
 <div id="choices"></div>
 
-<h3>Chosen:</h3>
+<h3>Your Build:</h3>
 <ul id="picked"></ul>
 
 <div id="result" class="hidden"></div>
@@ -55,10 +65,18 @@ const traits = [
   "Cursed Energy", "Battle Sense", "Reflexes", "Power", "Control"
 ];
 
+// NOTE: These are ORIGINAL “anime-style archetypes”
+// You can rename them later to anything you want.
 const sorcerers = [
-  "Gojo-like prodigy", "Cursed tool master", "Shadow user",
-  "Barrier specialist", "Body enhancer", "Energy manipulator",
-  "Hand-to-hand expert", "Strategist", "Ranged fighter"
+  { name: "Satoru Gojo", technique: 10, domain: 10, speed: 8, iq: 9, durability: 7 },
+  { name: "Ryomen Sukuna", technique: 9, domain: 9, speed: 7, iq: 8, durability: 10 },
+  { name: "Megumi Fushiguro", technique: 8, domain: 7, speed: 9, iq: 8, durability: 7 },
+  { name: "Toji Fushiguro", technique: 6, domain: 5, speed: 10, iq: 7, durability: 10 },
+  { name: "Mahito", technique: 9, domain: 8, speed: 7, iq: 8, durability: 8 },
+  { name: "Shoko Ierie", technique: 7, domain: 8, speed: 6, iq: 9, durability: 9 },
+  { name: "Tengen", technique: 8, domain: 10, speed: 6, iq: 9, durability: 7 },
+  { name: "Kusakabe", technique: 7, domain: 6, speed: 10, iq: 7, durability: 8 },
+  { name: "Yuta Okkotsu", technique: 8, domain: 8, speed: 8, iq: 8, durability: 7 }
 ];
 
 let currentTrait = 0;
@@ -78,26 +96,32 @@ function renderChoices() {
 
   let options = getRandomChoices();
 
-  options.forEach(name => {
+  options.forEach(char => {
     let div = document.createElement("div");
     div.className = "card";
-    div.innerText = name;
 
-    div.onclick = () => select(name);
+    div.innerHTML = `
+      <b>${char.name}</b>
+      <hr>
+      ⚡ Tech: ${char.technique}<br>
+      🌌 Domain: ${char.domain}<br>
+      🏃 Speed: ${char.speed}<br>
+      🧠 IQ: ${char.iq}<br>
+      🛡 Durability: ${char.durability}
+    `;
+
+    div.onclick = () => select(char);
 
     choicesDiv.appendChild(div);
   });
 }
 
-function select(name) {
-  picked.push({
-    trait: traits[currentTrait],
-    choice: name
-  });
+function select(char) {
+  picked.push(char);
 
   let list = document.getElementById("picked");
   let li = document.createElement("li");
-  li.innerText = traits[currentTrait] + ": " + name;
+  li.innerText = traits[currentTrait] + ": " + char.name;
   list.appendChild(li);
 
   currentTrait++;
@@ -111,22 +135,36 @@ function select(name) {
 
 function showResult() {
   document.getElementById("choices").innerHTML = "";
-  document.getElementById("trait").innerText = "Complete!";
+  document.getElementById("trait").innerText = "Build Complete!";
 
-  let score = Math.floor(Math.random() * 4) + 1;
+  let total = 0;
+
+  picked.forEach(p => {
+    total += (p.technique + p.domain + p.speed + p.iq + p.durability);
+  });
+
+  let avg = total / picked.length;
 
   let grade = "";
-  if (score === 4) grade = "Special Grade ⚡";
-  else if (score === 3) grade = "Grade 1";
-  else if (score === 2) grade = "Grade 2";
-  else if (score === 1) grade = "Grade 3";
+
+  if (avg >= 9) grade = "Special Grade ⚡";
+  else if (avg >= 7.5) grade = "Grade 1";
+  else if (avg >= 6) grade = "Grade 2";
+  else if (avg >= 4.5) grade = "Grade 3";
   else grade = "Grade 4";
 
-  let result = document.getElementById("result");
-  result.classList.remove("hidden");
-  result.innerHTML = `
-    <h2>Your Sorcerer Grade:</h2>
+  document.getElementById("result").classList.remove("hidden");
+
+  document.getElementById("result").innerHTML = `
+    <h2>Your Final Sorcerer Build</h2>
     <h1>${grade}</h1>
+    <p>Average Power: ${avg.toFixed(2)}</p>
+
+    <h3>Final Build:</h3>
+    <ul>
+      ${picked.map(p => `<li>${p.name}</li>`).join("")}
+    </ul>
+
     <button onclick="location.reload()">Play Again</button>
   `;
 }
