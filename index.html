@@ -1,14 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My First Game Site</title>
-</head>
-<body style="text-align:center; font-family:Arial;">
-  <h1>My First Website 🎮</h1>
-  <p>If you can see this, it worked!</p>
+  <title>Clicker Game</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial;
+      background: #111;
+      color: white;
+      margin-top: 80px;
+    }
 
-  <button onclick="alert('It works!')">
-    Click me
-  </button>
+    button {
+      font-size: 30px;
+      padding: 20px 40px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+    }
+
+    .big {
+      font-size: 40px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="big">Score: <span id="score">0</span></div>
+
+<button onclick="addPoint()">Click me!</button>
+
+<script>
+  let score = 0;
+
+  function addPoint() {
+    score++;
+    document.getElementById("score").textContent = score;
+  }
+</script>
+
 </body>
 </html>
