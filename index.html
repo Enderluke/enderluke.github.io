@@ -1,43 +1,137 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Clicker Game</title>
+  <title>Sorcerer Draft Game</title>
   <style>
     body {
-      text-align: center;
       font-family: Arial;
       background: #111;
       color: white;
-      margin-top: 80px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .card {
+      display: inline-block;
+      background: #222;
+      padding: 15px;
+      margin: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 150px;
+    }
+
+    .card:hover {
+      background: #333;
     }
 
     button {
-      font-size: 30px;
-      padding: 20px 40px;
+      margin-top: 10px;
+      padding: 10px 20px;
       cursor: pointer;
-      border: none;
-      border-radius: 10px;
     }
 
-    .big {
-      font-size: 40px;
-      margin-bottom: 20px;
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
 
-<div class="big">Score: <span id="score">0</span></div>
+<h1>Sorcerer Draft Game ⚡</h1>
 
-<button onclick="addPoint()">Click me!</button>
+<h2 id="trait">Trait: Technique</h2>
+
+<div id="choices"></div>
+
+<h3>Chosen:</h3>
+<ul id="picked"></ul>
+
+<div id="result" class="hidden"></div>
 
 <script>
-  let score = 0;
+const traits = [
+  "Technique", "Domain", "Speed", "IQ", "Durability",
+  "Cursed Energy", "Battle Sense", "Reflexes", "Power", "Control"
+];
 
-  function addPoint() {
-    score++;
-    document.getElementById("score").textContent = score;
+const sorcerers = [
+  "Gojo-like prodigy", "Cursed tool master", "Shadow user",
+  "Barrier specialist", "Body enhancer", "Energy manipulator",
+  "Hand-to-hand expert", "Strategist", "Ranged fighter"
+];
+
+let currentTrait = 0;
+let picked = [];
+
+function getRandomChoices() {
+  let shuffled = [...sorcerers].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 3);
+}
+
+function renderChoices() {
+  document.getElementById("trait").innerText =
+    "Trait: " + traits[currentTrait];
+
+  let choicesDiv = document.getElementById("choices");
+  choicesDiv.innerHTML = "";
+
+  let options = getRandomChoices();
+
+  options.forEach(name => {
+    let div = document.createElement("div");
+    div.className = "card";
+    div.innerText = name;
+
+    div.onclick = () => select(name);
+
+    choicesDiv.appendChild(div);
+  });
+}
+
+function select(name) {
+  picked.push({
+    trait: traits[currentTrait],
+    choice: name
+  });
+
+  let list = document.getElementById("picked");
+  let li = document.createElement("li");
+  li.innerText = traits[currentTrait] + ": " + name;
+  list.appendChild(li);
+
+  currentTrait++;
+
+  if (currentTrait >= traits.length) {
+    showResult();
+  } else {
+    renderChoices();
   }
+}
+
+function showResult() {
+  document.getElementById("choices").innerHTML = "";
+  document.getElementById("trait").innerText = "Complete!";
+
+  let score = Math.floor(Math.random() * 4) + 1;
+
+  let grade = "";
+  if (score === 4) grade = "Special Grade ⚡";
+  else if (score === 3) grade = "Grade 1";
+  else if (score === 2) grade = "Grade 2";
+  else if (score === 1) grade = "Grade 3";
+  else grade = "Grade 4";
+
+  let result = document.getElementById("result");
+  result.classList.remove("hidden");
+  result.innerHTML = `
+    <h2>Your Sorcerer Grade:</h2>
+    <h1>${grade}</h1>
+    <button onclick="location.reload()">Play Again</button>
+  `;
+}
+
+renderChoices();
 </script>
 
 </body>
