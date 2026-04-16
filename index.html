@@ -1,3 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>2D Walking Simulator + Tail</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #222;
+    }
+
+    canvas {
+      display: block;
+      background: #3c9c3c;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -13,14 +35,14 @@ const player = {
   speed: 4
 };
 
-// Tail
+// Tail system
 let tail = [];
 let maxTailLength = 20;
-const segmentSpacing = 12;
 
 // Food
 let foods = [];
 
+// Spawn food
 function spawnFood() {
   foods.push({
     x: Math.random() * canvas.width,
@@ -29,6 +51,7 @@ function spawnFood() {
   });
 }
 
+// Initial food
 for (let i = 0; i < 10; i++) spawnFood();
 
 // Input
@@ -36,15 +59,9 @@ const keys = {};
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-// Helpers
+// Distance helper
 function distance(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-// Initialize tail
-function addSegment() {
-  const last = tail.length > 0 ? tail[tail.length - 1] : player;
-  tail.push({ x: last.x, y: last.y });
 }
 
 // Update
@@ -59,38 +76,23 @@ function update() {
   player.x = Math.max(0, Math.min(canvas.width, player.x));
   player.y = Math.max(0, Math.min(canvas.height, player.y));
 
-  // Ensure tail length
-  while (tail.length < maxTailLength) {
-    addSegment();
-  }
+  // --- Improved tail (smoothed positions) ---
+  const last = tail.length > 0 ? tail[tail.length - 1] : player;
 
-  // Tail physics (follow system)
-  let prev = player;
-  for (let i = 0; i < tail.length; i++) {
-    let seg = tail[i];
+  tail.push({
+    x: last.x + (player.x - last.x) * 0.5,
+    y: last.y + (player.y - last.y) * 0.5
+  });
 
-    let dx = prev.x - seg.x;
-    let dy = prev.y - seg.y;
-    let dist = Math.hypot(dx, dy);
-
-    if (dist > 0) {
-      let angle = Math.atan2(dy, dx);
-      let targetX = prev.x - Math.cos(angle) * segmentSpacing;
-      let targetY = prev.y - Math.sin(angle) * segmentSpacing;
-
-      // Smooth follow (lerp)
-      seg.x += (targetX - seg.x) * 0.35;
-      seg.y += (targetY - seg.y) * 0.35;
-    }
-
-    prev = seg;
+  while (tail.length > maxTailLength) {
+    tail.shift();
   }
 
   // Food collision
   for (let i = foods.length - 1; i >= 0; i--) {
     if (distance(player, foods[i]) < player.size) {
       foods.splice(i, 1);
-      maxTailLength += 6;
+      maxTailLength += 10;
       spawnFood();
     }
   }
@@ -100,7 +102,7 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Food
+  // Draw food
   ctx.fillStyle = "yellow";
   foods.forEach(f => {
     ctx.beginPath();
@@ -108,21 +110,22 @@ function draw() {
     ctx.fill();
   });
 
-  // Tail (connected + smooth)
-  for (let i = tail.length - 1; i >= 0; i--) {
-    const seg = tail[i];
-    const t = i / tail.length;
+  // --- Improved tail rendering ---
+  for (let i = 0; i < tail.length; i++) {
+    const t = tail[i];
+    const progress = i / tail.length;
 
-    const size = player.size * (0.9 - t * 0.6);
+    const size = player.size * (0.9 - progress * 0.7);
+    const alpha = 0.2 + (1 - progress) * 0.8;
 
-    ctx.fillStyle = `rgba(0, 0, 255, ${0.3 + (1 - t) * 0.7})`;
+    ctx.fillStyle = `rgba(0, 0, 255, ${alpha})`;
 
     ctx.beginPath();
-    ctx.arc(seg.x, seg.y, size, 0, Math.PI * 2);
+    ctx.arc(t.x, t.y, size, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Player
+  // Draw player
   ctx.fillStyle = "blue";
   ctx.beginPath();
   ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
@@ -144,3 +147,6 @@ window.addEventListener("resize", () => {
   canvas.height = window.innerHeight;
 });
 </script>
+
+</body>
+</html>
