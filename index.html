@@ -60,7 +60,7 @@
 
 <body>
 
-<h1>Sorcerer Draft: Ascension ⚔️</h1>
+<h1>Sorcerer Draft: Ascension</h1>
 <h3 id="trait"></h3>
 
 <div id="choices"></div>
@@ -217,7 +217,7 @@ function end() {
   let base = Object.values(total).reduce((a,b)=>a+b,0);
   let final = base + synergyScore();
 
-  let rank = final > 250 ? "SPECIAL GRADE ⚡" :
+  let rank = final > 250 ? "SPECIAL GRADE" :
              final > 200 ? "GRADE 1" :
              final > 160 ? "GRADE 2" : "LOW GRADE";
 
