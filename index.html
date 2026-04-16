@@ -72,7 +72,7 @@ function update() {
   player.x = Math.max(0, Math.min(canvas.width, player.x));
   player.y = Math.max(0, Math.min(canvas.height, player.y));
 
-  // Smooth tail positions
+  // Tail movement (unchanged logic)
   const last = tail.length > 0 ? tail[tail.length - 1] : player;
 
   tail.push({
@@ -94,7 +94,7 @@ function update() {
   }
 }
 
-// Draw background grid
+// Draw grid
 function drawGrid() {
   const gridSize = 40;
   ctx.strokeStyle = "rgba(255,255,255,0.05)";
@@ -121,28 +121,43 @@ function draw() {
 
   drawGrid();
 
-  // Draw tail as smooth ribbon
-  if (tail.length > 1) {
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+  // =========================
+  // NEW TAIL DESIGN (ONLY CHANGE)
+  // =========================
+  for (let i = 0; i < tail.length; i++) {
+    const seg = tail[i];
+    const t = i / tail.length;
 
-    for (let i = 1; i < tail.length; i++) {
-      const p1 = tail[i - 1];
-      const p2 = tail[i];
+    const size = player.size * (0.9 - t * 0.7);
 
-      const t = i / tail.length;
+    const r = Math.floor(80 + (1 - t) * 80);
+    const g = Math.floor(180 - t * 120);
+    const b = Math.floor(255 - t * 60);
 
-      ctx.strokeStyle = `hsl(${200 + t * 100}, 80%, 60%)`;
-      ctx.lineWidth = player.size * (0.8 - t * 0.6);
+    // glow
+    const glow = ctx.createRadialGradient(seg.x, seg.y, 0, seg.x, seg.y, size * 2.5);
+    glow.addColorStop(0, `rgba(${r},${g},${b},0.9)`);
+    glow.addColorStop(1, "rgba(0,0,0,0)");
 
-      ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
-      ctx.stroke();
-    }
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(seg.x, seg.y, size * 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // core
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.beginPath();
+    ctx.arc(seg.x, seg.y, size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // highlight
+    ctx.fillStyle = "rgba(255,255,255,0.5)";
+    ctx.beginPath();
+    ctx.arc(seg.x - size * 0.3, seg.y - size * 0.3, size * 0.25, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  // Food (glowy)
+  // Food glow
   foods.forEach(f => {
     const glow = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.size * 2);
     glow.addColorStop(0, "#fff176");
