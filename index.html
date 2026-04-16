@@ -1,235 +1,275 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Sorcerer Draft: Ascension</title>
-
-  <style>
+<meta charset="UTF-8">
+<title>Jujutsu Math Sorcerer</title>
+<style>
     body {
-      font-family: Arial;
-      background: #0c0c0c;
-      color: white;
-      text-align: center;
+        background: #0d0d0d;
+        color: #e6e6e6;
+        font-family: monospace;
+        text-align: center;
     }
-
-    h1 { margin-bottom: 5px; }
-
-    .card {
-      display: inline-block;
-      background: #1a1a1a;
-      padding: 15px;
-      margin: 10px;
-      border-radius: 12px;
-      width: 220px;
-      cursor: pointer;
-      transition: 0.2s;
+    .panel {
+        border: 2px solid #444;
+        padding: 15px;
+        margin: 10px auto;
+        width: 80%;
+        background: #1a1a1a;
     }
-
-    .card:hover {
-      transform: scale(1.08);
-      background: #2a2a2a;
-    }
-
-    .epic { border: 2px solid violet; }
-    .rare { border: 2px solid gold; }
-
-    #bars {
-      width: 60%;
-      margin: auto;
-      text-align: left;
-    }
-
-    .bar {
-      background: #333;
-      margin: 5px 0;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .fill {
-      height: 10px;
-      background: #00d4ff;
-    }
-
     button {
-      padding: 10px 20px;
-      margin-top: 20px;
-      cursor: pointer;
+        background: #222;
+        color: #fff;
+        border: 1px solid #555;
+        padding: 10px;
+        margin: 5px;
+        cursor: pointer;
     }
-  </style>
+    button:hover {
+        background: #444;
+    }
+    .log {
+        height: 200px;
+        overflow-y: scroll;
+        text-align: left;
+        background: black;
+        padding: 10px;
+    }
+</style>
 </head>
-
 <body>
 
-<h1>Sorcerer Draft: Ascension</h1>
-<h3 id="trait"></h3>
+<h1>⚡ Jujutsu Math Sorcerer ⚡</h1>
 
-<div id="choices"></div>
+<div class="panel" id="stats"></div>
 
-<h3>Your Stats</h3>
-<div id="bars"></div>
+<div class="panel">
+    <button onclick="attack()">Basic Attack</button>
+    <button onclick="technique()">Cursed Technique</button>
+    <button onclick="domain()">Domain Expansion</button>
+</div>
 
-<h3>Abilities</h3>
-<ul id="abilities"></ul>
-
-<div id="result"></div>
+<div class="panel log" id="log"></div>
 
 <script>
-const traits = ["tech","dom","spd","iq","dur"];
+// ==========================
+// CORE PLAYER + ENEMY STATS
+// ==========================
+let player = {
+    hp: 120,
+    maxHp: 120,
+    ce: 100,
+    maxCe: 100,
+    atk: 15,
+    def: 8,
+    ceControl: 1.2,   // multiplier
+    luck: 0.15,       // crit probability
+    domainActive: false
+};
 
-const sorcerers = [
-  {
-    name: "Gojo",
-    rarity: "epic",
-    stats: {tech:10, dom:10, spd:8, iq:9, dur:7},
-    ability: (stats)=> stats.tech += 2
-  },
-  {
-    name: "Sukuna",
-    rarity: "epic",
-    stats: {tech:9, dom:9, spd:7, iq:8, dur:10},
-    ability: (stats)=> stats.dur += 3
-  },
-  {
-    name: "Megumi",
-    rarity: "rare",
-    stats: {tech:8, dom:7, spd:9, iq:8, dur:7},
-    ability: (stats)=> stats.spd += 2
-  },
-  {
-    name: "Toji",
-    rarity: "rare",
-    stats: {tech:6, dom:5, spd:10, iq:7, dur:10},
-    ability: (stats)=> stats.spd += 3
-  },
-  {
-    name: "Mahito",
-    rarity: "rare",
-    stats: {tech:9, dom:8, spd:7, iq:8, dur:8},
-    ability: (stats)=> stats.dom += 2
-  },
-  {
-    name: "Shoko",
-    rarity: "common",
-    stats: {tech:7, dom:8, spd:6, iq:9, dur:9},
-    ability: (stats)=> stats.dur += 2
-  },
-  {
-    name: "Yuta",
-    rarity: "epic",
-    stats: {tech:8, dom:8, spd:8, iq:8, dur:7},
-    ability: (stats)=> {
-      for (let k in stats) stats[k] += 1;
+let enemy = {
+    hp: 150,
+    atk: 12,
+    def: 6,
+    aggression: 0.6 // AI decision weight
+};
+
+// ==========================
+// UTILITY FUNCTIONS
+// ==========================
+
+// Random number
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+// Log system
+function log(msg) {
+    document.getElementById("log").innerHTML += msg + "<br>";
+}
+
+// Clamp values
+function clamp(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+}
+
+// ==========================
+// DAMAGE FORMULA
+// ==========================
+// Damage = (Attack^1.1 / Defense^0.9) * randomness * crit
+
+function calculateDamage(attacker, defender) {
+    let base = Math.pow(attacker.atk, 1.1) / Math.pow(defender.def, 0.9);
+
+    let randomness = rand(0.85, 1.15);
+
+    let crit = Math.random() < player.luck ? 1.8 : 1;
+
+    return Math.floor(base * randomness * crit);
+}
+
+// ==========================
+// CURSED ENERGY SYSTEM
+// ==========================
+// CE Regen Formula:
+// regen = sqrt(maxCE) * 0.8 * controlFactor
+
+function regenCE() {
+    let regen = Math.sqrt(player.maxCe) * 0.8 * player.ceControl;
+    player.ce = clamp(player.ce + regen, 0, player.maxCe);
+}
+
+// ==========================
+// ACTIONS
+// ==========================
+
+function attack() {
+    let dmg = calculateDamage(player, enemy);
+    enemy.hp -= dmg;
+
+    log(`You strike for ${dmg} damage.`);
+
+    nextTurn();
+}
+
+function technique() {
+    let cost = 25;
+
+    if (player.ce < cost) {
+        log("Not enough cursed energy!");
+        return;
     }
-  }
-];
 
-let current = 0;
-let total = {tech:0, dom:0, spd:0, iq:0, dur:0};
-let abilities = [];
+    player.ce -= cost;
 
-function weightedRandom() {
-  let pool = [];
-  sorcerers.forEach(s => {
-    let weight = s.rarity === "epic" ? 1 :
-                 s.rarity === "rare" ? 2 : 4;
-    for (let i=0;i<weight;i++) pool.push(s);
-  });
-  return pool[Math.floor(Math.random()*pool.length)];
+    // Technique scaling:
+    // damage = (atk * 2 + CE^0.5) * control multiplier
+
+    let dmg = (player.atk * 2 + Math.sqrt(player.ce)) * player.ceControl;
+
+    // add variance
+    dmg *= rand(0.9, 1.2);
+
+    dmg = Math.floor(dmg);
+
+    enemy.hp -= dmg;
+
+    log(`Cursed Technique hits for ${dmg} damage.`);
+
+    nextTurn();
 }
 
-function getChoices() {
-  return [weightedRandom(), weightedRandom(), weightedRandom()];
+function domain() {
+    let cost = 50;
+
+    if (player.ce < cost) {
+        log("Not enough energy for Domain Expansion!");
+        return;
+    }
+
+    player.ce -= cost;
+    player.domainActive = true;
+
+    // Domain Buffs:
+    player.atk *= 1.5;
+    player.def *= 1.5;
+    player.luck += 0.25;
+
+    log("DOMAIN EXPANSION ACTIVATED!");
+
+    nextTurn();
 }
 
-function renderBars() {
-  let bars = document.getElementById("bars");
-  bars.innerHTML = "";
+// ==========================
+// ENEMY AI
+// ==========================
 
-  for (let key in total) {
-    let div = document.createElement("div");
-    div.innerHTML = `
-      ${key.toUpperCase()}
-      <div class="bar">
-        <div class="fill" style="width:${total[key]*5}px"></div>
-      </div>
+function enemyTurn() {
+    if (enemy.hp <= 0) return;
+
+    let choice = Math.random();
+
+    let dmg;
+
+    // Weighted decision system
+    if (choice < enemy.aggression) {
+        dmg = calculateDamage(enemy, player);
+        player.hp -= dmg;
+        log(`Enemy attacks for ${dmg}`);
+    } else {
+        // defensive move (math-based)
+        let shield = Math.floor(enemy.def * rand(1.2, 2.0));
+        enemy.def += shield * 0.1;
+        log(`Enemy reinforces defense (+${shield})`);
+    }
+}
+
+// ==========================
+// TURN LOOP
+// ==========================
+
+function nextTurn() {
+    regenCE();
+    enemyTurn();
+
+    // Domain wears off after 3 turns probabilistically
+    if (player.domainActive && Math.random() < 0.3) {
+        player.domainActive = false;
+        player.atk /= 1.5;
+        player.def /= 1.5;
+        player.luck -= 0.25;
+        log("Domain Expansion faded.");
+    }
+
+    updateUI();
+    checkGameState();
+}
+
+// ==========================
+// GAME STATE CHECK
+// ==========================
+
+function checkGameState() {
+    if (player.hp <= 0) {
+        log("You were exorcised...");
+        disableButtons();
+    }
+
+    if (enemy.hp <= 0) {
+        log("Curse defeated!");
+        disableButtons();
+    }
+}
+
+function disableButtons() {
+    document.querySelectorAll("button").forEach(btn => btn.disabled = true);
+}
+
+// ==========================
+// UI UPDATE
+// ==========================
+
+function updateUI() {
+    document.getElementById("stats").innerHTML = `
+        <h3>Player</h3>
+        HP: ${player.hp.toFixed(1)} / ${player.maxHp}<br>
+        CE: ${player.ce.toFixed(1)} / ${player.maxCe}<br>
+        ATK: ${player.atk.toFixed(2)} | DEF: ${player.def.toFixed(2)}<br>
+        Luck: ${(player.luck * 100).toFixed(1)}%<br>
+        <hr>
+        <h3>Enemy</h3>
+        HP: ${enemy.hp.toFixed(1)}<br>
+        ATK: ${enemy.atk} | DEF: ${enemy.def.toFixed(2)}
     `;
-    bars.appendChild(div);
-  }
 }
 
-function render() {
-  document.getElementById("trait").innerText =
-    "Draft for: " + traits[current].toUpperCase();
+// ==========================
+// INIT
+// ==========================
 
-  let choices = document.getElementById("choices");
-  choices.innerHTML = "";
+updateUI();
+log("Battle Start.");
 
-  getChoices().forEach(c => {
-    let div = document.createElement("div");
-    div.className = "card " + c.rarity;
-
-    div.innerHTML = `
-      <b>${c.name}</b><br>
-      ${c.rarity}<hr>
-      Tech:${c.stats.tech} |
-      Dom:${c.stats.dom}<br>
-      Spd:${c.stats.spd} |
-      IQ:${c.stats.iq}<br>
-      Dur:${c.stats.dur}
-   `;
-
-    div.onclick = ()=> pick(c);
-    choices.appendChild(div);
-  });
-}
-
-function pick(c) {
-  for (let k in total) total[k] += c.stats[k];
-
-  c.ability(total);
-  abilities.push(c.name);
-
-  let li = document.createElement("li");
-  li.innerText = c.name;
-  document.getElementById("abilities").appendChild(li);
-
-  current++;
-
-  renderBars();
-
-  if (current >= traits.length) end();
-  else render();
-}
-
-function synergyScore() {
-  let score = 0;
-
-  if (total.tech > 40 && total.dom > 40) score += 20;
-  if (total.spd > 45) score += 15;
-  if (total.dur > 45) score += 15;
-
-  return score;
-}
-
-function end() {
-  document.getElementById("choices").innerHTML = "";
-
-  let base = Object.values(total).reduce((a,b)=>a+b,0);
-  let final = base + synergyScore();
-
-  let rank = final > 250 ? "SPECIAL GRADE" :
-             final > 200 ? "GRADE 1" :
-             final > 160 ? "GRADE 2" : "LOW GRADE";
-
-  document.getElementById("result").innerHTML = `
-    <h2>${rank}</h2>
-    <p>Battle Score: ${final}</p>
-    <button onclick="location.reload()">Retry</button>
-  `;
-}
-
-render();
-renderBars();
 </script>
 
 </body>
