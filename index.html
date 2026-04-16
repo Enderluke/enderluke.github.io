@@ -1,46 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Jujutsu Sorcerer Reborn</title>
+<title>Jujutsu Sorcerer Awakening</title>
 
 <style>
-body {
-    margin:0;
-    font-family:Segoe UI;
-    background: radial-gradient(circle, #1a1a2e, #0d0d0d);
+body{
+    background:#0d0d0d;
     color:white;
+    font-family:sans-serif;
     text-align:center;
 }
-
-.panel {
+.panel{
     background:#111;
     margin:10px auto;
     padding:15px;
     width:80%;
     border-radius:10px;
-    box-shadow:0 0 15px rgba(127,90,240,0.3);
 }
+.bar{height:20px;background:#333;border-radius:10px;overflow:hidden;}
+.fill{height:100%;}
+.hp{background:red;}
+.ce{background:cyan;}
 
-.bar {height:20px;background:#333;border-radius:10px;overflow:hidden;}
-.fill {height:100%;transition:.3s;}
-.hp {background:red;}
-.ce {background:cyan;}
-
-button {
-    padding:10px 15px;
+button{
+    padding:10px;
     margin:5px;
-    border:none;
-    border-radius:6px;
     background:#7f5af0;
+    border:none;
     color:white;
+    border-radius:6px;
     cursor:pointer;
 }
-button:disabled {opacity:0.4;}
 
-.log {
+.log{
     height:180px;
-    overflow-y:auto;
+    overflow:auto;
     background:black;
     padding:10px;
     text-align:left;
@@ -50,185 +45,180 @@ button:disabled {opacity:0.4;}
 
 <body>
 
-<h1>⚡ Jujutsu Sorcerer ⚡</h1>
+<h1>⚡ Jujutsu Awakening ⚡</h1>
 
 <div class="panel" id="playerUI"></div>
 <div class="panel" id="enemyUI"></div>
 
-<div class="panel">
-    <button id="atkBtn" onclick="attack()">Attack</button>
-    <button id="techBtn" onclick="technique()">Technique</button>
-    <button id="domainBtn" onclick="domain()">Domain</button>
-</div>
+<div class="panel" id="actions"></div>
 
 <div class="panel log" id="log"></div>
-
-<div class="panel" id="endPanel"></div>
+<div class="panel" id="end"></div>
 
 <script>
 
-// ===== GAME STATE =====
 let game;
 
-function initGame() {
-game = {
-    player:{
-        hp:120,maxHp:120,
-        ce:100,maxCe:100,
-        atk:15,def:8,
-        luck:0.15,
-        combo:0,
-        cooldowns:{tech:0,domain:0},
-        domainTurns:0
-    },
-    enemy:{
-        hp:150,
-        atk:12,
-        def:6,
-        phase:1
-    },
-    over:false
+function init(){
+game={
+p:{
+hp:120,maxHp:120,
+ce:100,maxCe:100,
+atk:15,def:8,
+combo:0,
+guard:false,
+domain:0,
+cool:0
+},
+e:{
+hp:150,
+atk:12,
+def:6,
+intent:"attack"
+},
+over:false
 };
 
 document.getElementById("log").innerHTML="";
-document.getElementById("endPanel").innerHTML="";
-enableButtons();
-updateUI();
+document.getElementById("end").innerHTML="";
+update();
 log("Battle Start!");
 }
 
 // ===== HELPERS =====
 function rand(a,b){return Math.random()*(b-a)+a;}
 function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
-function log(msg){
+function log(t){
 let el=document.getElementById("log");
-el.innerHTML+=msg+"<br>";
+el.innerHTML+=t+"<br>";
 el.scrollTop=el.scrollHeight;
 }
 
 // ===== DAMAGE =====
-function dmg(atk,def,critChance,forceCrit=false){
-let base = Math.pow(atk,1.1)/Math.pow(def,0.9);
-let variance = rand(0.9,1.15);
-
-let crit = (forceCrit || Math.random()<critChance)?1.8:1;
-
-return Math.floor(base*variance*crit);
+function damage(a,d,crit=false){
+let base=Math.pow(a,1.1)/Math.pow(d,0.9);
+let v=rand(0.9,1.1);
+let c=crit?2:1;
+return Math.floor(base*v*c);
 }
 
 // ===== ACTIONS =====
 function attack(){
-if(game.over) return;
+let p=game.p,e=game.e;
 
-let p=game.player,e=game.enemy;
+let crit = p.domain>0;
+let dmg=damage(p.atk,e.def,crit);
 
-let damage = dmg(p.atk,e.def,p.luck);
+dmg+=p.combo*2;
 
-damage += Math.floor(p.combo*2); // combo scaling
-
-e.hp -= damage;
+e.hp-=dmg;
 p.combo++;
 
-log(`⚔️ Attack deals ${damage} (Combo x${p.combo})`);
-
+log(`⚔️ Attack ${dmg}`);
 turn();
 }
 
 function technique(){
-let p=game.player,e=game.enemy;
+let p=game.p,e=game.e;
 
-if(p.cooldowns.tech>0) return log("Technique on cooldown!");
-if(p.ce<25) return log("Not enough CE!");
+if(p.ce<25) return log("No CE");
 
 p.ce-=25;
-p.cooldowns.tech=2;
 
-// scaling formula
-let damage = (p.atk*2 + Math.sqrt(p.ce))*1.2;
-damage *= rand(0.9,1.2);
+let dmg=(p.atk*2+Math.sqrt(p.ce))*rand(0.9,1.2);
 
-e.hp -= Math.floor(damage);
+if(p.domain>0) dmg*=1.5;
 
+e.hp-=Math.floor(dmg);
 p.combo++;
 
-log(`💥 Technique hits ${Math.floor(damage)}`);
-
+log(`💥 Technique ${Math.floor(dmg)}`);
 turn();
 }
 
-function domain(){
-let p=game.player;
+function guard(){
+game.p.guard=true;
+log("🛡 Guarding...");
+turn();
+}
 
-if(p.cooldowns.domain>0) return log("Domain on cooldown!");
-if(p.ce<50) return log("Not enough CE!");
+// 🌌 DOMAIN FIXED
+function domain(){
+let p=game.p;
+
+if(p.ce<50) return log("Not enough CE");
 
 p.ce-=50;
-p.domainTurns=3;
-p.cooldowns.domain=5;
+p.domain=3;
 
-log("🌌 DOMAIN EXPANSION — GUARANTEED HITS!");
+log("🌌 DOMAIN EXPANSION!");
+update();
+}
 
+// ⭐ NEW MOVE (only in domain)
+function sureHit(){
+let p=game.p,e=game.e;
+
+let dmg = 20 + p.combo*3; // TRUE DAMAGE
+
+e.hp-=dmg;
+
+log(`💠 Sure-Hit Strike ${dmg}`);
 turn();
 }
 
 // ===== ENEMY =====
+function enemyIntent(){
+game.e.intent = Math.random()<0.7 ? "attack" : "heavy";
+}
+
 function enemyTurn(){
-let p=game.player,e=game.enemy;
+let p=game.p,e=game.e;
 
 if(e.hp<=0) return;
 
-// phase change
-if(e.hp<70 && e.phase===1){
-e.phase=2;
-e.atk*=1.3;
-log("🔥 Enemy enters Phase 2!");
+let dmg;
+
+if(e.intent==="attack"){
+dmg=damage(e.atk,p.def);
+}
+else{
+dmg=damage(e.atk*1.5,p.def);
+log("⚠️ Enemy used HEAVY attack!");
 }
 
-let damage = dmg(e.atk,p.def,0.05);
+// guard reduces damage
+if(p.guard) dmg*=0.4;
 
-p.hp -= damage;
+// domain reduces incoming damage
+if(p.domain>0) dmg*=0.7;
 
-log(`👹 Enemy deals ${damage}`);
+p.hp-=Math.floor(dmg);
 
-p.combo=0; // combo reset if hit
+log(`👹 Enemy deals ${Math.floor(dmg)}`);
+
+p.guard=false;
+p.combo=0;
 }
 
 // ===== TURN =====
 function turn(){
-let p=game.player,e=game.enemy;
-
-// Domain effect
-let forceCrit = p.domainTurns>0;
-
-// Apply attack modifier for domain
-if(forceCrit){
-p.luck = 1;
-}
-
-// enemy turn
 enemyTurn();
 
-// restore luck after domain calc
-if(forceCrit){
-p.luck = 0.15;
-p.domainTurns--;
+if(game.p.domain>0){
+game.p.domain--;
 }
 
-// cooldowns
-for(let k in p.cooldowns){
-if(p.cooldowns[k]>0) p.cooldowns[k]--;
-}
+game.p.ce += Math.sqrt(game.p.maxCe)*0.5;
+game.p.ce = clamp(game.p.ce,0,game.p.maxCe);
 
-// regen CE
-p.ce += Math.sqrt(p.maxCe)*0.5;
-p.ce = clamp(p.ce,0,p.maxCe);
+game.p.hp=clamp(game.p.hp,0,game.p.maxHp);
+game.e.hp=clamp(game.e.hp,0,150);
 
-// clamp HP
-p.hp = clamp(p.hp,0,p.maxHp);
-e.hp = clamp(e.hp,0,150);
+enemyIntent();
 
-updateUI();
-checkGame();
+update();
+check();
 }
 
 // ===== UI =====
@@ -236,54 +226,59 @@ function bar(v,m,c){
 return `<div class="bar"><div class="fill ${c}" style="width:${(v/m)*100}%"></div></div>`;
 }
 
-function updateUI(){
-let p=game.player,e=game.enemy;
+function update(){
+
+let p=game.p,e=game.e;
+
+// dynamic action panel
+let actions="";
+
+if(p.domain>0){
+actions+=`<button onclick="sureHit()">Sure-Hit</button>`;
+}
+else{
+actions+=`
+<button onclick="attack()">Attack</button>
+<button onclick="technique()">Technique</button>
+<button onclick="guard()">Guard</button>
+<button onclick="domain()">Domain</button>
+`;
+}
+
+document.getElementById("actions").innerHTML=actions;
 
 document.getElementById("playerUI").innerHTML=`
-<h3>Player</h3>
-HP: ${p.hp} ${bar(p.hp,p.maxHp,"hp")}
-CE: ${p.ce.toFixed(1)} ${bar(p.ce,p.maxCe,"ce")}
+HP ${p.hp}${bar(p.hp,p.maxHp,"hp")}
+CE ${p.ce.toFixed(1)}${bar(p.ce,p.maxCe,"ce")}
 Combo: ${p.combo}
-Domain: ${p.domainTurns>0 ? p.domainTurns+" turns" : "Ready"}
+Domain: ${p.domain}
 `;
 
 document.getElementById("enemyUI").innerHTML=`
-<h3>Curse (Phase ${e.phase})</h3>
-HP: ${e.hp} ${bar(e.hp,150,"hp")}
+Enemy HP ${e.hp}${bar(e.hp,150,"hp")}
+Intent: ${e.intent}
 `;
 }
 
-// ===== GAME END =====
-function checkGame(){
-let p=game.player,e=game.enemy;
-
-if(p.hp<=0){
-endGame("💀 You Lost");
+// ===== GAME =====
+function check(){
+if(game.p.hp<=0){
+end("💀 You Lose");
 }
-if(e.hp<=0){
-endGame("🏆 Victory!");
+if(game.e.hp<=0){
+end("🏆 Victory");
 }
 }
 
-function endGame(msg){
+function end(msg){
 game.over=true;
-disableButtons();
-
-document.getElementById("endPanel").innerHTML=
-`<h2>${msg}</h2>
-<button onclick="initGame()">Restart Battle</button>`;
-}
-
-// ===== BUTTONS =====
-function disableButtons(){
-document.querySelectorAll("button").forEach(b=>b.disabled=true);
-}
-function enableButtons(){
-document.querySelectorAll("button").forEach(b=>b.disabled=false);
+document.getElementById("end").innerHTML=
+`<h2>${msg}</h2><button onclick="init()">Restart</button>`;
 }
 
 // ===== INIT =====
-initGame();
+init();
+enemyIntent();
 
 </script>
 
