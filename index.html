@@ -2,273 +2,278 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Jujutsu Math Sorcerer</title>
+<title>Jujutsu Sorcerer</title>
+
 <style>
-    body {
-        background: #0d0d0d;
-        color: #e6e6e6;
-        font-family: monospace;
-        text-align: center;
-    }
-    .panel {
-        border: 2px solid #444;
-        padding: 15px;
-        margin: 10px auto;
-        width: 80%;
-        background: #1a1a1a;
-    }
-    button {
-        background: #222;
-        color: #fff;
-        border: 1px solid #555;
-        padding: 10px;
-        margin: 5px;
-        cursor: pointer;
-    }
-    button:hover {
-        background: #444;
-    }
-    .log {
-        height: 200px;
-        overflow-y: scroll;
-        text-align: left;
-        background: black;
-        padding: 10px;
-    }
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top, #1a1a2e, #0d0d0d);
+    color: white;
+    text-align: center;
+}
+
+h1 {
+    text-shadow: 0 0 15px #7f5af0;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+}
+
+.panel {
+    background: rgba(20,20,30,0.9);
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 10px;
+    box-shadow: 0 0 15px rgba(127,90,240,0.2);
+}
+
+.bar {
+    height: 20px;
+    border-radius: 10px;
+    margin: 5px 0;
+    background: #333;
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    transition: 0.3s;
+}
+
+.hp { background: linear-gradient(90deg, #ff4d4d, #ff0000); }
+.ce { background: linear-gradient(90deg, #00c6ff, #0072ff); }
+
+button {
+    background: linear-gradient(45deg, #7f5af0, #2cb67d);
+    border: none;
+    padding: 12px 18px;
+    margin: 8px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px #7f5af0;
+}
+
+.log {
+    height: 200px;
+    overflow-y: auto;
+    text-align: left;
+    background: black;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 14px;
+}
 </style>
 </head>
+
 <body>
 
 <h1>⚡ Jujutsu Math Sorcerer ⚡</h1>
 
-<div class="panel" id="stats"></div>
+<div class="container">
+
+<div class="panel" id="playerPanel"></div>
+<div class="panel" id="enemyPanel"></div>
 
 <div class="panel">
-    <button onclick="attack()">Basic Attack</button>
-    <button onclick="technique()">Cursed Technique</button>
-    <button onclick="domain()">Domain Expansion</button>
+    <button onclick="attack()">Attack</button>
+    <button onclick="technique()">Technique</button>
+    <button onclick="domain()">Domain</button>
 </div>
 
 <div class="panel log" id="log"></div>
 
+</div>
+
 <script>
-// ==========================
-// CORE PLAYER + ENEMY STATS
-// ==========================
+
+// ================= STATS =================
 let player = {
-    hp: 120,
-    maxHp: 120,
-    ce: 100,
-    maxCe: 100,
-    atk: 15,
-    def: 8,
-    ceControl: 1.2,   // multiplier
-    luck: 0.15,       // crit probability
-    domainActive: false
+    hp: 120, maxHp: 120,
+    ce: 100, maxCe: 100,
+    atk: 15, def: 8,
+    luck: 0.15,
+    ceControl: 1.2,
+    domainTurns: 0
 };
 
 let enemy = {
     hp: 150,
     atk: 12,
     def: 6,
-    aggression: 0.6 // AI decision weight
+    luck: 0.05,
+    aggression: 0.65
 };
 
-// ==========================
-// UTILITY FUNCTIONS
-// ==========================
-
-// Random number
+// ================= HELPERS =================
 function rand(min, max) {
     return Math.random() * (max - min) + min;
 }
 
-// Log system
+function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+}
+
 function log(msg) {
-    document.getElementById("log").innerHTML += msg + "<br>";
+    let el = document.getElementById("log");
+    el.innerHTML += msg + "<br>";
+    el.scrollTop = el.scrollHeight;
 }
 
-// Clamp values
-function clamp(val, min, max) {
-    return Math.max(min, Math.min(max, val));
-}
-
-// ==========================
-// DAMAGE FORMULA
-// ==========================
-// Damage = (Attack^1.1 / Defense^0.9) * randomness * crit
-
+// ================= DAMAGE =================
 function calculateDamage(attacker, defender) {
     let base = Math.pow(attacker.atk, 1.1) / Math.pow(defender.def, 0.9);
+    let variance = rand(0.85, 1.15);
+    let crit = Math.random() < attacker.luck ? 1.8 : 1;
 
-    let randomness = rand(0.85, 1.15);
-
-    let crit = Math.random() < player.luck ? 1.8 : 1;
-
-    return Math.floor(base * randomness * crit);
+    return Math.floor(base * variance * crit);
 }
 
-// ==========================
-// CURSED ENERGY SYSTEM
-// ==========================
-// CE Regen Formula:
-// regen = sqrt(maxCE) * 0.8 * controlFactor
-
+// ================= CE =================
 function regenCE() {
-    let regen = Math.sqrt(player.maxCe) * 0.8 * player.ceControl;
+    let regen = Math.sqrt(player.maxCe) * 0.6 * player.ceControl;
     player.ce = clamp(player.ce + regen, 0, player.maxCe);
 }
 
-// ==========================
-// ACTIONS
-// ==========================
-
+// ================= ACTIONS =================
 function attack() {
     let dmg = calculateDamage(player, enemy);
     enemy.hp -= dmg;
-
-    log(`You strike for ${dmg} damage.`);
-
+    log(`⚔️ You deal ${dmg}`);
     nextTurn();
 }
 
 function technique() {
     let cost = 25;
-
-    if (player.ce < cost) {
-        log("Not enough cursed energy!");
-        return;
-    }
+    if (player.ce < cost) return log("Not enough CE!");
 
     player.ce -= cost;
 
-    // Technique scaling:
-    // damage = (atk * 2 + CE^0.5) * control multiplier
-
     let dmg = (player.atk * 2 + Math.sqrt(player.ce)) * player.ceControl;
-
-    // add variance
     dmg *= rand(0.9, 1.2);
 
     dmg = Math.floor(dmg);
-
     enemy.hp -= dmg;
 
-    log(`Cursed Technique hits for ${dmg} damage.`);
-
+    log(`💥 Technique hits ${dmg}`);
     nextTurn();
 }
 
 function domain() {
     let cost = 50;
 
-    if (player.ce < cost) {
-        log("Not enough energy for Domain Expansion!");
-        return;
-    }
+    if (player.ce < cost) return log("Not enough CE!");
+    if (player.domainTurns > 0) return log("Domain already active!");
 
     player.ce -= cost;
-    player.domainActive = true;
+    player.domainTurns = 3;
 
-    // Domain Buffs:
     player.atk *= 1.5;
     player.def *= 1.5;
     player.luck += 0.25;
 
-    log("DOMAIN EXPANSION ACTIVATED!");
-
+    log("🌌 DOMAIN EXPANSION!");
     nextTurn();
 }
 
-// ==========================
-// ENEMY AI
-// ==========================
-
+// ================= ENEMY =================
 function enemyTurn() {
     if (enemy.hp <= 0) return;
 
-    let choice = Math.random();
-
-    let dmg;
-
-    // Weighted decision system
-    if (choice < enemy.aggression) {
-        dmg = calculateDamage(enemy, player);
+    if (Math.random() < enemy.aggression) {
+        let dmg = calculateDamage(enemy, player);
         player.hp -= dmg;
-        log(`Enemy attacks for ${dmg}`);
+        log(`👹 Enemy hits ${dmg}`);
     } else {
-        // defensive move (math-based)
-        let shield = Math.floor(enemy.def * rand(1.2, 2.0));
-        enemy.def += shield * 0.1;
-        log(`Enemy reinforces defense (+${shield})`);
+        let boost = rand(0.1, 0.3);
+        enemy.def *= (1 + boost);
+
+        // cap defense
+        enemy.def = Math.min(enemy.def, 20);
+
+        log(`🛡 Enemy reinforces defense`);
     }
 }
 
-// ==========================
-// TURN LOOP
-// ==========================
-
+// ================= TURN =================
 function nextTurn() {
     regenCE();
     enemyTurn();
 
-    // Domain wears off after 3 turns probabilistically
-    if (player.domainActive && Math.random() < 0.3) {
-        player.domainActive = false;
-        player.atk /= 1.5;
-        player.def /= 1.5;
-        player.luck -= 0.25;
-        log("Domain Expansion faded.");
+    // Domain countdown
+    if (player.domainTurns > 0) {
+        player.domainTurns--;
+
+        if (player.domainTurns === 0) {
+            player.atk /= 1.5;
+            player.def /= 1.5;
+            player.luck -= 0.25;
+
+            log("Domain faded...");
+        }
     }
 
     updateUI();
-    checkGameState();
+    checkGame();
 }
 
-// ==========================
-// GAME STATE CHECK
-// ==========================
+// ================= UI =================
+function barHTML(value, max, cls) {
+    let percent = (value / max) * 100;
+    return `
+        <div class="bar">
+            <div class="fill ${cls}" style="width:${percent}%"></div>
+        </div>
+    `;
+}
 
-function checkGameState() {
+function updateUI() {
+    document.getElementById("playerPanel").innerHTML = `
+        <h3>🧙 Player</h3>
+        HP: ${player.hp.toFixed(1)} / ${player.maxHp}
+        ${barHTML(player.hp, player.maxHp, "hp")}
+        CE: ${player.ce.toFixed(1)} / ${player.maxCe}
+        ${barHTML(player.ce, player.maxCe, "ce")}
+        ATK: ${player.atk.toFixed(2)} | DEF: ${player.def.toFixed(2)}
+    `;
+
+    document.getElementById("enemyPanel").innerHTML = `
+        <h3>👹 Curse</h3>
+        HP: ${enemy.hp.toFixed(1)}
+        ${barHTML(enemy.hp, 150, "hp")}
+        ATK: ${enemy.atk} | DEF: ${enemy.def.toFixed(2)}
+    `;
+}
+
+// ================= GAME =================
+function checkGame() {
     if (player.hp <= 0) {
-        log("You were exorcised...");
+        log("💀 You lost...");
         disableButtons();
     }
-
     if (enemy.hp <= 0) {
-        log("Curse defeated!");
+        log("🏆 You win!");
         disableButtons();
     }
 }
 
 function disableButtons() {
-    document.querySelectorAll("button").forEach(btn => btn.disabled = true);
+    document.querySelectorAll("button").forEach(b => b.disabled = true);
 }
 
-// ==========================
-// UI UPDATE
-// ==========================
-
-function updateUI() {
-    document.getElementById("stats").innerHTML = `
-        <h3>Player</h3>
-        HP: ${player.hp.toFixed(1)} / ${player.maxHp}<br>
-        CE: ${player.ce.toFixed(1)} / ${player.maxCe}<br>
-        ATK: ${player.atk.toFixed(2)} | DEF: ${player.def.toFixed(2)}<br>
-        Luck: ${(player.luck * 100).toFixed(1)}%<br>
-        <hr>
-        <h3>Enemy</h3>
-        HP: ${enemy.hp.toFixed(1)}<br>
-        ATK: ${enemy.atk} | DEF: ${enemy.def.toFixed(2)}
-    `;
-}
-
-// ==========================
-// INIT
-// ==========================
-
+// ================= INIT =================
 updateUI();
-log("Battle Start.");
+log("Battle Start!");
 
 </script>
 
