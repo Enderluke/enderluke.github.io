@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>2D Walking Simulator</title>
+  <title>2D Walking Simulator + Tail</title>
   <style>
     body {
       margin: 0;
@@ -24,31 +24,47 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Resize canvas
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Player object
+// Player
 const player = {
   x: canvas.width / 2,
   y: canvas.height / 2,
-  size: 30,
-  speed: 4,
-  color: "blue"
+  size: 20,
+  speed: 4
 };
 
-// Input handling
+// Tail system
+let tail = [];
+let maxTailLength = 20;
+
+// Food (spheres)
+let foods = [];
+
+// Spawn food
+function spawnFood() {
+  foods.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: 10
+  });
+}
+
+// Initial food
+for (let i = 0; i < 10; i++) spawnFood();
+
+// Input
 const keys = {};
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-window.addEventListener("keydown", (e) => {
-  keys[e.key.toLowerCase()] = true;
-});
+// Distance helper
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
 
-window.addEventListener("keyup", (e) => {
-  keys[e.key.toLowerCase()] = false;
-});
-
-// Game loop
+// Update
 function update() {
   // Movement
   if (keys["w"] || keys["arrowup"]) player.y -= player.speed;
@@ -56,30 +72,68 @@ function update() {
   if (keys["a"] || keys["arrowleft"]) player.x -= player.speed;
   if (keys["d"] || keys["arrowright"]) player.x += player.speed;
 
-  // Boundary collision
-  player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
-  player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
+  // Boundaries
+  player.x = Math.max(0, Math.min(canvas.width, player.x));
+  player.y = Math.max(0, Math.min(canvas.height, player.y));
+
+  // Add position to tail
+  tail.push({ x: player.x, y: player.y });
+
+  // Limit tail length
+  while (tail.length > maxTailLength) {
+    tail.shift();
+  }
+
+  // Check food collision
+  for (let i = foods.length - 1; i >= 0; i--) {
+    if (distance(player, foods[i]) < player.size) {
+      foods.splice(i, 1);
+      maxTailLength += 10; // grow tail
+      spawnFood(); // replace food
+    }
+  }
 }
 
+// Draw
 function draw() {
-  // Clear screen
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Draw food
+  ctx.fillStyle = "yellow";
+  foods.forEach(f => {
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Draw tail (smooth gradient effect)
+  for (let i = 0; i < tail.length; i++) {
+    const t = tail[i];
+    const alpha = i / tail.length;
+
+    ctx.fillStyle = `rgba(0, 0, 255, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, player.size * (alpha * 0.8), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   // Draw player
-  ctx.fillStyle = player.color;
-  ctx.fillRect(player.x, player.y, player.size, player.size);
+  ctx.fillStyle = "blue";
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+  ctx.fill();
 }
 
+// Loop
 function gameLoop() {
   update();
   draw();
   requestAnimationFrame(gameLoop);
 }
 
-// Start game
 gameLoop();
 
-// Resize handling
+// Resize
 window.addEventListener("resize", () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
