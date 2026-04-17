@@ -85,6 +85,26 @@
       border-bottom: 1px solid rgba(255,255,255,0.2);
       text-align: center;
     }
+
+    /* ===== BACK BUTTON ===== */
+    #backBtn {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #ff5252;
+      color: white;
+      cursor: pointer;
+      z-index: 5;
+      display: none;
+    }
+
+    #backBtn:hover {
+      background: #ff7979;
+    }
   </style>
 </head>
 <body>
@@ -100,6 +120,8 @@
   </div>
 </div>
 
+<button id="backBtn" onclick="goBack()">⬅ Back</button>
+
 <canvas id="gameCanvas"></canvas>
 
 <script>
@@ -109,7 +131,7 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// ===== PLAYER ID (NEW) =====
+// ===== PLAYER ID =====
 let playerId = localStorage.getItem("playerId");
 if (!playerId) {
   playerId = "player-" + Math.random().toString(36).substr(2, 9);
@@ -124,11 +146,24 @@ function getScores() {
   return JSON.parse(localStorage.getItem("tailScores") || "[]");
 }
 
+// ===== UPDATED: NO DUPES =====
 function saveScore(name, score) {
   let scores = getScores();
-  scores.push({ name, score, id: playerId });
+
+  const existing = scores.find(s => s.id === playerId);
+
+  if (existing) {
+    if (score > existing.score) {
+      existing.score = score;
+      existing.name = name;
+    }
+  } else {
+    scores.push({ name, score, id: playerId });
+  }
+
   scores.sort((a,b) => b.score - a.score);
   scores = scores.slice(0, 10);
+
   localStorage.setItem("tailScores", JSON.stringify(scores));
 }
 
@@ -150,7 +185,21 @@ function startGame() {
   }
   currentUser = input.value.trim();
   document.getElementById("menu").style.display = "none";
+  document.getElementById("backBtn").style.display = "block";
   gameStarted = true;
+}
+
+// ===== BACK BUTTON FUNCTION =====
+function goBack() {
+  if (gameStarted && currentUser) {
+    saveScore(currentUser, maxTailLength);
+  }
+
+  document.getElementById("menu").style.display = "flex";
+  document.getElementById("backBtn").style.display = "none";
+  renderLeaderboard();
+
+  gameStarted = false;
 }
 
 renderLeaderboard();
