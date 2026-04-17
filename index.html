@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>best game oat</title>
+  <title>2D Walking Simulator + Tail</title>
   <style>
     body {cv 
       margin: 0;
@@ -90,7 +90,7 @@
 <body>
 
 <div id="menu">
-  <h1>best game oat obviously</h1>
+  <h1>Glow Tail Game</h1>
   <input id="username" placeholder="Enter username" />
   <button onclick="startGame()">Play</button>
 
@@ -109,6 +109,13 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// ===== PLAYER ID (NEW) =====
+let playerId = localStorage.getItem("playerId");
+if (!playerId) {
+  playerId = "player-" + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem("playerId", playerId);
+}
+
 // ===== USER / MENU =====
 let currentUser = "";
 let gameStarted = false;
@@ -119,7 +126,7 @@ function getScores() {
 
 function saveScore(name, score) {
   let scores = getScores();
-  scores.push({ name, score });
+  scores.push({ name, score, id: playerId });
   scores.sort((a,b) => b.score - a.score);
   scores = scores.slice(0, 10);
   localStorage.setItem("tailScores", JSON.stringify(scores));
