@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>best game oat</title>
+  <title>2D Walking Simulator + Tail</title>
   <style>
     body {cv 
       margin: 0;
@@ -110,7 +110,7 @@
 <body>
 
 <div id="menu">
-  <h1>best game oat</h1>
+  <h1>Glow Tail Game</h1>
   <input id="username" placeholder="Enter username" />
   <button onclick="startGame()">Play</button>
 
@@ -141,6 +141,7 @@ if (!playerId) {
 // ===== USER / MENU =====
 let currentUser = "";
 let gameStarted = false;
+let gameOver = false;
 
 function getScores() {
   return JSON.parse(localStorage.getItem("tailScores") || "[]");
@@ -187,9 +188,10 @@ function startGame() {
   document.getElementById("menu").style.display = "none";
   document.getElementById("backBtn").style.display = "block";
   gameStarted = true;
+  gameOver = false;
 }
 
-// ===== RESET FUNCTION (NEW FIX) =====
+// ===== RESET FUNCTION =====
 function resetGame() {
   player.x = canvas.width / 2;
   player.y = canvas.height / 2;
@@ -207,13 +209,14 @@ function goBack() {
     saveScore(currentUser, maxTailLength);
   }
 
-  resetGame(); // <-- FIX APPLIED HERE
+  resetGame();
 
   document.getElementById("menu").style.display = "flex";
   document.getElementById("backBtn").style.display = "none";
   renderLeaderboard();
 
   gameStarted = false;
+  gameOver = false;
 }
 
 renderLeaderboard();
@@ -245,7 +248,14 @@ for (let i = 0; i < 12; i++) spawnFood();
 
 // Input
 const keys = {};
-window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keydown", e => {
+  keys[e.key.toLowerCase()] = true;
+
+  // ===== ENTER TO RETURN AFTER GAME OVER =====
+  if (gameOver && e.key === "Enter") {
+    goBack();
+  }
+});
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 // Distance helper
@@ -255,7 +265,7 @@ function distance(a, b) {
 
 // Update
 function update() {
-  if (!gameStarted) return;
+  if (!gameStarted || gameOver) return;
 
   if (keys["w"] || keys["arrowup"]) player.y -= player.speed;
   if (keys["s"] || keys["arrowdown"]) player.y += player.speed;
@@ -274,6 +284,15 @@ function update() {
 
   while (tail.length > maxTailLength) {
     tail.shift();
+  }
+
+  // ===== COLLISION WITH TAIL (NEW) =====
+  for (let i = 0; i < tail.length - 10; i++) {
+    if (distance(player, tail[i]) < player.size * 0.8) {
+      gameOver = true;
+      saveScore(currentUser, maxTailLength);
+      return;
+    }
   }
 
   for (let i = foods.length - 1; i >= 0; i--) {
@@ -373,6 +392,20 @@ function draw() {
   ctx.beginPath();
   ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
   ctx.fill();
+
+  // ===== GAME OVER SCREEN =====
+  if (gameOver) {
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.font = "bold 60px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+
+    ctx.font = "24px Arial";
+    ctx.fillText("Press ENTER to return", canvas.width / 2, canvas.height / 2 + 30);
+  }
 }
 
 // Loop
