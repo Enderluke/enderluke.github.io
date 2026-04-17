@@ -146,7 +146,7 @@ function getScores() {
   return JSON.parse(localStorage.getItem("tailScores") || "[]");
 }
 
-// ===== UPDATED: NO DUPES =====
+// ===== NO DUPES =====
 function saveScore(name, score) {
   let scores = getScores();
 
@@ -189,11 +189,25 @@ function startGame() {
   gameStarted = true;
 }
 
-// ===== BACK BUTTON FUNCTION =====
+// ===== RESET FUNCTION (NEW FIX) =====
+function resetGame() {
+  player.x = canvas.width / 2;
+  player.y = canvas.height / 2;
+
+  tail = [];
+  maxTailLength = 25;
+
+  foods = [];
+  for (let i = 0; i < 12; i++) spawnFood();
+}
+
+// ===== BACK BUTTON =====
 function goBack() {
   if (gameStarted && currentUser) {
     saveScore(currentUser, maxTailLength);
   }
+
+  resetGame(); // <-- FIX APPLIED HERE
 
   document.getElementById("menu").style.display = "flex";
   document.getElementById("backBtn").style.display = "none";
