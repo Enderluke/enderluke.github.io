@@ -155,6 +155,21 @@
       box-shadow: 0 12px 24px rgba(255, 227, 77, 0.22);
     }
 
+    .secondary-btn {
+      width: 100%;
+      margin: 0 0 14px;
+      padding: 11px 14px;
+      color: var(--text);
+      background: rgba(111, 211, 255, 0.14);
+      border: 1px solid rgba(111, 211, 255, 0.28);
+    }
+
+    .secondary-btn[aria-pressed="true"] {
+      color: #09130e;
+      background: linear-gradient(180deg, #a8ffc4, var(--good));
+      border-color: rgba(115, 255, 179, 0.6);
+    }
+
     .hints {
       margin-bottom: 18px;
       color: rgba(255, 255, 255, 0.75);
@@ -341,8 +356,10 @@
       </div>
 
       <div class="hints">
-        WASD / Arrow Keys to move · Drag on touch screens to steer · P or Esc to pause · Enter returns to menu after game over
+        WASD / Arrow Keys to move · Drag to steer · P or Esc to pause · M toggles sound
       </div>
+
+      <button id="soundBtn" class="secondary-btn" type="button" aria-pressed="false">Sound: Off</button>
 
       <div id="nameError" class="name-error" aria-live="polite"></div>
 
@@ -374,6 +391,7 @@
     const backBtn = document.getElementById("backBtn");
     const usernameInput = document.getElementById("username");
     const nameError = document.getElementById("nameError");
+    const soundBtn = document.getElementById("soundBtn");
     const scoresList = document.getElementById("scores");
 
     const hud = document.getElementById("hud");
@@ -387,7 +405,8 @@
     const STORAGE_KEYS = {
       playerId: "glowTailPlayerId",
       scores: "glowTailScores",
-      lastUsername: "glowTailLastUsername"
+      lastUsername: "glowTailLastUsername",
+      soundEnabled: "glowTailSoundEnabled"
     };
 
     const START_TAIL_LENGTH = 24;
@@ -408,6 +427,9 @@
     const START_GRACE_SECONDS = 1.2;
     const SHIELD_GRACE_SECONDS = 1.8;
     const SHIELD_TAIL_TRIM = 10;
+    const STAR_COUNT = 95;
+    const DUST_COUNT = 44;
+    const MAX_RIPPLES = 18;
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const lerp = (a, b, t) => a + (b - a) * t;
@@ -439,6 +461,9 @@
     let maxTailLength = START_TAIL_LENGTH;
     let foods = [];
     let particles = [];
+    let stars = [];
+    let dust = [];
+    let ripples = [];
 
     let magnetTime = 0;
     let shieldTime = 0;
@@ -452,6 +477,16 @@
     let objectivesCompleted = 0;
     let pointerTarget = null;
     let activePointerId = null;
+    let screenShake = 0;
+    let flashTime = 0;
+
+    let audioCtx = null;
+    let masterGain = null;
+    let musicGain = null;
+    let sfxGain = null;
+    let musicTimer = null;
+    let musicStep = 0;
+    let audioEnabled = false;
 
     const keys = Object.create(null);
 
@@ -512,6 +547,35 @@
       setStorageItem(STORAGE_KEYS.playerId, playerId);
     }
 
+    audioEnabled = getStorageItem(STORAGE_KEYS.soundEnabled) === "true";
+    updateSoundButton();
+
+    function ensureBackgroundLayers() {
+      if (stars.length !== STAR_COUNT) {
+        stars = Array.from({ length: STAR_COUNT }, () => ({
+          x: Math.random(),
+          y: Math.random(),
+          size: rand(0.7, 2.5),
+          twinkle: rand(0.0012, 0.0045),
+          phase: rand(0, Math.PI * 2),
+          drift: rand(0.004, 0.018),
+          hue: rand(170, 220)
+        }));
+      }
+
+      if (dust.length !== DUST_COUNT) {
+        dust = Array.from({ length: DUST_COUNT }, () => ({
+          x: Math.random(),
+          y: Math.random(),
+          size: rand(18, 58),
+          speed: rand(0.004, 0.018),
+          phase: rand(0, Math.PI * 2),
+          hue: rand(120, 205),
+          alpha: rand(0.025, 0.075)
+        }));
+      }
+    }
+
     function resizeCanvas() {
       viewWidth = window.innerWidth;
       viewHeight = window.innerHeight;
@@ -526,6 +590,7 @@
 
       player.x = clamp(player.x, player.size, viewWidth - player.size);
       player.y = clamp(player.y, player.size, viewHeight - player.size);
+      ensureBackgroundLayers();
 
       foods = foods.filter(
         (f) =>
@@ -688,6 +753,167 @@
       toastTime = duration;
     }
 
+    function updateSoundButton() {
+      soundBtn.textContent = audioEnabled ? "Sound: On" : "Sound: Off";
+      soundBtn.setAttribute("aria-pressed", String(audioEnabled));
+    }
+
+    function ensureAudio() {
+      if (!audioEnabled) return false;
+
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) {
+            audioEnabled = false;
+            updateSoundButton();
+            return false;
+          }
+
+          audioCtx = new AudioContextClass();
+          masterGain = audioCtx.createGain();
+          musicGain = audioCtx.createGain();
+          sfxGain = audioCtx.createGain();
+
+          masterGain.gain.value = 0.32;
+          musicGain.gain.value = 0.16;
+          sfxGain.gain.value = 0.42;
+
+          musicGain.connect(masterGain);
+          sfxGain.connect(masterGain);
+          masterGain.connect(audioCtx.destination);
+        }
+
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+
+        startMusicLoop();
+        return true;
+      } catch {
+        audioEnabled = false;
+        updateSoundButton();
+        return false;
+      }
+    }
+
+    function toggleAudio(forceState) {
+      audioEnabled = typeof forceState === "boolean" ? forceState : !audioEnabled;
+      setStorageItem(STORAGE_KEYS.soundEnabled, String(audioEnabled));
+      updateSoundButton();
+
+      if (audioEnabled) {
+        ensureAudio();
+        playTone(523.25, 0.1, "triangle", 0.15);
+        playTone(783.99, 0.16, "sine", 0.1, 0.04);
+      } else {
+        stopMusicLoop();
+      }
+    }
+
+    function startMusicLoop() {
+      if (musicTimer || !audioEnabled || !audioCtx) return;
+
+      musicTimer = setInterval(() => {
+        if (!audioEnabled || !audioCtx || !gameStarted || paused || gameOver) return;
+        playMusicStep();
+      }, 430);
+    }
+
+    function stopMusicLoop() {
+      if (!musicTimer) return;
+
+      clearInterval(musicTimer);
+      musicTimer = null;
+    }
+
+    function playMusicStep() {
+      const notes = [196, 246.94, 293.66, 392, 329.63, 293.66, 246.94, 261.63];
+      const bass = [98, 98, 123.47, 123.47, 130.81, 130.81, 110, 110];
+      const step = musicStep % notes.length;
+
+      playTone(notes[step], 0.32, "triangle", step % 2 === 0 ? 0.035 : 0.022, 0, musicGain);
+
+      if (step % 2 === 0) {
+        playTone(bass[step], 0.46, "sine", 0.025, 0, musicGain);
+      }
+
+      musicStep += 1;
+    }
+
+    function playTone(frequency, duration = 0.16, type = "sine", volume = 0.16, delay = 0, targetGain = sfxGain) {
+      if (!audioEnabled || !audioCtx || !targetGain) return;
+
+      const now = audioCtx.currentTime + delay;
+      const oscillator = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      oscillator.connect(gain);
+      gain.connect(targetGain);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.03);
+    }
+
+    function playNoise(duration = 0.2, volume = 0.16, frequency = 500) {
+      if (!audioEnabled || !audioCtx || !sfxGain) return;
+
+      const now = audioCtx.currentTime;
+      const sampleRate = audioCtx.sampleRate;
+      const buffer = audioCtx.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      }
+
+      const source = audioCtx.createBufferSource();
+      const filter = audioCtx.createBiquadFilter();
+      const gain = audioCtx.createGain();
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(frequency, now);
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      source.buffer = buffer;
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(sfxGain);
+      source.start(now);
+      source.stop(now + duration + 0.02);
+    }
+
+    function playPickupSound(type) {
+      if (!ensureAudio()) return;
+
+      if (type === "gold") {
+        playTone(659.25, 0.12, "triangle", 0.18);
+        playTone(987.77, 0.18, "sine", 0.13, 0.05);
+      } else if (type === "magnet") {
+        playTone(392, 0.14, "sawtooth", 0.11);
+        playTone(783.99, 0.22, "triangle", 0.12, 0.04);
+      } else if (type === "shield") {
+        playTone(329.63, 0.16, "triangle", 0.14);
+        playTone(493.88, 0.2, "sine", 0.12, 0.04);
+      } else {
+        playTone(523.25 + Math.min(comboCount, 8) * 18, 0.11, "sine", 0.13);
+      }
+    }
+
+    function playCrashSound() {
+      if (!ensureAudio()) return;
+
+      playNoise(0.34, 0.22, 320);
+      playTone(164.81, 0.28, "sawtooth", 0.12);
+      playTone(82.41, 0.42, "sine", 0.1, 0.06);
+    }
+
     function setNewObjective() {
       const cycleType = ["eat", "survive", "combo"][objectiveRotation % 3];
       objectiveRotation++;
@@ -729,6 +955,9 @@
       maxTailLength += reward;
       objectivesCompleted += 1;
       spawnEatParticles(player.x, player.y, 170, 250, 20);
+      spawnRipple(player.x, player.y, 205, 1.5);
+      playTone(783.99, 0.16, "triangle", 0.14);
+      playTone(1174.66, 0.22, "sine", 0.1, 0.08);
       showToast(`Objective complete! +${reward} tail`, 1.5);
       setNewObjective();
       updateHud();
@@ -743,6 +972,7 @@
       maxTailLength = START_TAIL_LENGTH;
       foods = [];
       particles = [];
+      ripples = [];
       tail = [];
 
       magnetTime = 0;
@@ -756,6 +986,8 @@
       objectivesCompleted = 0;
       pointerTarget = null;
       activePointerId = null;
+      screenShake = 0;
+      flashTime = 0;
       setNewObjective();
 
       const spacing = player.size * 0.72;
@@ -835,6 +1067,51 @@
           hue: rand(hueMin, hueMax)
         });
       }
+
+      if (particles.length > 220) {
+        particles.splice(0, particles.length - 220);
+      }
+    }
+
+    function spawnRipple(x, y, hue = 52, strength = 1) {
+      ripples.push({
+        x,
+        y,
+        hue,
+        age: 0,
+        life: 34 + strength * 10,
+        radius: 8 + strength * 6,
+        maxRadius: 82 + strength * 38
+      });
+
+      if (ripples.length > MAX_RIPPLES) {
+        ripples.splice(0, ripples.length - MAX_RIPPLES);
+      }
+    }
+
+    function flashScreen(duration = 0.18, shake = 4) {
+      flashTime = Math.max(flashTime, duration);
+      screenShake = Math.max(screenShake, shake);
+    }
+
+    function updateVisualEffects(dt, deltaSeconds) {
+      if (screenShake > 0) {
+        screenShake = Math.max(0, screenShake - dt * 0.32);
+      }
+
+      if (flashTime > 0) {
+        flashTime = Math.max(0, flashTime - deltaSeconds);
+      }
+
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const ripple = ripples[i];
+        ripple.age += dt;
+        ripple.radius = lerp(ripple.radius, ripple.maxRadius, 0.12 * dt);
+
+        if (ripple.age >= ripple.life) {
+          ripples.splice(i, 1);
+        }
+      }
     }
 
     function setNameError(message) {
@@ -864,6 +1141,7 @@
       backBtn.hidden = false;
       hud.hidden = false;
 
+      ensureAudio();
       resetGame();
       updateHud();
     }
@@ -873,6 +1151,8 @@
 
       gameOver = true;
       paused = false;
+      flashScreen(0.35, 8);
+      playCrashSound();
       saveScore(currentUser, maxTailLength);
       renderLeaderboard();
       updateHud();
@@ -924,6 +1204,9 @@
         spawnEatParticles(food.x, food.y, 42, 62, 12);
       }
 
+      const effectHue = food.type === "magnet" ? 204 : food.type === "shield" ? 136 : food.type === "gold" ? 46 : 55;
+      spawnRipple(food.x, food.y, effectHue, food.type === "normal" ? 0.7 : 1.25);
+      playPickupSound(food.type);
       maxTailLength += growth;
 
       if (globalTime - lastFoodCollectTime <= COMBO_WINDOW_MS) {
@@ -962,6 +1245,8 @@
       if (toastTime > 0) {
         toastTime = Math.max(0, toastTime - deltaSeconds);
       }
+
+      updateVisualEffects(dt, deltaSeconds);
 
       if (!gameStarted || gameOver || paused) {
         updateParticles(dt);
@@ -1093,6 +1378,10 @@
               tail.length = Math.min(tail.length, maxTailLength);
               comboCount = 0;
               spawnEatParticles(player.x, player.y, 105, 150, 26);
+              spawnRipple(player.x, player.y, 136, 1.8);
+              flashScreen(0.18, 5);
+              playTone(220, 0.14, "sawtooth", 0.11);
+              playTone(440, 0.2, "triangle", 0.13, 0.06);
               showToast("Shield saved you! Tail trimmed", 1.5);
               updateHud();
             } else {
@@ -1133,14 +1422,17 @@
 
     function drawBackground() {
       const gradient = ctx.createLinearGradient(0, 0, 0, viewHeight);
-      gradient.addColorStop(0, "#0d1323");
-      gradient.addColorStop(0.55, "#14392c");
-      gradient.addColorStop(1, "#09130e");
+      gradient.addColorStop(0, "#090d1a");
+      gradient.addColorStop(0.45, "#122d2e");
+      gradient.addColorStop(1, "#06100c");
 
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, viewWidth, viewHeight);
 
+      drawNebula();
       drawGrid();
+      drawDust();
+      drawStars();
 
       const vignette = ctx.createRadialGradient(
         viewWidth / 2,
@@ -1155,6 +1447,76 @@
 
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, viewWidth, viewHeight);
+    }
+
+    function drawNebula() {
+      const drift = globalTime * 0.00004;
+      const glows = [
+        { x: 0.18 + Math.sin(drift * 2.3) * 0.04, y: 0.24, r: 0.34, color: "rgba(72, 182, 255, 0.13)" },
+        { x: 0.78 + Math.cos(drift * 1.7) * 0.04, y: 0.18, r: 0.28, color: "rgba(120, 255, 172, 0.1)" },
+        { x: 0.55, y: 0.86 + Math.sin(drift * 2.1) * 0.03, r: 0.38, color: "rgba(255, 226, 90, 0.08)" }
+      ];
+
+      for (const glow of glows) {
+        const x = glow.x * viewWidth;
+        const y = glow.y * viewHeight;
+        const radius = glow.r * Math.max(viewWidth, viewHeight);
+        const nebula = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        nebula.addColorStop(0, glow.color);
+        nebula.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = nebula;
+        ctx.fillRect(0, 0, viewWidth, viewHeight);
+      }
+    }
+
+    function drawDust() {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+
+      for (const mote of dust) {
+        const x = ((mote.x + globalTime * 0.00001 * mote.speed * 18) % 1) * viewWidth;
+        const y = (mote.y + Math.sin(globalTime * 0.0008 + mote.phase) * 0.018) * viewHeight;
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, mote.size);
+
+        glow.addColorStop(0, `hsla(${mote.hue}, 95%, 72%, ${mote.alpha})`);
+        glow.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, mote.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawStars() {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+
+      for (const star of stars) {
+        const driftX = (star.x + globalTime * 0.000001 * star.drift) % 1;
+        const x = driftX * viewWidth;
+        const y = star.y * viewHeight;
+        const twinkle = 0.34 + Math.sin(globalTime * star.twinkle + star.phase) * 0.28;
+
+        ctx.fillStyle = `hsla(${star.hue}, 90%, 82%, ${clamp(twinkle, 0.1, 0.78)})`;
+        ctx.beginPath();
+        ctx.arc(x, y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (star.size > 1.8) {
+          ctx.strokeStyle = `hsla(${star.hue}, 90%, 82%, ${twinkle * 0.22})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x - star.size * 2.2, y);
+          ctx.lineTo(x + star.size * 2.2, y);
+          ctx.moveTo(x, y - star.size * 2.2);
+          ctx.lineTo(x, y + star.size * 2.2);
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
     }
 
     function drawGrid() {
@@ -1277,6 +1639,29 @@
       }
     }
 
+    function drawRipples() {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+
+      for (const ripple of ripples) {
+        const t = ripple.age / ripple.life;
+        const alpha = Math.max(0, 1 - t) * 0.55;
+
+        ctx.strokeStyle = `hsla(${ripple.hue}, 100%, 70%, ${alpha})`;
+        ctx.lineWidth = Math.max(1, 5 * (1 - t));
+        ctx.beginPath();
+        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = `hsla(${ripple.hue}, 100%, 62%, ${alpha * 0.12})`;
+        ctx.beginPath();
+        ctx.arc(ripple.x, ripple.y, ripple.radius * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
     function drawTail() {
       const chain = [player, ...tail];
 
@@ -1371,6 +1756,32 @@
       ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
       ctx.fill();
 
+      const speed = Math.hypot(player.vx, player.vy);
+      const heading = speed > 0.25 ? Math.atan2(player.vy, player.vx) : -Math.PI / 6;
+
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      ctx.rotate(heading);
+
+      const nose = ctx.createLinearGradient(-player.size * 0.2, 0, player.size * 1.3, 0);
+      nose.addColorStop(0, "rgba(255,255,255,0)");
+      nose.addColorStop(1, "rgba(255,255,255,0.38)");
+      ctx.fillStyle = nose;
+      ctx.beginPath();
+      ctx.moveTo(player.size * 1.15, 0);
+      ctx.lineTo(player.size * 0.18, -player.size * 0.52);
+      ctx.lineTo(player.size * 0.18, player.size * 0.52);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(8, 16, 35, 0.72)";
+      ctx.beginPath();
+      ctx.arc(player.size * 0.34, -player.size * 0.33, player.size * 0.13, 0, Math.PI * 2);
+      ctx.arc(player.size * 0.34, player.size * 0.33, player.size * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
       ctx.fillStyle = "rgba(255,255,255,0.85)";
       ctx.beginPath();
       ctx.arc(player.x - player.size * 0.26, player.y - player.size * 0.28, player.size * 0.32, 0, Math.PI * 2);
@@ -1455,6 +1866,13 @@
     function draw() {
       ctx.clearRect(0, 0, viewWidth, viewHeight);
       drawBackground();
+
+      const shakeX = screenShake > 0 ? rand(-screenShake, screenShake) : 0;
+      const shakeY = screenShake > 0 ? rand(-screenShake, screenShake) : 0;
+      ctx.save();
+      ctx.translate(shakeX, shakeY);
+
+      drawRipples();
       drawFoods();
       drawParticles();
 
@@ -1470,6 +1888,13 @@
         if (gameOver) {
           drawOverlayCard("GAME OVER", `Final Length: ${maxTailLength}`, "Press Enter to return to menu");
         }
+      }
+
+      ctx.restore();
+
+      if (flashTime > 0) {
+        ctx.fillStyle = `rgba(255, 245, 220, ${Math.min(0.18, flashTime * 0.55)})`;
+        ctx.fillRect(0, 0, viewWidth, viewHeight);
       }
     }
 
@@ -1489,6 +1914,7 @@
 
     playBtn.addEventListener("click", startGame);
     backBtn.addEventListener("click", goBack);
+    soundBtn.addEventListener("click", () => toggleAudio());
 
     usernameInput.addEventListener("input", () => {
       if (nameError.textContent) setNameError("");
@@ -1513,6 +1939,11 @@
       }
 
       keys[key] = true;
+
+      if (key === "m") {
+        if (event.repeat) return;
+        toggleAudio();
+      }
 
       if (gameStarted && !gameOver && (key === "p" || key === "escape")) {
         if (event.repeat) return;
