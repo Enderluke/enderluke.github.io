@@ -538,6 +538,8 @@
       <div class="hud-row"><span>Directive</span><strong id="hudDirective">Balanced</strong></div>
       <div class="hud-row"><span>Morale</span><strong id="hudMorale">0%</strong></div>
       <div class="hud-row"><span>Storage</span><strong id="hudStorage">0</strong></div>
+      <div class="hud-row"><span>Permits</span><strong id="hudPermits">0/0</strong></div>
+      <div class="hud-row"><span>Outposts</span><strong id="hudOutposts">0/0</strong></div>
     </div>
     <div class="resource-strip">
       <div class="resource-pill"><span>Energy</span><strong id="hudEnergy">0</strong></div>
@@ -601,6 +603,8 @@
     const hudBuildings = document.getElementById("hudBuildings");
     const hudDirective = document.getElementById("hudDirective");
     const hudStorage = document.getElementById("hudStorage");
+    const hudPermits = document.getElementById("hudPermits");
+    const hudOutposts = document.getElementById("hudOutposts");
     const hudEnergy = document.getElementById("hudEnergy");
     const hudOre = document.getElementById("hudOre");
     const hudFood = document.getElementById("hudFood");
@@ -739,15 +743,45 @@
         desc: "Creates new food fields and a bright district.",
         sprawl: 620
       },
+      loom: {
+        name: "Nebula Loom",
+        cost: { ore: 680, crystal: 420, science: 520, energy: 420 },
+        buildTime: 34,
+        color: "#ff8fd8",
+        effect: "fabric",
+        unlock: 9,
+        desc: "Weaves ambient nebula into science and discovery.",
+        sprawl: 680
+      },
+      gate: {
+        name: "Wormhole Gate",
+        cost: { ore: 850, crystal: 620, science: 720, energy: 620 },
+        buildTime: 40,
+        color: "#9ac7ff",
+        effect: "routes",
+        unlock: 10,
+        desc: "Opens long-range lanes and distant resources.",
+        sprawl: 760
+      },
+      spire: {
+        name: "Celestial Spire",
+        cost: { ore: 1100, food: 460, crystal: 780, science: 960, energy: 760 },
+        buildTime: 48,
+        color: "#ffffff",
+        effect: "wonder",
+        unlock: 12,
+        desc: "A late-game wonder for a star-spanning colony.",
+        sprawl: 860
+      },
       outpost: {
         name: "Outer Outpost",
-        cost: { ore: 190, crystal: 92, food: 58, science: 30 },
-        buildTime: 18,
+        cost: { ore: 260, crystal: 140, food: 86, science: 80 },
+        buildTime: 24,
         color: "#f6d365",
         effect: "expand",
         unlock: 2,
         desc: "Pushes the colony into a new sector.",
-        sprawl: 980
+        sprawl: 1320
       }
     };
 
@@ -887,13 +921,27 @@
         desc: "Run 18 buildings and 16 crew",
         reward: { ore: 280, food: 220, crystal: 180, science: 240 },
         test: () => game.buildings.length >= 18 && game.workers.length >= 16
+      },
+      {
+        id: "nebulaEra",
+        name: "Nebula Era",
+        desc: "Reach level 10 and build a Loom",
+        reward: { energy: 420, crystal: 260, science: 360 },
+        test: () => game.level >= 10 && countBuildings().loom >= 1
+      },
+      {
+        id: "starSpanning",
+        name: "Star Spanning",
+        desc: "Build a Gate and a Spire",
+        reward: { ore: 650, food: 420, crystal: 480, science: 720, energy: 540 },
+        test: () => countBuildings().gate >= 1 && countBuildings().spire >= 1
       }
     ];
 
     const WORLD = {
-      width: 6800,
-      height: 5000,
-      padding: 260
+      width: 8600,
+      height: 6400,
+      padding: 360
     };
 
     const CAMERA = {
@@ -987,6 +1035,7 @@
       actionCooldowns: {},
       completedMilestones: new Set(),
       stats: { beaconsScouted: 0, actionsUsed: 0 },
+      buildPermitsUsed: {},
       buildings: [],
       sites: [],
       workers: [],
@@ -1095,6 +1144,29 @@
       return game.level >= (UPGRADES[key]?.unlock || 1);
     }
 
+    function buildingPermitLimit() {
+      return 3 + Math.floor(game.level / 2) + Math.min(3, countBuildings().outpost);
+    }
+
+    function usedBuildPermits(level = game.level) {
+      return game.buildPermitsUsed[level] || 0;
+    }
+
+    function outpostLimit() {
+      return Math.max(1, Math.floor((game.level + 1) / 4));
+    }
+
+    function usedOutpostSlots() {
+      return countBuildings().outpost + game.sites.filter((site) => site.kind === "outpost").length;
+    }
+
+    function buildBlockedReason(key) {
+      if (!isBuildingUnlocked(key)) return `Unlock L${BUILDINGS[key].unlock}`;
+      if (key === "outpost" && usedOutpostSlots() >= outpostLimit()) return "Outpost cap";
+      if (key !== "outpost" && usedBuildPermits() >= buildingPermitLimit()) return "Permits full";
+      return "";
+    }
+
     function cooldownText(key) {
       const value = game.actionCooldowns[key] || 0;
       return value > 0 ? `${Math.ceil(value)}s` : "";
@@ -1125,14 +1197,15 @@
       document.querySelectorAll(".build-btn").forEach((button) => {
         const key = button.dataset.build;
         const def = BUILDINGS[key];
-        const unlocked = isBuildingUnlocked(key);
-        const ready = unlocked && canAfford(def.cost);
+        const blocked = buildBlockedReason(key);
+        const unlocked = !blocked || !blocked.startsWith("Unlock");
+        const ready = !blocked && canAfford(def.cost);
         button.disabled = !ready;
         button.classList.toggle("ready", ready);
-        button.classList.toggle("locked", !unlocked);
-        button.innerHTML = unlocked
-          ? `${def.name}<br />${costText(def.cost)}`
-          : `${def.name}<br />Unlock L${def.unlock}`;
+        button.classList.toggle("locked", !unlocked || Boolean(blocked));
+        button.innerHTML = blocked
+          ? `${def.name}<br />${blocked}`
+          : `${def.name}<br />${costText(def.cost)}`;
       });
 
       document.querySelectorAll(".upgrade-btn").forEach((button) => {
@@ -1158,6 +1231,8 @@
       hudBuildings.textContent = game.buildings.length;
       hudDirective.textContent = DIRECTIVES[game.directive]?.name || "Balanced";
       hudStorage.textContent = fmt(resourceCapacity());
+      hudPermits.textContent = `${usedBuildPermits()}/${buildingPermitLimit()}`;
+      hudOutposts.textContent = `${usedOutpostSlots()}/${outpostLimit()}`;
       hudEnergy.textContent = `${fmt(game.resources.energy)}`;
       hudOre.textContent = `${fmt(game.resources.ore)}`;
       hudFood.textContent = `${fmt(game.resources.food)}`;
@@ -1182,7 +1257,10 @@
         + counts.outpost * 160
         + counts.archive * 340
         + counts.shield * 300
-        + counts.terraformer * 220;
+        + counts.terraformer * 220
+        + counts.loom * 280
+        + counts.gate * 520
+        + counts.spire * 760;
     }
 
     function capResources() {
@@ -1554,6 +1632,9 @@
         archive: 46,
         shield: 52,
         terraformer: 54,
+        loom: 56,
+        gate: 64,
+        spire: 70,
         outpost: 48
       };
       return {
@@ -1624,6 +1705,7 @@
       game.actionCooldowns = {};
       game.completedMilestones = new Set();
       game.stats = { beaconsScouted: 0, actionsUsed: 0 };
+      game.buildPermitsUsed = {};
       game.upgrades = new Set();
       game.buildings = [makeBuilding("hub", cx, cy)];
       game.sites = [];
@@ -1805,8 +1887,8 @@
       }, null)?.item;
     }
 
-    function findOpenPoint(cx, cy, minRadius, maxRadius, minGap = 130, tries = 42) {
-      const occupied = [
+    function findOpenPoint(cx, cy, minRadius, maxRadius, minGap = 130, tries = 42, blockers = null) {
+      const occupied = blockers || [
         ...game.buildings,
         ...game.sites,
         ...game.nodes,
@@ -1828,16 +1910,33 @@
         );
         const score = Math.min(nearest, edgeGap);
         if (!best || score > best.score) best = { x, y, score };
-        if (nearest >= minGap && edgeGap >= 90) return { x, y };
+        if (nearest >= minGap && edgeGap >= 90) return { x, y, score };
       }
 
       return best || { x: clampWorldX(cx, 90), y: clampWorldY(cy, 90) };
     }
 
+    function buildBlockers() {
+      return [
+        ...game.buildings.map((object) => ({ ...object, spacing: object.size + 260 })),
+        ...game.sites.map((object) => ({ ...object, spacing: 260 }))
+      ];
+    }
+
+    function chooseBuildAnchor(kind) {
+      if (selectedObject && selectedObject.kind) return selectedObject;
+      const outposts = game.buildings.filter((building) => building.kind === "outpost");
+      if (kind !== "outpost" && outposts.length && Math.random() < 0.58) {
+        return outposts[Math.floor(rand(0, outposts.length))];
+      }
+      return getColonyCenter();
+    }
+
     function createSite(kind) {
       const def = BUILDINGS[kind];
-      if (!isBuildingUnlocked(kind)) {
-        setLog(`${def.name} unlocks at level ${def.unlock}. Scout and finish milestones.`);
+      const blocked = buildBlockedReason(kind);
+      if (blocked) {
+        setLog(`${def.name}: ${blocked}. Scout, level up, or finish current districts.`);
         return;
       }
       if (!spend(def.cost)) {
@@ -1845,19 +1944,31 @@
         return;
       }
 
-      const anchor = selectedObject && selectedObject.kind ? selectedObject : getColonyCenter();
+      const anchor = chooseBuildAnchor(kind);
       const index = game.sites.length + game.buildings.length;
       const angle = index * 1.42 + rand(-0.18, 0.18);
-      const radius = kind === "outpost" ? rand(980, 1320) : rand(def.sprawl * 0.7, def.sprawl * 1.18);
-      const minGap = kind === "outpost" ? 520 : clamp(def.sprawl * 0.72, 230, 440);
+      const radius = kind === "outpost" ? rand(1360, 1860) : rand(def.sprawl * 0.86, def.sprawl * 1.45);
+      const minGap = kind === "outpost"
+        ? 920
+        : clamp(def.sprawl * 0.82 + game.buildings.length * 10 + Math.max(0, game.level - 6) * 20, 300, 740);
       const point = findOpenPoint(
         anchor.x + Math.cos(angle) * radius,
         anchor.y + Math.sin(angle) * radius,
         0,
-        kind === "outpost" ? 420 : 260,
+        kind === "outpost" ? 740 : 420,
         minGap,
-        86
+        110,
+        buildBlockers()
       );
+      if (point.score < minGap * 0.62) {
+        Object.entries(def.cost).forEach(([key, amount]) => {
+          game.resources[key] += amount;
+        });
+        setLog(`${def.name} needs more open space. Pan to a clearer area or build an outpost.`);
+        capResources();
+        updateHud();
+        return;
+      }
       const site = {
         id: cryptoRandomId(),
         kind,
@@ -1867,13 +1978,15 @@
         progress: 0,
         needed: def.buildTime,
         workerId: null,
-        color: def.color
+        color: def.color,
+        permitLevel: kind === "outpost" ? null : game.level
       };
 
       game.sites.push(site);
+      if (kind !== "outpost") game.buildPermitsUsed[game.level] = usedBuildPermits() + 1;
       const worker = findIdleWorker();
       if (worker) assignWorkerToSite(worker, site);
-      setLog(`${def.name} blueprint placed.`);
+      setLog(`${def.name} blueprint placed near ${anchor.name}.`);
       updateHud();
     }
 
@@ -2074,13 +2187,59 @@
         seedResourceField(building.x, building.y, game.level + 2);
         addDiscovery(120);
       }
+      if (kind === "loom") {
+        game.resources.science += 260;
+        game.beaconBonus += 0.12;
+        addDiscovery(220);
+      }
+      if (kind === "gate") {
+        game.workerSpeed += 24;
+        seedResourceField(building.x, building.y, game.level + 3);
+        spawnBeacon(building.x + rand(-1600, 1600), building.y + rand(-1250, 1250));
+        addDiscovery(320);
+      }
+      if (kind === "spire") {
+        game.storageBonus += 620;
+        game.morale = clamp(game.morale + 16, 18, 100);
+        game.resources.science += 420;
+        addDiscovery(520);
+      }
       if (kind === "outpost") {
         game.housing += 2;
         seedResourceField(building.x, building.y, game.level);
-        spawnBeacon(building.x + rand(-1080, 1080), building.y + rand(-840, 840));
+        spawnBeacon(building.x + rand(-1380, 1380), building.y + rand(-1060, 1060));
+        maybeSeedOutpostCompanion(building);
         addDiscovery(85 + game.level * 18);
       }
       capResources();
+    }
+
+    function maybeSeedOutpostCompanion(outpost) {
+      if (Math.random() > 0.72) {
+        setLog(`${outpost.name} online. This outpost is ready for a frontier district.`);
+        return;
+      }
+      const options = ["solar", "garden", "habitat", "lab", "commons"].filter((kind) => isBuildingUnlocked(kind));
+      const kind = options[Math.floor(rand(0, options.length))] || "solar";
+      const def = BUILDINGS[kind];
+      const point = findOpenPoint(outpost.x, outpost.y, 420, 760, 360, 72, buildBlockers());
+      const site = {
+        id: cryptoRandomId(),
+        kind,
+        name: def.name,
+        x: point.x,
+        y: point.y,
+        progress: 0,
+        needed: def.buildTime * 0.75,
+        workerId: null,
+        color: def.color,
+        permitLevel: null,
+        frontierGift: true
+      };
+      game.sites.push(site);
+      const worker = findIdleWorker();
+      if (worker) assignWorkerToSite(worker, site, false);
+      setLog(`${outpost.name} online. A frontier ${def.name} kit deployed nearby.`);
     }
 
     function addDiscovery(amount) {
@@ -2395,13 +2554,16 @@
       const energyRate = 0.22
         + counts.solar * 0.78
         + counts.reactor * 2.4
+        + counts.spire * 0.4
         - game.workers.length * 0.09
         - counts.lab * 0.18
         - counts.dock * 0.22
         - counts.shield * 0.3
-        - counts.terraformer * 0.46;
-      const foodRate = counts.garden * 0.38 + counts.terraformer * 1.1 - game.workers.length * 0.12;
-      const scienceRate = counts.lab * 0.16 + counts.observatory * 0.18 + counts.archive * 0.52 + counts.dock * 0.04;
+        - counts.terraformer * 0.46
+        - counts.loom * 0.28
+        - counts.gate * 0.52;
+      const foodRate = counts.garden * 0.38 + counts.terraformer * 1.1 + counts.spire * 0.16 - game.workers.length * 0.12;
+      const scienceRate = counts.lab * 0.16 + counts.observatory * 0.18 + counts.archive * 0.52 + counts.loom * 0.72 + counts.gate * 0.22 + counts.dock * 0.04;
       game.resources.energy += energyRate * deltaSeconds;
       game.resources.food += foodRate * deltaSeconds;
       game.resources.science += scienceRate * deltaSeconds;
@@ -2439,6 +2601,9 @@
         archive: 0,
         shield: 0,
         terraformer: 0,
+        loom: 0,
+        gate: 0,
+        spire: 0,
         outpost: 0
       };
       game.buildings.forEach((building) => {
@@ -2637,6 +2802,25 @@
       ctx.restore();
     }
 
+    function drawTerritoryFields() {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (const building of game.buildings) {
+        if (!["hub", "outpost", "shield", "terraformer", "loom", "gate", "spire"].includes(building.kind)) continue;
+        if (!objectVisible(building.x, building.y, 520)) continue;
+        const base = building.kind === "hub" ? 280 : building.kind === "outpost" ? 390 : building.kind === "gate" ? 520 : building.kind === "spire" ? 620 : 430;
+        const pulse = Math.sin(globalTime * 0.0012 + building.phase) * 18;
+        ctx.strokeStyle = hexToRgba(building.color, building.kind === "outpost" ? 0.18 : 0.24);
+        ctx.lineWidth = 1.5 / camera.zoom;
+        ctx.setLineDash([10 / camera.zoom, 14 / camera.zoom]);
+        ctx.beginPath();
+        ctx.arc(building.x, building.y, base + pulse, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.restore();
+    }
+
     function drawSoftGlow(x, y, radius, inner, outer = "rgba(0,0,0,0)") {
       const glow = ctx.createRadialGradient(x, y, 0, x, y, radius);
       glow.addColorStop(0, inner);
@@ -2713,6 +2897,9 @@
         if (building.kind === "archive") drawArchive(0, 0, size, building.color);
         if (building.kind === "shield") drawShield(0, 0, size, building.color);
         if (building.kind === "terraformer") drawTerraformer(0, 0, size, building.color);
+        if (building.kind === "loom") drawNebulaLoom(0, 0, size, building.color);
+        if (building.kind === "gate") drawWormholeGate(0, 0, size, building.color);
+        if (building.kind === "spire") drawCelestialSpire(0, 0, size, building.color);
         if (building.kind === "outpost") drawOutpost(0, 0, size, building.color);
         ctx.restore();
       }
@@ -2933,6 +3120,73 @@
       ctx.beginPath();
       ctx.arc(x, y, size * 0.9, Math.PI * 0.1, Math.PI * 0.9);
       ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawNebulaLoom(x, y, size, color) {
+      ctx.save();
+      ctx.strokeStyle = hexToRgba(color, 0.78);
+      ctx.lineWidth = 1.6 / camera.zoom;
+      for (let i = 0; i < 4; i++) {
+        const phase = globalTime * 0.001 + i * Math.PI / 4;
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * (0.34 + i * 0.17), size * 0.16, phase, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = hexToRgba(color, 0.42);
+      for (let i = 0; i < 6; i++) {
+        const angle = i / 6 * Math.PI * 2 + globalTime * 0.0008;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(angle) * size * 0.56, y + Math.sin(angle) * size * 0.42, size * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawWormholeGate(x, y, size, color) {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.strokeStyle = hexToRgba(color, 0.82);
+      ctx.lineWidth = 2.4 / camera.zoom;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * (0.52 + i * 0.18), size * (0.52 + i * 0.18), globalTime * 0.0012 + i, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      const swirl = ctx.createRadialGradient(x, y, 0, x, y, size * 0.75);
+      swirl.addColorStop(0, "rgba(255,255,255,0.65)");
+      swirl.addColorStop(0.35, hexToRgba(color, 0.36));
+      swirl.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = swirl;
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.75, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawCelestialSpire(x, y, size, color) {
+      ctx.save();
+      ctx.strokeStyle = hexToRgba(color, 0.86);
+      ctx.fillStyle = "rgba(235, 250, 255, 0.18)";
+      ctx.lineWidth = 1.8 / camera.zoom;
+      ctx.beginPath();
+      ctx.moveTo(x, y - size * 1.38);
+      ctx.lineTo(x + size * 0.46, y + size * 0.62);
+      ctx.lineTo(x, y + size * 0.92);
+      ctx.lineTo(x - size * 0.46, y + size * 0.62);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.78, y + size * 0.42);
+      ctx.lineTo(x + size * 0.78, y + size * 0.42);
+      ctx.moveTo(x, y - size * 1.38);
+      ctx.lineTo(x, y + size * 0.92);
+      ctx.stroke();
+      ctx.fillStyle = hexToRgba(color, 0.9);
+      ctx.beginPath();
+      ctx.arc(x, y - size * 0.48, size * 0.11, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
 
@@ -3273,6 +3527,7 @@
       const shakeY = screenShake > 0 ? rand(-screenShake, screenShake) : 0;
       withWorldTransform(shakeX, shakeY, () => {
         drawGrid();
+        drawTerritoryFields();
         drawRipples();
         drawConnections();
         drawBeacons();
