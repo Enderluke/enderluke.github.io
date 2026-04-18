@@ -78,7 +78,8 @@
     #menu,
     #hud,
     #controls,
-    #backBtn {
+    #backBtn,
+    #cameraHint {
       position: absolute;
       z-index: 10;
     }
@@ -321,6 +322,21 @@
       box-shadow: 0 12px 24px rgba(255, 91, 110, 0.22);
     }
 
+    #cameraHint {
+      right: 16px;
+      bottom: 16px;
+      width: min(310px, calc(100vw - 32px));
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      background: rgba(9, 14, 28, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 12px;
+      line-height: 1.4;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
     [hidden] {
       display: none !important;
     }
@@ -360,6 +376,10 @@
         left: 10px;
       }
 
+      #cameraHint {
+        display: none;
+      }
+
       .button-grid {
         grid-template-columns: 1fr 1fr;
       }
@@ -393,19 +413,20 @@
       <div id="nameError" class="name-error" aria-live="polite"></div>
 
       <div class="hints">
-        Click a command, then click a resource or beacon. Buildings need a worker to construct them.
+        Drag the sector to move the camera, scroll to zoom, and click resources or beacons to give orders.
         Press M for sound, P or Esc to pause, and Space to focus the colony.
       </div>
 
       <div class="feature-list">
-        <div>Assign miners, growers, crystal techs, scouts, and builders.</div>
-        <div>Build solar arrays, habitats, gardens, labs, docks, and outposts.</div>
-        <div>Expand the map through strange beacons and unlock better upgrades.</div>
+        <div>Spacehands work, wander, socialize, maintain stations, and take jobs on their own.</div>
+        <div>Build solar arrays, habitats, gardens, labs, docks, and outposts across a wider sector.</div>
+        <div>Scout strange beacons, expand the map, and zoom into the colony’s daily life.</div>
       </div>
     </div>
   </div>
 
   <button id="backBtn" type="button" hidden>Back</button>
+  <div id="cameraHint" hidden>Drag to pan. Scroll to zoom. Click a worker to see what they are doing.</div>
 
   <div id="hud" hidden>
     <div class="hud-title">Colony Status</div>
@@ -451,6 +472,7 @@
     const commanderInput = document.getElementById("commanderName");
     const nameError = document.getElementById("nameError");
     const controls = document.getElementById("controls");
+    const cameraHint = document.getElementById("cameraHint");
     const commandGrid = document.getElementById("commandGrid");
     const buildGrid = document.getElementById("buildGrid");
     const upgradeGrid = document.getElementById("upgradeGrid");
@@ -545,6 +567,22 @@
       crystal: { name: "Crystal", color: "#7de7ff", glow: "rgba(125, 231, 255, 0.34)", yield: 10 }
     };
 
+    const WORLD = {
+      width: 4300,
+      height: 3100,
+      padding: 190
+    };
+
+    const CAMERA = {
+      minZoom: 0.42,
+      maxZoom: 2.35,
+      startZoom: 0.82
+    };
+
+    const AUTONOMY_STATES = new Set(["idle", "roam", "socialize", "maintain", "rest"]);
+    const WORKER_COLORS = ["#6fd3ff", "#73ffb3", "#ffe34d", "#c89bff", "#ff91ad", "#a2ffed", "#ffc66b"];
+    const WORKER_NAMES = ["Nova", "Pip", "Sol", "Vega", "Mira", "Kip", "Rook", "Juno", "Lyra", "Orbit", "Patch", "Io"];
+
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const lerp = (a, b, t) => a + (b - a) * t;
     const rand = (min, max) => Math.random() * (max - min) + min;
@@ -565,6 +603,22 @@
     let selectedObject = null;
     let screenShake = 0;
     let flashTime = 0;
+
+    const camera = {
+      x: 0,
+      y: 0,
+      zoom: CAMERA.startZoom
+    };
+
+    const pointerState = {
+      active: false,
+      id: null,
+      startX: 0,
+      startY: 0,
+      lastX: 0,
+      lastY: 0,
+      moved: false
+    };
 
     let audioCtx = null;
     let masterGain = null;
@@ -752,7 +806,7 @@
       canvas.style.height = `${viewHeight}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ensureBackgroundLayers();
-      clampWorldObjects();
+      clampCamera();
     }
 
     function clampWorldObjects() {
@@ -765,9 +819,67 @@
       ];
 
       objects.forEach((obj) => {
-        obj.x = clamp(obj.x, 32, viewWidth - 32);
-        obj.y = clamp(obj.y, 32, viewHeight - 32);
+        obj.x = clampWorldX(obj.x, 32);
+        obj.y = clampWorldY(obj.y, 32);
       });
+    }
+
+    function clampWorldX(x, margin = 0) {
+      return clamp(x, -WORLD.width / 2 + margin, WORLD.width / 2 - margin);
+    }
+
+    function clampWorldY(y, margin = 0) {
+      return clamp(y, -WORLD.height / 2 + margin, WORLD.height / 2 - margin);
+    }
+
+    function clampCamera() {
+      const halfVisibleW = viewWidth / (2 * camera.zoom);
+      const halfVisibleH = viewHeight / (2 * camera.zoom);
+      const maxX = Math.max(0, WORLD.width / 2 - halfVisibleW + WORLD.padding);
+      const maxY = Math.max(0, WORLD.height / 2 - halfVisibleH + WORLD.padding);
+      camera.x = clamp(camera.x, -maxX, maxX);
+      camera.y = clamp(camera.y, -maxY, maxY);
+    }
+
+    function screenToWorld(x, y) {
+      return {
+        x: camera.x + (x - viewWidth / 2) / camera.zoom,
+        y: camera.y + (y - viewHeight / 2) / camera.zoom
+      };
+    }
+
+    function worldToScreen(x, y) {
+      return {
+        x: (x - camera.x) * camera.zoom + viewWidth / 2,
+        y: (y - camera.y) * camera.zoom + viewHeight / 2
+      };
+    }
+
+    function objectVisible(x, y, radius = 80) {
+      const screen = worldToScreen(x, y);
+      const scaledRadius = radius * camera.zoom;
+      return screen.x > -scaledRadius
+        && screen.x < viewWidth + scaledRadius
+        && screen.y > -scaledRadius
+        && screen.y < viewHeight + scaledRadius;
+    }
+
+    function zoomAt(screenX, screenY, factor) {
+      const before = screenToWorld(screenX, screenY);
+      camera.zoom = clamp(camera.zoom * factor, CAMERA.minZoom, CAMERA.maxZoom);
+      const after = screenToWorld(screenX, screenY);
+      camera.x += before.x - after.x;
+      camera.y += before.y - after.y;
+      clampCamera();
+    }
+
+    function withWorldTransform(shakeX, shakeY, drawFn) {
+      ctx.save();
+      ctx.translate(viewWidth / 2 + shakeX, viewHeight / 2 + shakeY);
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x, -camera.y);
+      drawFn();
+      ctx.restore();
     }
 
     function updateAudio() {
@@ -946,11 +1058,11 @@
     }
 
     function playerViewX() {
-      return viewWidth / 2;
+      return camera.x;
     }
 
     function playerViewY() {
-      return viewHeight / 2;
+      return camera.y;
     }
 
     function nearestHubTo(x, y) {
@@ -966,22 +1078,25 @@
       const def = kind === "hub"
         ? { name: "Command Hub", color: "#6fd3ff", effect: "hub" }
         : BUILDINGS[kind];
+      const sizes = { hub: 48, solar: 36, habitat: 42, garden: 34, lab: 36, dock: 44, outpost: 46 };
       return {
         id: cryptoRandomId(),
         kind,
         name: def.name,
         x,
         y,
-        size: kind === "hub" || kind === "outpost" ? 38 : 24,
+        size: sizes[kind] || 34,
         color: def.color,
-        phase: rand(0, Math.PI * 2)
+        phase: rand(0, Math.PI * 2),
+        rotation: rand(-0.45, 0.45)
       };
     }
 
     function makeWorker(index, home) {
+      const name = WORKER_NAMES[index % WORKER_NAMES.length];
       return {
         id: cryptoRandomId(),
-        name: `Spacehand ${index + 1}`,
+        name: `${name}-${index + 1}`,
         x: home.x + rand(-26, 26),
         y: home.y + rand(-26, 26),
         tx: home.x,
@@ -992,8 +1107,17 @@
         targetId: null,
         carry: null,
         work: 0,
+        manual: false,
+        activity: "checking their suit",
+        agendaTimer: rand(0.4, 2.6),
+        mood: rand(74, 100),
+        bob: rand(0, Math.PI * 2),
+        facing: rand(0, Math.PI * 2),
+        socialId: null,
+        maintenanceBoost: 0,
+        personality: rand(0.75, 1.25),
         orbit: rand(0, Math.PI * 2),
-        color: ["#6fd3ff", "#73ffb3", "#ffe34d", "#c89bff", "#ff91ad"][index % 5]
+        color: WORKER_COLORS[index % WORKER_COLORS.length]
       };
     }
 
@@ -1003,14 +1127,14 @@
     }
 
     function resetGame() {
-      const cx = viewWidth / 2;
-      const cy = viewHeight / 2;
+      const cx = 0;
+      const cy = 0;
       game.cycle = 0;
       game.level = 1;
-      game.resources = { energy: 92, ore: 74, food: 62, crystal: 24, science: 0 };
-      game.housing = 5;
+      game.resources = { energy: 118, ore: 110, food: 92, crystal: 38, science: 0 };
+      game.housing = 7;
       game.morale = 92;
-      game.workerSpeed = 86;
+      game.workerSpeed = 148;
       game.cargoBonus = 0;
       game.scoutBonus = 0;
       game.upgrades = new Set();
@@ -1026,95 +1150,140 @@
       ripples = [];
       screenShake = 0;
       flashTime = 0;
+      camera.x = cx;
+      camera.y = cy;
+      camera.zoom = CAMERA.startZoom;
+      clampCamera();
 
-      for (let i = 0; i < 3; i++) game.workers.push(makeWorker(i, game.buildings[0]));
+      for (let i = 0; i < 5; i++) game.workers.push(makeWorker(i, game.buildings[0]));
       seedResourceField(cx, cy, 1);
-      spawnBeacon(cx + rand(-260, 260), cy + rand(-220, 220));
+      spawnBeacon(cx + rand(-740, 740), cy + rand(-520, 520));
       updateHud();
     }
 
     function seedResourceField(cx, cy, tier = 1) {
-      const count = 8 + tier * 2;
+      const count = 10 + tier * 3;
       const types = ["ore", "food", "crystal"];
       for (let i = 0; i < count; i++) {
-        const angle = rand(0, Math.PI * 2);
-        const radius = rand(130, 350 + tier * 60);
-        spawnNode(types[i % types.length], cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius, tier);
+        const point = findOpenPoint(cx, cy, 420, 920 + tier * 120, 118, 58);
+        spawnNode(types[i % types.length], point.x, point.y, tier);
       }
     }
 
     function spawnNode(type, x, y, tier = game.level) {
-      const margin = 54;
+      const margin = 90;
+      const amount = Math.floor(rand(90, 175) + tier * 34);
       game.nodes.push({
         id: cryptoRandomId(),
         type,
-        x: clamp(x, margin, viewWidth - margin),
-        y: clamp(y, margin, viewHeight - margin),
-        amount: Math.floor(rand(70, 135) + tier * 24),
-        max: Math.floor(rand(100, 170) + tier * 28),
-        size: type === "ore" ? rand(18, 25) : type === "food" ? rand(16, 22) : rand(14, 20),
+        x: clampWorldX(x, margin),
+        y: clampWorldY(y, margin),
+        amount,
+        max: amount + Math.floor(rand(26, 70)),
+        size: type === "ore" ? rand(24, 34) : type === "food" ? rand(22, 32) : rand(20, 28),
         phase: rand(0, Math.PI * 2)
       });
     }
 
     function spawnBeacon(x, y) {
-      const margin = 74;
+      const margin = 120;
+      const point = findOpenPoint(x, y, 0, 260, 180, 28);
       game.beacons.push({
         id: cryptoRandomId(),
-        x: clamp(x, margin, viewWidth - margin),
-        y: clamp(y, margin, viewHeight - margin),
-        size: 36,
+        x: clampWorldX(point.x, margin),
+        y: clampWorldY(point.y, margin),
+        size: 48,
         progress: 0,
         phase: rand(0, Math.PI * 2)
       });
     }
 
     function findIdleWorker() {
-      return game.workers.find((worker) => worker.state === "idle");
+      return game.workers.find(isWorkerAvailable)
+        || game.workers.find((worker) => !worker.manual && !worker.carry && worker.state !== "build" && worker.job !== "scout");
     }
 
     function findById(collection, id) {
       return collection.find((item) => item.id === id);
     }
 
-    function assignWorkerToNode(worker, node) {
+    function isWorkerAvailable(worker) {
+      return AUTONOMY_STATES.has(worker.state);
+    }
+
+    function clearWorkerAssignment(worker) {
+      if (worker.job === "build" && worker.targetId) {
+        const site = findById(game.sites, worker.targetId);
+        if (site && site.workerId === worker.id) site.workerId = null;
+      }
+      worker.socialId = null;
+      worker.carry = null;
+      worker.work = 0;
+    }
+
+    function resetWorkerToIdle(worker, activity = "looking for something useful to do") {
+      if (worker.job === "build" && worker.targetId) {
+        const site = findById(game.sites, worker.targetId);
+        if (site && site.workerId === worker.id) site.workerId = null;
+      }
+      worker.state = "idle";
+      worker.job = null;
+      worker.targetId = null;
+      worker.carry = null;
+      worker.work = 0;
+      worker.manual = false;
+      worker.socialId = null;
+      worker.activity = activity;
+      worker.agendaTimer = rand(0.7, 2.8);
+    }
+
+    function assignWorkerToNode(worker, node, manual = true) {
+      clearWorkerAssignment(worker);
       worker.state = "travel";
       worker.job = node.type;
       worker.targetId = node.id;
       worker.carry = null;
       worker.work = 0;
+      worker.manual = manual;
+      worker.activity = manual ? `heading to ${RESOURCE_META[node.type].name.toLowerCase()}` : `self-started ${RESOURCE_META[node.type].name.toLowerCase()} work`;
       worker.tx = node.x;
       worker.ty = node.y;
-      setLog(`${worker.name} dispatched for ${RESOURCE_META[node.type].name.toLowerCase()}.`);
+      if (manual) setLog(`${worker.name} dispatched for ${RESOURCE_META[node.type].name.toLowerCase()}.`);
       spawnRipple(worker.x, worker.y, 196, 0.5);
-      playDispatchSound();
+      if (manual) playDispatchSound();
     }
 
-    function assignWorkerToBeacon(worker, beacon) {
+    function assignWorkerToBeacon(worker, beacon, manual = true) {
+      clearWorkerAssignment(worker);
       worker.state = "travel";
       worker.job = "scout";
       worker.targetId = beacon.id;
       worker.carry = null;
       worker.work = 0;
+      worker.manual = manual;
+      worker.activity = "scanning a deep-space beacon";
       worker.tx = beacon.x;
       worker.ty = beacon.y;
-      setLog(`${worker.name} is scouting a beacon.`);
+      if (manual) setLog(`${worker.name} is scouting a beacon.`);
       spawnRipple(worker.x, worker.y, 270, 0.7);
-      playDispatchSound();
+      if (manual) playDispatchSound();
     }
 
-    function assignWorkerToSite(worker, site) {
+    function assignWorkerToSite(worker, site, manual = true) {
+      clearWorkerAssignment(worker);
       worker.state = "travel";
       worker.job = "build";
       worker.targetId = site.id;
       worker.carry = null;
       worker.work = 0;
+      worker.manual = manual;
+      worker.activity = `assembling ${site.name}`;
       worker.tx = site.x;
       worker.ty = site.y;
       site.workerId = worker.id;
-      setLog(`${worker.name} is building ${site.name}.`);
+      if (manual) setLog(`${worker.name} is building ${site.name}.`);
       spawnRipple(worker.x, worker.y, 45, 0.7);
-      playDispatchSound();
+      if (manual) playDispatchSound();
     }
 
     function commandNearest(type) {
@@ -1149,6 +1318,35 @@
       }, null)?.item;
     }
 
+    function findOpenPoint(cx, cy, minRadius, maxRadius, minGap = 130, tries = 42) {
+      const occupied = [
+        ...game.buildings,
+        ...game.sites,
+        ...game.nodes,
+        ...game.beacons
+      ];
+      let best = null;
+
+      for (let i = 0; i < tries; i++) {
+        const angle = rand(0, Math.PI * 2);
+        const radius = rand(minRadius, maxRadius);
+        const x = clampWorldX(cx + Math.cos(angle) * radius, 90);
+        const y = clampWorldY(cy + Math.sin(angle) * radius, 90);
+        const nearest = occupied.reduce((gap, object) => Math.min(gap, distanceXY(x, y, object.x, object.y)), Infinity);
+        const edgeGap = Math.min(
+          x + WORLD.width / 2,
+          WORLD.width / 2 - x,
+          y + WORLD.height / 2,
+          WORLD.height / 2 - y
+        );
+        const score = Math.min(nearest, edgeGap);
+        if (!best || score > best.score) best = { x, y, score };
+        if (nearest >= minGap && edgeGap >= 90) return { x, y };
+      }
+
+      return best || { x: clampWorldX(cx, 90), y: clampWorldY(cy, 90) };
+    }
+
     function createSite(kind) {
       const def = BUILDINGS[kind];
       if (!spend(def.cost)) {
@@ -1156,16 +1354,24 @@
         return;
       }
 
-      const anchor = game.buildings[game.buildings.length - 1] || game.buildings[0];
+      const anchor = selectedObject && selectedObject.kind ? selectedObject : getColonyCenter();
       const index = game.sites.length + game.buildings.length;
       const angle = index * 1.42 + rand(-0.18, 0.18);
-      const radius = kind === "outpost" ? rand(205, 295) : rand(78, 142);
+      const radius = kind === "outpost" ? rand(620, 860) : rand(180, 320);
+      const point = findOpenPoint(
+        anchor.x + Math.cos(angle) * radius,
+        anchor.y + Math.sin(angle) * radius,
+        0,
+        kind === "outpost" ? 260 : 180,
+        kind === "outpost" ? 260 : 180,
+        60
+      );
       const site = {
         id: cryptoRandomId(),
         kind,
         name: def.name,
-        x: clamp(anchor.x + Math.cos(angle) * radius, 44, viewWidth - 44),
-        y: clamp(anchor.y + Math.sin(angle) * radius, 44, viewHeight - 44),
+        x: point.x,
+        y: point.y,
         progress: 0,
         needed: def.buildTime,
         workerId: null,
@@ -1197,7 +1403,8 @@
 
     function clickWorld(x, y) {
       if (!game.running || game.paused) return;
-      const target = pickObject(x, y);
+      const world = screenToWorld(x, y);
+      const target = pickObject(world.x, world.y);
       if (!target) {
         selectedObject = null;
         setLog("Select a resource, beacon, or command.");
@@ -1230,11 +1437,11 @@
 
     function pickObject(x, y) {
       const candidates = [
-        ...game.workers.map((object) => ({ type: "worker", object, radius: 16 })),
-        ...game.nodes.map((object) => ({ type: "node", object, radius: object.size + 14 })),
-        ...game.beacons.map((object) => ({ type: "beacon", object, radius: object.size + 12 })),
-        ...game.sites.map((object) => ({ type: "site", object, radius: 30 })),
-        ...game.buildings.map((object) => ({ type: "building", object, radius: object.size + 8 }))
+        ...game.workers.map((object) => ({ type: "worker", object, radius: 22 / camera.zoom })),
+        ...game.nodes.map((object) => ({ type: "node", object, radius: object.size + 18 / camera.zoom })),
+        ...game.beacons.map((object) => ({ type: "beacon", object, radius: object.size + 16 / camera.zoom })),
+        ...game.sites.map((object) => ({ type: "site", object, radius: 48 / camera.zoom })),
+        ...game.buildings.map((object) => ({ type: "building", object, radius: object.size + 12 / camera.zoom }))
       ];
 
       return candidates
@@ -1244,7 +1451,7 @@
     }
 
     function workerStatus(worker) {
-      if (worker.state === "idle") return "idle near the colony";
+      if (AUTONOMY_STATES.has(worker.state)) return worker.activity || "choosing their own task";
       if (worker.state === "return") return `returning with ${worker.carry?.type || "cargo"}`;
       if (worker.job === "build") return "building";
       if (worker.job === "scout") return "scouting";
@@ -1268,18 +1475,121 @@
         game.level += 1;
         game.housing += 2;
         seedResourceField(building.x, building.y, game.level);
-        spawnBeacon(building.x + rand(-340, 340), building.y + rand(-280, 280));
+        spawnBeacon(building.x + rand(-760, 760), building.y + rand(-580, 580));
       }
+    }
+
+    function updateAutonomousWorker(worker, deltaSeconds) {
+      worker.bob += deltaSeconds * (5.2 + worker.personality);
+      worker.agendaTimer -= deltaSeconds;
+
+      if (worker.state === "idle") {
+        const home = findById(game.buildings, worker.homeId) || game.buildings[0];
+        worker.orbit += deltaSeconds * (0.36 + worker.personality * 0.18 + game.morale / 360);
+        const orbitX = Math.cos(worker.orbit) * (62 + worker.personality * 18);
+        const orbitY = Math.sin(worker.orbit * 0.92) * (42 + worker.personality * 10);
+        worker.tx = home.x + orbitX;
+        worker.ty = home.y + orbitY;
+        moveWorker(worker, deltaSeconds, 0.36);
+        if (worker.agendaTimer <= 0) chooseAutonomousAction(worker);
+        return;
+      }
+
+      if (worker.state === "socialize") {
+        const buddy = findById(game.workers, worker.socialId);
+        if (buddy && buddy.id !== worker.id) {
+          worker.tx = buddy.x + Math.cos(worker.orbit) * 28;
+          worker.ty = buddy.y + Math.sin(worker.orbit) * 20;
+          if (distanceXY(worker.x, worker.y, buddy.x, buddy.y) < 48) {
+            worker.mood = clamp(worker.mood + deltaSeconds * 1.1, 35, 100);
+            game.morale = clamp(game.morale + deltaSeconds * 0.035, 18, 100);
+          }
+        }
+      }
+
+      if (worker.state === "maintain" && distanceXY(worker.x, worker.y, worker.tx, worker.ty) < 36) {
+        game.resources.energy = clamp(game.resources.energy + deltaSeconds * 0.035, 0, 9999);
+        worker.mood = clamp(worker.mood + deltaSeconds * 0.35, 35, 100);
+        if (Math.random() < 0.08) spawnConstructionSparks(worker.x, worker.y);
+      }
+
+      if (worker.state === "rest" && distanceXY(worker.x, worker.y, worker.tx, worker.ty) < 34) {
+        worker.mood = clamp(worker.mood + deltaSeconds * 1.8, 35, 100);
+      }
+
+      if (worker.state === "roam") {
+        worker.orbit += deltaSeconds * 0.5;
+      }
+
+      moveWorker(worker, deltaSeconds, worker.state === "roam" ? 0.42 : 0.34);
+      if (worker.agendaTimer <= 0 || distanceXY(worker.x, worker.y, worker.tx, worker.ty) < 9) {
+        chooseAutonomousAction(worker);
+      }
+    }
+
+    function chooseAutonomousAction(worker) {
+      const autoWorkChance = game.nodes.length > 0 && (game.resources.food < 70 || game.resources.ore < 90 || game.resources.crystal < 40 ? 0.42 : 0.18);
+      if (Math.random() < autoWorkChance) {
+        const type = chooseNeededResource();
+        const node = nearestTarget(game.nodes.filter((item) => item.type === type && item.amount > 0), worker.x, worker.y);
+        if (node) {
+          assignWorkerToNode(worker, node, false);
+          return;
+        }
+      }
+
+      const roll = Math.random();
+      const home = findById(game.buildings, worker.homeId) || game.buildings[0];
+      if (roll < 0.32 && game.workers.length > 1) {
+        const buddy = nearestTarget(game.workers.filter((item) => item.id !== worker.id), worker.x, worker.y);
+        worker.state = "socialize";
+        worker.socialId = buddy?.id || null;
+        worker.activity = buddy ? `chatting with ${buddy.name}` : "looking for a friend";
+        worker.tx = (buddy?.x || home.x) + rand(-34, 34);
+        worker.ty = (buddy?.y || home.y) + rand(-28, 28);
+        worker.agendaTimer = rand(4.5, 9.5);
+      } else if (roll < 0.58) {
+        const building = game.buildings[Math.floor(rand(0, game.buildings.length))] || home;
+        worker.state = "maintain";
+        worker.socialId = null;
+        worker.activity = `tuning ${building.name}`;
+        worker.tx = building.x + rand(-building.size * 0.8, building.size * 0.8);
+        worker.ty = building.y + rand(-building.size * 0.8, building.size * 0.8);
+        worker.agendaTimer = rand(4.5, 8.5);
+      } else if (roll < 0.78) {
+        const anchor = getColonyCenter();
+        const point = findOpenPoint(anchor.x, anchor.y, 80, 260, 70, 16);
+        worker.state = "roam";
+        worker.socialId = null;
+        worker.activity = "taking a zero-g walk";
+        worker.tx = point.x;
+        worker.ty = point.y;
+        worker.agendaTimer = rand(4, 8);
+      } else {
+        const restStop = nearestTarget(game.buildings.filter((building) => building.kind === "habitat" || building.kind === "garden" || building.kind === "hub"), worker.x, worker.y) || home;
+        worker.state = "rest";
+        worker.socialId = null;
+        worker.activity = `resting near ${restStop.name}`;
+        worker.tx = restStop.x + rand(-54, 54);
+        worker.ty = restStop.y + rand(-42, 42);
+        worker.agendaTimer = rand(5.5, 10.5);
+      }
+    }
+
+    function chooseNeededResource() {
+      const needs = [
+        { type: "food", score: 120 - game.resources.food + rand(0, 30) },
+        { type: "ore", score: 140 - game.resources.ore + rand(0, 24) },
+        { type: "crystal", score: 78 - game.resources.crystal + rand(0, 34) }
+      ];
+      needs.sort((a, b) => b.score - a.score);
+      return needs[0].type;
     }
 
     function updateWorkers(deltaSeconds) {
       for (const worker of game.workers) {
-        if (worker.state === "idle") {
-          const home = findById(game.buildings, worker.homeId) || game.buildings[0];
-          worker.orbit += deltaSeconds * (0.6 + game.morale / 180);
-          worker.tx = home.x + Math.cos(worker.orbit) * 36;
-          worker.ty = home.y + Math.sin(worker.orbit) * 26;
-          moveWorker(worker, deltaSeconds, 0.55);
+        if (AUTONOMY_STATES.has(worker.state)) {
+          updateAutonomousWorker(worker, deltaSeconds);
           continue;
         }
 
@@ -1299,9 +1609,7 @@
           } else {
             const node = findById(game.nodes, worker.targetId);
             if (!node || node.amount <= 0) {
-              worker.state = "idle";
-              worker.job = null;
-              worker.targetId = null;
+              resetWorkerToIdle(worker, "noticed that node ran dry");
               setLog("A resource node ran dry.");
             } else if (worker.work >= 3.1) {
               const meta = RESOURCE_META[node.type];
@@ -1322,8 +1630,7 @@
         if (worker.state === "build") {
           const site = findById(game.sites, worker.targetId);
           if (!site) {
-            worker.state = "idle";
-            worker.job = null;
+            resetWorkerToIdle(worker, "could not find the build site");
             continue;
           }
 
@@ -1375,14 +1682,10 @@
       if (worker.carry) {
         game.resources[worker.carry.type] += worker.carry.amount;
         spawnRipple(worker.x, worker.y, worker.carry.type === "ore" ? 45 : worker.carry.type === "food" ? 126 : 190, 0.8);
-        playDropoffSound(worker.carry.type);
-        setLog(`${worker.name} delivered ${worker.carry.amount} ${worker.carry.type}.`);
+        if (worker.manual) playDropoffSound(worker.carry.type);
+        if (worker.manual || Math.random() < 0.18) setLog(`${worker.name} delivered ${worker.carry.amount} ${worker.carry.type}.`);
       }
-      worker.state = "idle";
-      worker.job = null;
-      worker.targetId = null;
-      worker.carry = null;
-      worker.work = 0;
+      resetWorkerToIdle(worker, "looking proud after a delivery");
     }
 
     function finishScout(worker) {
@@ -1392,9 +1695,8 @@
         const reveals = 3 + game.scoutBonus;
         const types = ["ore", "food", "crystal"];
         for (let i = 0; i < reveals; i++) {
-          const angle = rand(0, Math.PI * 2);
-          const radius = rand(80, 230);
-          spawnNode(types[(i + game.level) % types.length], beacon.x + Math.cos(angle) * radius, beacon.y + Math.sin(angle) * radius, game.level + 1);
+          const point = findOpenPoint(beacon.x, beacon.y, 180, 520, 132, 38);
+          spawnNode(types[(i + game.level) % types.length], point.x, point.y, game.level + 1);
         }
         if (Math.random() < 0.44 && game.workers.length < game.housing) {
           game.workers.push(makeWorker(game.workers.length, nearestHubTo(beacon.x, beacon.y)));
@@ -1404,16 +1706,13 @@
         }
         game.resources.science += 8 + game.level * 2;
         game.level += 1;
-        spawnBeacon(beacon.x + rand(-360, 360), beacon.y + rand(-300, 300));
+        spawnBeacon(beacon.x + rand(-780, 780), beacon.y + rand(-620, 620));
         spawnRipple(beacon.x, beacon.y, 270, 2.2);
         spawnParticles(beacon.x, beacon.y, 245, 300, 34);
         playExpandSound();
         flashScreen(0.2, 3);
       }
-      worker.state = "idle";
-      worker.job = null;
-      worker.targetId = null;
-      worker.work = 0;
+      resetWorkerToIdle(worker, "telling everyone about the beacon");
     }
 
     function finishSite(site, worker) {
@@ -1422,10 +1721,7 @@
       game.buildings.push(building);
       applyBuildingEffect(building);
       worker.homeId = nearestHubTo(site.x, site.y).id;
-      worker.state = "idle";
-      worker.job = null;
-      worker.targetId = null;
-      worker.work = 0;
+      resetWorkerToIdle(worker, `admiring the new ${site.name}`);
       spawnRipple(site.x, site.y, site.kind === "outpost" ? 45 : 195, 1.8);
       spawnParticles(site.x, site.y, 40, 210, 28);
       playBuildSound();
@@ -1449,9 +1745,10 @@
 
     function updateSites() {
       for (const site of game.sites) {
-        if (!site.workerId || !findById(game.workers, site.workerId) || findById(game.workers, site.workerId).state === "idle") {
+        const assigned = findById(game.workers, site.workerId);
+        if (!site.workerId || !assigned || AUTONOMY_STATES.has(assigned.state)) {
           const worker = findIdleWorker();
-          if (worker) assignWorkerToSite(worker, site);
+          if (worker) assignWorkerToSite(worker, site, false);
         }
       }
     }
@@ -1518,7 +1815,7 @@
       updateWorkers(deltaSeconds);
       updateSites();
       updateEconomy(deltaSeconds);
-      game.nodes = game.nodes.filter((node) => node.amount > 0 || distanceXY(node.x, node.y, viewWidth / 2, viewHeight / 2) < 400);
+      game.nodes = game.nodes.filter((node) => node.amount > 0);
       updateHud();
     }
 
@@ -1530,7 +1827,6 @@
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, viewWidth, viewHeight);
       drawNebula();
-      drawGrid();
       drawDust();
       drawStars();
 
@@ -1569,20 +1865,29 @@
 
     function drawGrid() {
       ctx.save();
-      ctx.strokeStyle = "rgba(255,255,255,0.046)";
-      ctx.lineWidth = 1;
-      for (let x = 0; x <= viewWidth; x += 44) {
+      ctx.strokeStyle = "rgba(255,255,255,0.042)";
+      ctx.lineWidth = 1 / camera.zoom;
+      const grid = 120;
+      const minX = -WORLD.width / 2;
+      const maxX = WORLD.width / 2;
+      const minY = -WORLD.height / 2;
+      const maxY = WORLD.height / 2;
+      for (let x = minX; x <= maxX; x += grid) {
         ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, viewHeight);
+        ctx.moveTo(x, minY);
+        ctx.lineTo(x, maxY);
         ctx.stroke();
       }
-      for (let y = 0; y <= viewHeight; y += 44) {
+      for (let y = minY; y <= maxY; y += grid) {
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(viewWidth, y);
+        ctx.moveTo(minX, y);
+        ctx.lineTo(maxX, y);
         ctx.stroke();
       }
+      ctx.strokeStyle = "rgba(111, 211, 255, 0.16)";
+      ctx.lineWidth = 2 / camera.zoom;
+      roundRect(ctx, minX, minY, WORLD.width, WORLD.height, 8);
+      ctx.stroke();
       ctx.restore();
     }
 
@@ -1626,7 +1931,7 @@
         const t = ripple.age / ripple.life;
         const alpha = Math.max(0, 1 - t) * 0.55;
         ctx.strokeStyle = `hsla(${ripple.hue}, 100%, 70%, ${alpha})`;
-        ctx.lineWidth = Math.max(1, 5 * (1 - t));
+        ctx.lineWidth = Math.max(1 / camera.zoom, (5 * (1 - t)) / camera.zoom);
         ctx.beginPath();
         ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
         ctx.stroke();
@@ -1637,7 +1942,7 @@
     function drawConnections() {
       ctx.save();
       ctx.strokeStyle = "rgba(111, 211, 255, 0.18)";
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 1.2 / camera.zoom;
       for (let i = 1; i < game.buildings.length; i++) {
         const building = game.buildings[i];
         const hub = nearestHubTo(building.x, building.y);
@@ -1649,114 +1954,217 @@
       ctx.restore();
     }
 
+    function drawSoftGlow(x, y, radius, inner, outer = "rgba(0,0,0,0)") {
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      glow.addColorStop(0, inner);
+      glow.addColorStop(1, outer);
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawPolygon(x, y, radius, points, rotation = 0) {
+      ctx.beginPath();
+      for (let i = 0; i < points; i++) {
+        const angle = rotation + i / points * Math.PI * 2;
+        const px = x + Math.cos(angle) * radius;
+        const py = y + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    }
+
+    function drawTinyWindows(x, y, radius, color, count = 8) {
+      ctx.save();
+      ctx.fillStyle = hexToRgba(color, 0.9);
+      for (let i = 0; i < count; i++) {
+        const angle = i / count * Math.PI * 2 + globalTime * 0.00015;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius * 0.72, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawModuleShell(building, size) {
+      ctx.save();
+      ctx.rotate(building.rotation || 0);
+      const bodyGradient = ctx.createLinearGradient(-size, -size, size, size);
+      bodyGradient.addColorStop(0, "rgba(255,255,255,0.2)");
+      bodyGradient.addColorStop(0.42, "rgba(13,22,39,0.94)");
+      bodyGradient.addColorStop(1, "rgba(3,8,16,0.98)");
+      ctx.fillStyle = bodyGradient;
+      drawPolygon(0, 0, size, 8, Math.PI / 8);
+      ctx.fill();
+      ctx.strokeStyle = hexToRgba(building.color, 0.92);
+      ctx.lineWidth = 2.2 / camera.zoom;
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 1 / camera.zoom;
+      drawPolygon(0, 0, size * 0.72, 8, Math.PI / 8);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     function drawBuildings() {
       for (const building of game.buildings) {
+        if (!objectVisible(building.x, building.y, building.size * 4)) continue;
         ctx.save();
         const pulse = 1 + Math.sin(globalTime * 0.005 + building.phase) * 0.04;
         const size = building.size * pulse;
-        const glow = ctx.createRadialGradient(building.x, building.y, 0, building.x, building.y, size * 2.8);
-        glow.addColorStop(0, `${hexToRgba(building.color, 0.46)}`);
-        glow.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(building.x, building.y, size * 2.8, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "rgba(8, 16, 28, 0.92)";
-        roundRect(ctx, building.x - size, building.y - size, size * 2, size * 2, 8);
-        ctx.fill();
-        ctx.strokeStyle = building.color;
-        ctx.lineWidth = 2;
-        roundRect(ctx, building.x - size, building.y - size, size * 2, size * 2, 8);
-        ctx.stroke();
-
-        ctx.fillStyle = building.color;
-        ctx.beginPath();
-        ctx.arc(building.x, building.y, size * 0.28, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (building.kind === "solar") drawSolarPanels(building.x, building.y, size, building.color);
-        if (building.kind === "habitat") drawRing(building.x, building.y, size, building.color);
-        if (building.kind === "garden") drawLeaf(building.x, building.y, size, building.color);
-        if (building.kind === "lab") drawAntenna(building.x, building.y, size, building.color);
-        if (building.kind === "dock") drawDock(building.x, building.y, size, building.color);
-        if (building.kind === "outpost") drawOutpost(building.x, building.y, size, building.color);
+        drawSoftGlow(building.x, building.y, size * 3.4, hexToRgba(building.color, 0.38));
+        ctx.translate(building.x, building.y);
+        drawModuleShell(building, size);
+        if (building.kind === "hub") drawCommandHub(0, 0, size, building.color);
+        if (building.kind === "solar") drawSolarPanels(0, 0, size, building.color);
+        if (building.kind === "habitat") drawRing(0, 0, size, building.color);
+        if (building.kind === "garden") drawLeaf(0, 0, size, building.color);
+        if (building.kind === "lab") drawAntenna(0, 0, size, building.color);
+        if (building.kind === "dock") drawDock(0, 0, size, building.color);
+        if (building.kind === "outpost") drawOutpost(0, 0, size, building.color);
         ctx.restore();
       }
     }
 
+    function drawCommandHub(x, y, size, color) {
+      ctx.save();
+      ctx.strokeStyle = hexToRgba(color, 0.86);
+      ctx.lineWidth = 2 / camera.zoom;
+      ctx.beginPath();
+      ctx.ellipse(x, y, size * 1.36, size * 0.52, globalTime * 0.0008, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(x, y, size * 0.64, size * 1.08, -globalTime * 0.00055, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+      drawTinyWindows(x, y, size * 0.55, color, 10);
+      ctx.restore();
+    }
+
     function drawSolarPanels(x, y, size, color) {
+      ctx.save();
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.4;
+      ctx.lineWidth = 1.4 / camera.zoom;
+      ctx.fillStyle = "rgba(30, 75, 105, 0.78)";
       for (const side of [-1, 1]) {
-        ctx.strokeRect(x + side * size * 0.74, y - size * 0.32, side * size * 0.58, size * 0.64);
+        const panelX = x + side * size * 0.76;
+        const width = side * size * 0.74;
+        ctx.fillRect(panelX, y - size * 0.42, width, size * 0.84);
+        ctx.strokeRect(panelX, y - size * 0.42, width, size * 0.84);
+        for (let i = 1; i < 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(panelX + width * (i / 3), y - size * 0.42);
+          ctx.lineTo(panelX + width * (i / 3), y + size * 0.42);
+          ctx.stroke();
+        }
       }
+      ctx.restore();
     }
 
     function drawRing(x, y, size, color) {
+      ctx.save();
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.4;
+      ctx.lineWidth = 2 / camera.zoom;
       ctx.beginPath();
       ctx.ellipse(x, y, size * 0.95, size * 0.42, globalTime * 0.001, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.strokeStyle = hexToRgba(color, 0.42);
+      ctx.lineWidth = 5 / camera.zoom;
+      ctx.beginPath();
+      ctx.ellipse(x, y, size * 1.06, size * 0.5, globalTime * 0.001, 0, Math.PI * 2);
+      ctx.stroke();
+      drawTinyWindows(x, y, size * 0.66, color, 12);
+      ctx.restore();
     }
 
     function drawLeaf(x, y, size, color) {
+      ctx.save();
+      ctx.globalAlpha = 0.92;
       ctx.fillStyle = hexToRgba(color, 0.55);
       ctx.beginPath();
       ctx.ellipse(x - size * 0.14, y, size * 0.26, size * 0.52, -0.6, 0, Math.PI * 2);
       ctx.ellipse(x + size * 0.18, y, size * 0.22, size * 0.45, 0.7, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.28)";
+      ctx.lineWidth = 1 / camera.zoom;
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.7, Math.PI, 0);
+      ctx.stroke();
+      ctx.restore();
     }
 
     function drawAntenna(x, y, size, color) {
+      ctx.save();
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.7 / camera.zoom;
       ctx.beginPath();
       ctx.moveTo(x, y - size * 0.3);
       ctx.lineTo(x, y - size * 1.15);
       ctx.stroke();
       ctx.beginPath();
+      ctx.arc(x, y - size * 0.66, size * 0.34, -0.35, Math.PI + 0.35);
+      ctx.stroke();
+      ctx.beginPath();
       ctx.arc(x, y - size * 1.22, 3, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
+      ctx.restore();
     }
 
     function drawDock(x, y, size, color) {
+      ctx.save();
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.8 / camera.zoom;
       ctx.beginPath();
       ctx.moveTo(x - size * 0.75, y + size * 0.4);
       ctx.lineTo(x + size * 0.75, y + size * 0.4);
       ctx.moveTo(x - size * 0.55, y - size * 0.4);
       ctx.lineTo(x + size * 0.55, y - size * 0.4);
       ctx.stroke();
+      ctx.fillStyle = hexToRgba(color, 0.28);
+      roundRect(ctx, x - size * 0.9, y - size * 0.14, size * 1.8, size * 0.28, 4);
+      ctx.fill();
+      ctx.restore();
     }
 
     function drawOutpost(x, y, size, color) {
+      ctx.save();
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.4;
+      ctx.lineWidth = 1.7 / camera.zoom;
       ctx.beginPath();
       ctx.arc(x, y, size * 1.15, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.55, y + size * 0.6);
+      ctx.lineTo(x, y - size * 1.15);
+      ctx.lineTo(x + size * 0.55, y + size * 0.6);
+      ctx.stroke();
+      ctx.restore();
     }
 
     function drawSites() {
       for (const site of game.sites) {
+        if (!objectVisible(site.x, site.y, 80)) continue;
         const progress = clamp(site.progress / site.needed, 0, 1);
         ctx.save();
         ctx.strokeStyle = "rgba(255,255,255,0.34)";
+        ctx.lineWidth = 1.2 / camera.zoom;
         ctx.setLineDash([6, 6]);
-        roundRect(ctx, site.x - 24, site.y - 24, 48, 48, 8);
+        roundRect(ctx, site.x - 34, site.y - 34, 68, 68, 8);
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.strokeStyle = site.color;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4 / camera.zoom;
         ctx.beginPath();
-        ctx.arc(site.x, site.y, 32, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+        ctx.arc(site.x, site.y, 44, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
         ctx.stroke();
         ctx.fillStyle = "rgba(255,255,255,0.82)";
-        ctx.font = "bold 11px Arial";
+        ctx.font = `bold ${12 / camera.zoom}px Arial`;
         ctx.textAlign = "center";
         ctx.fillText(`${Math.floor(progress * 100)}%`, site.x, site.y + 4);
         ctx.restore();
@@ -1765,21 +2173,20 @@
 
     function drawNodes() {
       for (const node of game.nodes) {
+        if (!objectVisible(node.x, node.y, node.size * 4)) continue;
         const meta = RESOURCE_META[node.type];
         const t = clamp(node.amount / node.max, 0, 1);
         const pulse = 1 + Math.sin(globalTime * 0.006 + node.phase) * 0.12;
         const radius = node.size * (0.72 + t * 0.38) * pulse;
-        const glow = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, radius * 2.7);
-        glow.addColorStop(0, meta.glow);
-        glow.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, radius * 2.7, 0, Math.PI * 2);
-        ctx.fill();
+        drawSoftGlow(node.x, node.y, radius * 3.1, meta.glow);
 
-        ctx.fillStyle = node.type === "ore" ? "#4d3d35" : node.type === "food" ? "#204c34" : "#183e54";
+        const gradient = ctx.createRadialGradient(node.x - radius * 0.32, node.y - radius * 0.36, 0, node.x, node.y, radius * 1.15);
+        gradient.addColorStop(0, "rgba(255,255,255,0.38)");
+        gradient.addColorStop(0.38, node.type === "ore" ? "#5f4b31" : node.type === "food" ? "#245f3e" : "#1d5875");
+        gradient.addColorStop(1, node.type === "ore" ? "#2b221d" : node.type === "food" ? "#102819" : "#0c273a");
+        ctx.fillStyle = gradient;
         ctx.strokeStyle = meta.color;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.5 / camera.zoom;
         ctx.beginPath();
         if (node.type === "crystal") {
           ctx.moveTo(node.x, node.y - radius);
@@ -1793,11 +2200,19 @@
         }
         ctx.fill();
         ctx.stroke();
+
+        if (node.type === "food") {
+          ctx.strokeStyle = "rgba(255,255,255,0.24)";
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius * 0.62, -0.3, Math.PI * 1.18);
+          ctx.stroke();
+        }
       }
     }
 
     function drawBeacons() {
       for (const beacon of game.beacons) {
+        if (!objectVisible(beacon.x, beacon.y, beacon.size * 4)) continue;
         const pulse = 1 + Math.sin(globalTime * 0.009 + beacon.phase) * 0.1;
         ctx.save();
         ctx.globalCompositeOperation = "screen";
@@ -1811,12 +2226,19 @@
         ctx.arc(beacon.x, beacon.y, radius * 2.9, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = "rgba(206, 145, 255, 0.78)";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2 / camera.zoom;
         ctx.beginPath();
         ctx.ellipse(beacon.x, beacon.y, radius, radius * 0.46, globalTime * 0.0025, 0, Math.PI * 2);
         ctx.stroke();
         ctx.beginPath();
         ctx.ellipse(beacon.x, beacon.y, radius * 0.62, radius * 1.08, -globalTime * 0.002, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,0.38)";
+        ctx.beginPath();
+        ctx.moveTo(beacon.x - radius * 0.5, beacon.y);
+        ctx.lineTo(beacon.x + radius * 0.5, beacon.y);
+        ctx.moveTo(beacon.x, beacon.y - radius * 0.5);
+        ctx.lineTo(beacon.x, beacon.y + radius * 0.5);
         ctx.stroke();
         ctx.fillStyle = "rgba(255,255,255,0.8)";
         ctx.beginPath();
@@ -1828,10 +2250,12 @@
 
     function drawWorkers() {
       for (const worker of game.workers) {
-        if (worker.state !== "idle") {
+        if (!objectVisible(worker.x, worker.y, 90)) continue;
+        if (!AUTONOMY_STATES.has(worker.state)) {
           ctx.save();
-          ctx.strokeStyle = "rgba(111, 211, 255, 0.22)";
-          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = worker.manual ? "rgba(111, 211, 255, 0.24)" : "rgba(115, 255, 179, 0.13)";
+          ctx.lineWidth = 1.2 / camera.zoom;
+          ctx.setLineDash(worker.manual ? [] : [8, 10]);
           ctx.beginPath();
           ctx.moveTo(worker.x, worker.y);
           ctx.lineTo(worker.tx, worker.ty);
@@ -1840,28 +2264,115 @@
         }
 
         ctx.save();
-        const speedAngle = Math.atan2(worker.ty - worker.y, worker.tx - worker.x);
+        const movementAngle = Math.atan2(worker.ty - worker.y, worker.tx - worker.x);
+        if (Number.isFinite(movementAngle)) worker.facing = lerpAngle(worker.facing || movementAngle, movementAngle, 0.16);
+        const bob = Math.sin(worker.bob || 0) * 1.6;
         ctx.translate(worker.x, worker.y);
-        ctx.rotate(Number.isFinite(speedAngle) ? speedAngle : 0);
-        ctx.fillStyle = "rgba(255,255,255,0.86)";
+        ctx.rotate(worker.facing || 0);
+
+        drawSoftGlow(0, 0, 22, hexToRgba(worker.color, 0.28));
+
+        ctx.fillStyle = "rgba(3, 8, 14, 0.7)";
         ctx.beginPath();
-        ctx.arc(0, 0, 7, 0, Math.PI * 2);
+        ctx.ellipse(-1, 11, 13, 4, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = worker.color;
-        ctx.lineWidth = 2.2;
-        ctx.beginPath();
-        ctx.arc(0, 0, 10, 0, Math.PI * 2);
-        ctx.stroke();
+
         ctx.fillStyle = worker.color;
-        ctx.fillRect(-12, -4, 6, 8);
+        roundRect(ctx, -7, -2 + bob * 0.2, 14, 18, 6);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.48)";
+        ctx.lineWidth = 1.1 / camera.zoom;
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(233, 252, 255, 0.95)";
+        ctx.beginPath();
+        ctx.arc(0, -8 + bob, 7, 0, Math.PI * 2);
+        ctx.fill();
+        const visor = ctx.createLinearGradient(-4, -12 + bob, 6, -5 + bob);
+        visor.addColorStop(0, "rgba(16, 40, 60, 0.95)");
+        visor.addColorStop(1, "rgba(111, 211, 255, 0.85)");
+        ctx.fillStyle = visor;
+        ctx.beginPath();
+        ctx.ellipse(2, -8 + bob, 4.8, 3.2, 0.16, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = hexToRgba(worker.color, 0.72);
+        ctx.lineWidth = 2 / camera.zoom;
+        ctx.beginPath();
+        ctx.moveTo(-8, 4);
+        ctx.lineTo(-14, 8 + Math.sin(worker.bob) * 2);
+        ctx.moveTo(8, 4);
+        ctx.lineTo(14, 8 - Math.sin(worker.bob) * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(255,255,255,0.72)";
+        ctx.beginPath();
+        ctx.moveTo(-9, 15);
+        ctx.lineTo(-5, 21 + Math.max(0, bob));
+        ctx.moveTo(7, 15);
+        ctx.lineTo(11, 21 - Math.min(0, bob));
+        ctx.stroke();
+
+        if (!AUTONOMY_STATES.has(worker.state)) {
+          ctx.fillStyle = hexToRgba(worker.color, 0.72);
+          ctx.beginPath();
+          ctx.moveTo(-11, 4);
+          ctx.lineTo(-20, 0);
+          ctx.lineTo(-11, -4);
+          ctx.closePath();
+          ctx.fill();
+        }
+
         if (worker.carry) {
           ctx.fillStyle = RESOURCE_META[worker.carry.type].color;
           ctx.beginPath();
-          ctx.arc(-16, 0, 4, 0, Math.PI * 2);
+          ctx.arc(-18, -7, 5, 0, Math.PI * 2);
           ctx.fill();
         }
         ctx.restore();
+
+        drawWorkerThought(worker);
       }
+    }
+
+    function drawWorkerThought(worker) {
+      if (!AUTONOMY_STATES.has(worker.state) || camera.zoom < 0.7) return;
+      const screenAlpha = worker.state === "idle" ? 0.35 : 0.66;
+      ctx.save();
+      ctx.globalAlpha = screenAlpha;
+      ctx.fillStyle = "rgba(255,255,255,0.88)";
+      ctx.strokeStyle = hexToRgba(worker.color, 0.75);
+      ctx.lineWidth = 1 / camera.zoom;
+      const x = worker.x + 18;
+      const y = worker.y - 22 - Math.sin(worker.bob || 0) * 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = worker.state === "socialize" ? "#73ffb3" : worker.state === "maintain" ? "#ffe34d" : worker.state === "rest" ? "#c89bff" : "#6fd3ff";
+      if (worker.state === "socialize") {
+        ctx.beginPath();
+        ctx.arc(x - 2, y, 2, 0, Math.PI * 2);
+        ctx.arc(x + 3, y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (worker.state === "maintain") {
+        ctx.fillRect(x - 4, y - 1, 8, 2);
+        ctx.fillRect(x - 1, y - 4, 2, 8);
+      } else if (worker.state === "rest") {
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0.2, Math.PI * 1.55);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function lerpAngle(a, b, t) {
+      const diff = Math.atan2(Math.sin(b - a), Math.cos(b - a));
+      return a + diff * t;
     }
 
     function drawParticles() {
@@ -1878,8 +2389,8 @@
       if (!selectedObject) return;
       ctx.save();
       ctx.strokeStyle = "rgba(255,255,255,0.82)";
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1.5 / camera.zoom;
+      ctx.setLineDash([5 / camera.zoom, 5 / camera.zoom]);
       ctx.beginPath();
       ctx.arc(selectedObject.x, selectedObject.y, (selectedObject.size || 24) + 18, 0, Math.PI * 2);
       ctx.stroke();
@@ -1888,16 +2399,24 @@
 
     function drawLabels() {
       ctx.save();
-      ctx.font = "12px Arial";
+      ctx.font = `${12 / camera.zoom}px Arial`;
       ctx.textAlign = "center";
       ctx.fillStyle = "rgba(255,255,255,0.72)";
-      for (const node of game.nodes) {
-        if (distanceXY(node.x, node.y, viewWidth / 2, viewHeight / 2) < 460) {
-          ctx.fillText(`${RESOURCE_META[node.type].name} ${Math.floor(node.amount)}`, node.x, node.y + node.size + 18);
+      if (camera.zoom > 0.55) {
+        for (const node of game.nodes) {
+          if (objectVisible(node.x, node.y, 120) && (camera.zoom > 0.82 || node === selectedObject)) {
+            ctx.fillText(`${RESOURCE_META[node.type].name} ${Math.floor(node.amount)}`, node.x, node.y + node.size + 22 / camera.zoom);
+          }
         }
       }
       for (const site of game.sites) {
-        ctx.fillText(site.name, site.x, site.y + 44);
+        if (objectVisible(site.x, site.y, 100)) ctx.fillText(site.name, site.x, site.y + 58 / camera.zoom);
+      }
+      if (camera.zoom > 1) {
+        ctx.font = `${11 / camera.zoom}px Arial`;
+        for (const worker of game.workers) {
+          if (objectVisible(worker.x, worker.y, 70)) ctx.fillText(worker.name, worker.x, worker.y + 38 / camera.zoom);
+        }
       }
       ctx.restore();
     }
@@ -1948,19 +2467,19 @@
       drawBackground();
       const shakeX = screenShake > 0 ? rand(-screenShake, screenShake) : 0;
       const shakeY = screenShake > 0 ? rand(-screenShake, screenShake) : 0;
-      ctx.save();
-      ctx.translate(shakeX, shakeY);
-      drawRipples();
-      drawConnections();
-      drawBeacons();
-      drawNodes();
-      drawSites();
-      drawBuildings();
-      drawWorkers();
-      drawParticles();
-      drawSelection();
-      drawLabels();
-      ctx.restore();
+      withWorldTransform(shakeX, shakeY, () => {
+        drawGrid();
+        drawRipples();
+        drawConnections();
+        drawBeacons();
+        drawNodes();
+        drawSites();
+        drawBuildings();
+        drawWorkers();
+        drawParticles();
+        drawSelection();
+        drawLabels();
+      });
       drawPauseOverlay();
 
       if (flashTime > 0) {
@@ -1997,6 +2516,7 @@
       hud.hidden = false;
       controls.hidden = false;
       backBtn.hidden = false;
+      cameraHint.hidden = false;
       ensureAudio();
       resetGame();
       setLog("Colony online. Dispatch a worker.");
@@ -2009,6 +2529,7 @@
       hud.hidden = true;
       controls.hidden = true;
       backBtn.hidden = true;
+      cameraHint.hidden = true;
       selectedObject = null;
       updateHud();
     }
@@ -2047,14 +2568,55 @@
 
     canvas.addEventListener("pointerdown", (event) => {
       if (!game.running) return;
-      const rect = canvas.getBoundingClientRect();
-      clickWorld(event.clientX - rect.left, event.clientY - rect.top);
+      pointerState.active = true;
+      pointerState.id = event.pointerId;
+      pointerState.startX = event.clientX;
+      pointerState.startY = event.clientY;
+      pointerState.lastX = event.clientX;
+      pointerState.lastY = event.clientY;
+      pointerState.moved = false;
+      canvas.setPointerCapture?.(event.pointerId);
     });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!pointerState.active || pointerState.id !== event.pointerId) return;
+      const dx = event.clientX - pointerState.lastX;
+      const dy = event.clientY - pointerState.lastY;
+      const total = Math.hypot(event.clientX - pointerState.startX, event.clientY - pointerState.startY);
+      if (total > 4) pointerState.moved = true;
+      camera.x -= dx / camera.zoom;
+      camera.y -= dy / camera.zoom;
+      clampCamera();
+      pointerState.lastX = event.clientX;
+      pointerState.lastY = event.clientY;
+    });
+
+    canvas.addEventListener("pointerup", (event) => {
+      if (!pointerState.active || pointerState.id !== event.pointerId) return;
+      const rect = canvas.getBoundingClientRect();
+      if (!pointerState.moved) clickWorld(event.clientX - rect.left, event.clientY - rect.top);
+      pointerState.active = false;
+      pointerState.id = null;
+      canvas.releasePointerCapture?.(event.pointerId);
+    });
+
+    canvas.addEventListener("pointercancel", () => {
+      pointerState.active = false;
+      pointerState.id = null;
+    });
+
+    canvas.addEventListener("wheel", (event) => {
+      if (!game.running) return;
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const factor = event.deltaY < 0 ? 1.12 : 0.88;
+      zoomAt(event.clientX - rect.left, event.clientY - rect.top, factor);
+    }, { passive: false });
 
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
       if (event.target === commanderInput) return;
-      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) event.preventDefault();
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "w", "a", "s", "d", "+", "-", "="].includes(key)) event.preventDefault();
 
       if (key === "m") {
         if (!event.repeat) toggleAudio();
@@ -2067,9 +2629,27 @@
         }
       }
 
+      if (game.running && !event.repeat) {
+        if (key === "+" || key === "=") zoomAt(viewWidth / 2, viewHeight / 2, 1.14);
+        if (key === "-") zoomAt(viewWidth / 2, viewHeight / 2, 0.86);
+      }
+
+      if (game.running) {
+        const pan = 86 / camera.zoom;
+        if (key === "arrowup" || key === "w") camera.y -= pan;
+        if (key === "arrowdown" || key === "s") camera.y += pan;
+        if (key === "arrowleft" || key === "a") camera.x -= pan;
+        if (key === "arrowright" || key === "d") camera.x += pan;
+        clampCamera();
+      }
+
       if (key === " ") {
         const hub = game.buildings[0];
         selectedObject = hub;
+        camera.x = hub.x;
+        camera.y = hub.y;
+        camera.zoom = Math.max(camera.zoom, 0.92);
+        clampCamera();
         setLog("Command Hub selected.");
       }
     });
