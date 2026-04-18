@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>best game oat</title>
+  <title>Starstead Colony</title>
   <style>
     :root {
-      --bg-1: #0b1020;
-      --bg-2: #123420;
-      --panel: rgba(10, 15, 30, 0.72);
-      --panel-border: rgba(255, 255, 255, 0.12);
+      --bg-1: #090d1a;
+      --bg-2: #122d2e;
+      --panel: rgba(9, 14, 28, 0.78);
+      --panel-strong: rgba(10, 18, 32, 0.9);
+      --panel-border: rgba(255, 255, 255, 0.14);
       --text: #f4f7ff;
-      --muted: #bfd0ff;
+      --muted: #bdd1f5;
       --accent: #ffe34d;
       --accent-2: #6fd3ff;
-      --danger: #ff5b6e;
-      --danger-hover: #ff7888;
       --good: #73ffb3;
-      --shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+      --danger: #ff5b6e;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.34);
       --radius: 8px;
     }
 
@@ -35,8 +35,8 @@
     body {
       overflow: hidden;
       background:
-        radial-gradient(circle at 20% 20%, rgba(70, 140, 255, 0.18), transparent 28%),
-        radial-gradient(circle at 80% 15%, rgba(165, 75, 255, 0.16), transparent 25%),
+        radial-gradient(circle at 20% 20%, rgba(70, 140, 255, 0.16), transparent 28%),
+        radial-gradient(circle at 80% 14%, rgba(115, 255, 179, 0.1), transparent 24%),
         linear-gradient(180deg, var(--bg-1), var(--bg-2));
       color: var(--text);
       font-family: Inter, Arial, Helvetica, sans-serif;
@@ -51,8 +51,33 @@
       touch-action: none;
     }
 
+    button {
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+      transform: none;
+      filter: none;
+    }
+
     #menu,
     #hud,
+    #controls,
     #backBtn {
       position: absolute;
       z-index: 10;
@@ -67,13 +92,13 @@
       overflow-y: auto;
       background:
         radial-gradient(circle at 20% 15%, rgba(80, 170, 255, 0.18), transparent 25%),
-        radial-gradient(circle at 80% 20%, rgba(160, 60, 255, 0.18), transparent 22%),
-        linear-gradient(135deg, rgba(20, 35, 75, 0.76), rgba(70, 20, 80, 0.72));
+        radial-gradient(circle at 80% 20%, rgba(115, 255, 179, 0.12), transparent 22%),
+        linear-gradient(135deg, rgba(11, 23, 48, 0.86), rgba(9, 36, 40, 0.78));
       backdrop-filter: blur(10px);
     }
 
     .menu-card {
-      width: min(560px, 94vw);
+      width: min(620px, 94vw);
       max-height: calc(100vh - 48px);
       overflow-y: auto;
       padding: 28px 24px 22px;
@@ -93,7 +118,7 @@
 
     .subtitle {
       margin: 0 auto 18px;
-      max-width: 460px;
+      max-width: 520px;
       color: var(--muted);
       line-height: 1.45;
       font-size: 15px;
@@ -106,7 +131,7 @@
       margin-bottom: 14px;
     }
 
-    #username {
+    #commanderName {
       width: 100%;
       padding: 14px 16px;
       font-size: 17px;
@@ -119,35 +144,18 @@
       text-align: center;
     }
 
-    #username::placeholder {
+    #commanderName::placeholder {
       color: rgba(255, 255, 255, 0.55);
     }
 
-    #username:focus {
+    #commanderName:focus {
       border-color: rgba(111, 211, 255, 0.8);
       box-shadow: 0 0 0 4px rgba(111, 211, 255, 0.16);
       transform: translateY(-1px);
     }
 
-    button {
-      border: none;
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-weight: 800;
-      transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background 0.16s ease;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      filter: brightness(1.03);
-    }
-
-    button:active {
-      transform: translateY(1px) scale(0.99);
-    }
-
     #playBtn {
-      min-width: 120px;
+      min-width: 126px;
       padding: 14px 22px;
       font-size: 18px;
       background: linear-gradient(180deg, #fff178, var(--accent));
@@ -171,8 +179,8 @@
     }
 
     .hints {
-      margin-bottom: 18px;
-      color: rgba(255, 255, 255, 0.75);
+      margin: 0 0 18px;
+      color: rgba(255, 255, 255, 0.78);
       font-size: 13px;
       line-height: 1.5;
     }
@@ -185,105 +193,122 @@
       font-weight: 700;
     }
 
-    #leaderboard {
-      text-align: left;
-      margin-top: 10px;
+    .feature-list {
+      margin: 14px 0 0;
       padding: 16px;
-      border-radius: var(--radius);
-      background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.09);
-    }
-
-    #leaderboard h2 {
-      margin: 0 0 12px;
-      font-size: 20px;
-      text-align: center;
-    }
-
-    #scores {
-      list-style: none;
-      margin: 0;
-      padding: 0;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.055);
+      text-align: left;
       display: grid;
       gap: 8px;
-    }
-
-    #scores li {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 9px 12px;
-      border-radius: var(--radius);
-      background: rgba(255, 255, 255, 0.045);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.84);
       font-size: 14px;
-    }
-
-    .score-rank {
-      font-weight: 900;
-      color: #fff1a8;
-      min-width: 32px;
-    }
-
-    .score-name {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-weight: 700;
-    }
-
-    .score-value {
-      font-weight: 800;
-      color: #cbe6ff;
+      line-height: 1.35;
     }
 
     #hud {
       top: 16px;
       right: 16px;
-      min-width: 248px;
+      width: min(332px, calc(100vw - 32px));
       padding: 14px 14px 12px;
       border-radius: var(--radius);
-      background: rgba(10, 15, 28, 0.68);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
     }
 
-    .hud-title {
+    .hud-title,
+    .panel-title {
       margin: 0 0 10px;
       font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 0;
-      color: rgba(255, 255, 255, 0.75);
+      color: rgba(255, 255, 255, 0.76);
+    }
+
+    .hud-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
     }
 
     .hud-row {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 14px;
-      padding: 6px 0;
-      font-size: 14px;
+      gap: 10px;
+      padding: 5px 0;
+      font-size: 13px;
     }
 
     .hud-row span {
-      color: rgba(255, 255, 255, 0.75);
+      color: rgba(255, 255, 255, 0.68);
     }
 
     .hud-row strong {
       color: white;
-      font-size: 15px;
       text-align: right;
+      font-size: 13px;
     }
 
-    #hudPower,
-    #hudObjective {
-      max-width: 148px;
-      line-height: 1.2;
+    #logLine {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.8);
       font-size: 13px;
-      white-space: normal;
+      line-height: 1.35;
+      min-height: 36px;
+    }
+
+    #controls {
+      left: 16px;
+      bottom: 16px;
+      width: min(368px, calc(100vw - 32px));
+      padding: 14px;
+      border-radius: var(--radius);
+      background: var(--panel-strong);
+      border: 1px solid var(--panel-border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .button-grid:last-child {
+      margin-bottom: 0;
+    }
+
+    .command-btn,
+    .build-btn,
+    .upgrade-btn {
+      min-height: 42px;
+      padding: 9px 10px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      text-align: left;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .command-btn.active {
+      color: #071114;
+      background: linear-gradient(180deg, #95e7ff, var(--accent-2));
+      border-color: rgba(111, 211, 255, 0.72);
+    }
+
+    .build-btn.ready,
+    .upgrade-btn.ready {
+      border-color: rgba(115, 255, 179, 0.44);
+      box-shadow: inset 0 0 0 1px rgba(115, 255, 179, 0.08);
     }
 
     #backBtn {
@@ -296,15 +321,11 @@
       box-shadow: 0 12px 24px rgba(255, 91, 110, 0.22);
     }
 
-    #backBtn:hover {
-      background: linear-gradient(180deg, #ff8696, var(--danger-hover));
-    }
-
     [hidden] {
       display: none !important;
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 760px) {
       .menu-card h1 {
         font-size: 38px;
       }
@@ -318,16 +339,29 @@
       }
 
       #hud {
-        left: 12px;
-        right: 12px;
-        top: auto;
-        bottom: 12px;
-        min-width: 0;
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+      }
+
+      #controls {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+        max-height: 38vh;
+        overflow-y: auto;
       }
 
       #backBtn {
-        top: 12px;
-        left: 12px;
+        top: auto;
+        bottom: calc(38vh + 22px);
+        left: 10px;
+      }
+
+      .button-grid {
+        grid-template-columns: 1fr 1fr;
       }
     }
   </style>
@@ -337,51 +371,73 @@
 
   <div id="menu">
     <div class="menu-card">
-      <h1>best game oat</h1>
+      <h1>Starstead Colony</h1>
       <p class="subtitle">
-        Collect glowing orbs, grow longer, and avoid crashing into your own tail.
-        Rare gold and magnet orbs, combo bonuses, and mini objectives now keep each run a little fresher.
+        Build a glowing frontier city in deep space. Dispatch little spacehands, gather resources,
+        scout beacons, construct districts, and keep the colony alive as the sector expands.
       </p>
 
       <div class="form-row">
         <input
-          id="username"
+          id="commanderName"
           type="text"
           maxlength="18"
           autocomplete="nickname"
-          placeholder="Enter username"
-          aria-label="Username"
+          placeholder="Commander name"
+          aria-label="Commander name"
         />
-        <button id="playBtn" type="button">Play</button>
-      </div>
-
-      <div class="hints">
-        WASD / Arrow Keys to move · Space/Shift or double-tap to dash · Enter rifts for Fever · M toggles sound
+        <button id="playBtn" type="button">Begin</button>
       </div>
 
       <button id="soundBtn" class="secondary-btn" type="button" aria-pressed="false">Sound: Off</button>
-
       <div id="nameError" class="name-error" aria-live="polite"></div>
 
-      <div id="leaderboard">
-        <h2>🏆 Leaderboard</h2>
-        <ul id="scores"></ul>
+      <div class="hints">
+        Click a command, then click a resource or beacon. Buildings need a worker to construct them.
+        Press M for sound, P or Esc to pause, and Space to focus the colony.
+      </div>
+
+      <div class="feature-list">
+        <div>Assign miners, growers, crystal techs, scouts, and builders.</div>
+        <div>Build solar arrays, habitats, gardens, labs, docks, and outposts.</div>
+        <div>Expand the map through strange beacons and unlock better upgrades.</div>
       </div>
     </div>
   </div>
 
-  <button id="backBtn" type="button" hidden>⬅ Back</button>
+  <button id="backBtn" type="button" hidden>Back</button>
 
   <div id="hud" hidden>
-    <div class="hud-title">Live Stats</div>
-    <div class="hud-row"><span>Player</span><strong id="hudName">—</strong></div>
-    <div class="hud-row"><span>Sector</span><strong id="hudLevel">1</strong></div>
-    <div class="hud-row"><span>Length</span><strong id="hudLength">0</strong></div>
-    <div class="hud-row"><span>Best</span><strong id="hudBest">0</strong></div>
-    <div class="hud-row"><span>Dash</span><strong id="hudDash">Ready</strong></div>
-    <div class="hud-row"><span>Status</span><strong id="hudStatus">Idle</strong></div>
-    <div class="hud-row"><span>Power</span><strong id="hudPower">None</strong></div>
-    <div class="hud-row"><span>Objective</span><strong id="hudObjective">—</strong></div>
+    <div class="hud-title">Colony Status</div>
+    <div class="hud-grid">
+      <div class="hud-row"><span>Commander</span><strong id="hudName">-</strong></div>
+      <div class="hud-row"><span>Cycle</span><strong id="hudCycle">0</strong></div>
+      <div class="hud-row"><span>Level</span><strong id="hudLevel">1</strong></div>
+      <div class="hud-row"><span>Crew</span><strong id="hudCrew">0/0</strong></div>
+      <div class="hud-row"><span>Energy</span><strong id="hudEnergy">0</strong></div>
+      <div class="hud-row"><span>Ore</span><strong id="hudOre">0</strong></div>
+      <div class="hud-row"><span>Food</span><strong id="hudFood">0</strong></div>
+      <div class="hud-row"><span>Crystal</span><strong id="hudCrystal">0</strong></div>
+      <div class="hud-row"><span>Science</span><strong id="hudScience">0</strong></div>
+      <div class="hud-row"><span>Morale</span><strong id="hudMorale">0%</strong></div>
+    </div>
+    <div id="logLine">Ready.</div>
+  </div>
+
+  <div id="controls" hidden>
+    <div class="panel-title">Dispatch</div>
+    <div class="button-grid" id="commandGrid">
+      <button class="command-btn active" type="button" data-command="ore">Mine Ore<br />Asteroids and iron moons</button>
+      <button class="command-btn" type="button" data-command="food">Grow Food<br />Hydro pods and spores</button>
+      <button class="command-btn" type="button" data-command="crystal">Collect Crystal<br />Blue crystal clusters</button>
+      <button class="command-btn" type="button" data-command="scout">Scout Beacon<br />Reveal new space</button>
+    </div>
+
+    <div class="panel-title">Build</div>
+    <div class="button-grid" id="buildGrid"></div>
+
+    <div class="panel-title">Upgrade</div>
+    <div class="button-grid" id="upgradeGrid"></div>
   </div>
 
   <script>
@@ -391,118 +447,122 @@
     const menu = document.getElementById("menu");
     const playBtn = document.getElementById("playBtn");
     const backBtn = document.getElementById("backBtn");
-    const usernameInput = document.getElementById("username");
-    const nameError = document.getElementById("nameError");
     const soundBtn = document.getElementById("soundBtn");
-    const scoresList = document.getElementById("scores");
+    const commanderInput = document.getElementById("commanderName");
+    const nameError = document.getElementById("nameError");
+    const controls = document.getElementById("controls");
+    const commandGrid = document.getElementById("commandGrid");
+    const buildGrid = document.getElementById("buildGrid");
+    const upgradeGrid = document.getElementById("upgradeGrid");
 
     const hud = document.getElementById("hud");
     const hudName = document.getElementById("hudName");
+    const hudCycle = document.getElementById("hudCycle");
     const hudLevel = document.getElementById("hudLevel");
-    const hudLength = document.getElementById("hudLength");
-    const hudBest = document.getElementById("hudBest");
-    const hudDash = document.getElementById("hudDash");
-    const hudStatus = document.getElementById("hudStatus");
-    const hudPower = document.getElementById("hudPower");
-    const hudObjective = document.getElementById("hudObjective");
+    const hudCrew = document.getElementById("hudCrew");
+    const hudEnergy = document.getElementById("hudEnergy");
+    const hudOre = document.getElementById("hudOre");
+    const hudFood = document.getElementById("hudFood");
+    const hudCrystal = document.getElementById("hudCrystal");
+    const hudScience = document.getElementById("hudScience");
+    const hudMorale = document.getElementById("hudMorale");
+    const logLine = document.getElementById("logLine");
 
     const STORAGE_KEYS = {
-      playerId: "glowTailPlayerId",
-      scores: "glowTailScores",
-      lastUsername: "glowTailLastUsername",
-      soundEnabled: "glowTailSoundEnabled"
+      commander: "starsteadCommander",
+      soundEnabled: "starsteadSoundEnabled"
     };
 
-    const START_TAIL_LENGTH = 24;
-    const FOOD_COUNT = 14;
-    const FOOD_GROWTH = 7;
-    const GOLD_FOOD_GROWTH = 13;
-    const MAGNET_FOOD_GROWTH = 9;
-    const SHIELD_FOOD_GROWTH = 6;
-    const MAX_NAME_LENGTH = 18;
-    const GRID_SIZE = 44;
-    const GOLD_FOOD_CHANCE = 0.12;
-    const MAGNET_FOOD_CHANCE = 0.08;
-    const SHIELD_FOOD_CHANCE = 0.07;
-    const MAGNET_DURATION = 7;
-    const SHIELD_DURATION = 10;
-    const MAGNET_RADIUS = 175;
-    const COMBO_WINDOW_MS = 2200;
-    const START_GRACE_SECONDS = 1.2;
-    const SHIELD_GRACE_SECONDS = 1.8;
-    const SHIELD_TAIL_TRIM = 10;
-    const STAR_COUNT = 95;
-    const DUST_COUNT = 44;
-    const MAX_RIPPLES = 18;
-    const DASH_MAX = 100;
-    const DASH_COST = 38;
-    const DASH_PICKUP_RECHARGE = 11;
-    const DASH_RECHARGE_PER_SECOND = 7;
-    const DASH_DURATION = 0.26;
-    const DASH_COOLDOWN = 0.22;
-    const DASH_SPEED = 12.4;
-    const FEVER_DURATION = 9;
-    const RIFT_LIFE_SECONDS = 16;
-    const RIFT_MIN_LEVEL = 2;
-    const HAZARD_MIN_LEVEL = 2;
-    const HAZARD_MAX_COUNT = 8;
+    const BUILDINGS = {
+      solar: {
+        name: "Solar Array",
+        cost: { ore: 45, crystal: 8 },
+        buildTime: 5,
+        color: "#ffe34d",
+        effect: "energy"
+      },
+      habitat: {
+        name: "Habitat Ring",
+        cost: { ore: 55, food: 18 },
+        buildTime: 6,
+        color: "#73ffb3",
+        effect: "housing"
+      },
+      garden: {
+        name: "Glow Garden",
+        cost: { ore: 34, crystal: 18 },
+        buildTime: 5,
+        color: "#9cff71",
+        effect: "food"
+      },
+      lab: {
+        name: "Signal Lab",
+        cost: { ore: 48, crystal: 34, energy: 22 },
+        buildTime: 7,
+        color: "#6fd3ff",
+        effect: "science"
+      },
+      dock: {
+        name: "Star Dock",
+        cost: { ore: 85, crystal: 44, energy: 38 },
+        buildTime: 9,
+        color: "#c89bff",
+        effect: "crew"
+      },
+      outpost: {
+        name: "Outer Outpost",
+        cost: { ore: 120, crystal: 58, food: 32 },
+        buildTime: 12,
+        color: "#ffcf5f",
+        effect: "expand"
+      }
+    };
+
+    const UPGRADES = {
+      thrusters: {
+        name: "Worker Thrusters",
+        cost: { science: 28, crystal: 14 },
+        desc: "Workers fly faster.",
+        apply: () => { game.workerSpeed += 28; }
+      },
+      cargo: {
+        name: "Cargo Pods",
+        cost: { science: 38, ore: 28 },
+        desc: "Workers carry more.",
+        apply: () => { game.cargoBonus += 5; }
+      },
+      scanners: {
+        name: "Deep Scanners",
+        cost: { science: 48, crystal: 28, energy: 30 },
+        desc: "Scouting reveals more nodes.",
+        apply: () => { game.scoutBonus += 1; }
+      }
+    };
+
+    const RESOURCE_META = {
+      ore: { name: "Ore", color: "#ffd45f", glow: "rgba(255, 210, 95, 0.34)", yield: 16 },
+      food: { name: "Food", color: "#8eff82", glow: "rgba(142, 255, 130, 0.3)", yield: 13 },
+      crystal: { name: "Crystal", color: "#7de7ff", glow: "rgba(125, 231, 255, 0.34)", yield: 10 }
+    };
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const lerp = (a, b, t) => a + (b - a) * t;
     const rand = (min, max) => Math.random() * (max - min) + min;
     const distanceXY = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
-    const distance = (a, b) => distanceXY(a.x, a.y, b.x, b.y);
+    const fmt = (value) => Math.floor(value).toString();
 
     let viewWidth = window.innerWidth;
     let viewHeight = window.innerHeight;
     let dpr = 1;
-
-    let currentUser = "";
-    let gameStarted = false;
-    let gameOver = false;
-    let paused = false;
     let lastFrameTime = 0;
     let globalTime = 0;
 
-    const player = {
-      x: viewWidth / 2,
-      y: viewHeight / 2,
-      size: 18,
-      baseSpeed: 4.5,
-      vx: 0,
-      vy: 0
-    };
-
-    let tail = [];
-    let maxTailLength = START_TAIL_LENGTH;
-    let foods = [];
-    let particles = [];
     let stars = [];
     let dust = [];
+    let particles = [];
     let ripples = [];
-    let hazards = [];
-    let rift = null;
-
-    let magnetTime = 0;
-    let shieldTime = 0;
-    let graceTime = 0;
-    let feverTime = 0;
-    let dashEnergy = DASH_MAX;
-    let dashTime = 0;
-    let dashCooldown = 0;
-    let dashVector = { x: 1, y: 0 };
-    let riftCooldown = 0;
-    let runLevel = 1;
-    let comboCount = 0;
-    let lastFoodCollectTime = -Infinity;
-    let toastText = "";
-    let toastTime = 0;
-    let objective = null;
-    let objectiveRotation = 0;
-    let objectivesCompleted = 0;
-    let pointerTarget = null;
-    let activePointerId = null;
-    let lastTapTime = 0;
+    let selectedCommand = "ore";
+    let selectedObject = null;
     let screenShake = 0;
     let flashTime = 0;
 
@@ -514,27 +574,30 @@
     let musicStep = 0;
     let audioEnabled = false;
 
-    const keys = Object.create(null);
-
-    function safeJsonParse(value, fallback) {
-      try {
-        const parsed = JSON.parse(value);
-        return parsed ?? fallback;
-      } catch {
-        return fallback;
-      }
-    }
-
-    function sanitizeName(name) {
-      return String(name || "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, MAX_NAME_LENGTH);
-    }
+    const game = {
+      running: false,
+      paused: false,
+      commander: "",
+      cycle: 0,
+      level: 1,
+      resources: { energy: 92, ore: 74, food: 62, crystal: 24, science: 0 },
+      housing: 5,
+      morale: 92,
+      workerSpeed: 86,
+      cargoBonus: 0,
+      scoutBonus: 0,
+      buildings: [],
+      sites: [],
+      workers: [],
+      nodes: [],
+      beacons: [],
+      upgrades: new Set(),
+      log: "Ready."
+    };
 
     const storage = (() => {
       try {
-        const testKey = "__glowTailStorageTest__";
+        const testKey = "__starsteadStorageTest__";
         localStorage.setItem(testKey, "1");
         localStorage.removeItem(testKey);
         return localStorage;
@@ -545,7 +608,6 @@
 
     function getStorageItem(key) {
       if (!storage) return null;
-
       try {
         return storage.getItem(key);
       } catch {
@@ -555,30 +617,108 @@
 
     function setStorageItem(key, value) {
       if (!storage) return;
-
       try {
         storage.setItem(key, value);
       } catch {
-        showToast("Storage is full, but your run still counts here", 1.8);
+        setLog("Storage is full. This run still works.");
       }
     }
 
-    let playerId = getStorageItem(STORAGE_KEYS.playerId);
-    if (!playerId) {
-      playerId =
-        (globalThis.crypto && typeof crypto.randomUUID === "function")
-          ? crypto.randomUUID()
-          : "player-" + Math.random().toString(36).slice(2, 11);
-
-      setStorageItem(STORAGE_KEYS.playerId, playerId);
+    function sanitizeName(name) {
+      return String(name || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 18);
     }
 
-    audioEnabled = getStorageItem(STORAGE_KEYS.soundEnabled) === "true";
-    updateSoundButton();
+    function setLog(text) {
+      game.log = text;
+      logLine.textContent = text;
+    }
+
+    function canAfford(cost) {
+      return Object.entries(cost).every(([key, amount]) => game.resources[key] >= amount);
+    }
+
+    function spend(cost) {
+      if (!canAfford(cost)) return false;
+      Object.entries(cost).forEach(([key, amount]) => {
+        game.resources[key] -= amount;
+      });
+      return true;
+    }
+
+    function costText(cost) {
+      return Object.entries(cost).map(([key, amount]) => `${amount} ${key}`).join(", ");
+    }
+
+    function createButton(label, sub, className, attrs) {
+      const button = document.createElement("button");
+      button.className = className;
+      button.type = "button";
+      button.innerHTML = `${label}<br />${sub}`;
+      Object.entries(attrs).forEach(([key, value]) => button.dataset[key] = value);
+      return button;
+    }
+
+    function buildPanels() {
+      buildGrid.replaceChildren();
+      Object.entries(BUILDINGS).forEach(([key, def]) => {
+        buildGrid.appendChild(createButton(def.name, costText(def.cost), "build-btn", { build: key }));
+      });
+
+      upgradeGrid.replaceChildren();
+      Object.entries(UPGRADES).forEach(([key, def]) => {
+        upgradeGrid.appendChild(createButton(def.name, def.desc, "upgrade-btn", { upgrade: key }));
+      });
+    }
+
+    function updateButtons() {
+      document.querySelectorAll(".command-btn").forEach((button) => {
+        button.classList.toggle("active", button.dataset.command === selectedCommand);
+      });
+
+      document.querySelectorAll(".build-btn").forEach((button) => {
+        const def = BUILDINGS[button.dataset.build];
+        const ready = canAfford(def.cost);
+        button.disabled = !ready;
+        button.classList.toggle("ready", ready);
+      });
+
+      document.querySelectorAll(".upgrade-btn").forEach((button) => {
+        const key = button.dataset.upgrade;
+        const def = UPGRADES[key];
+        const bought = game.upgrades.has(key);
+        const ready = !bought && canAfford(def.cost);
+        button.disabled = bought || !ready;
+        button.classList.toggle("ready", ready);
+        button.innerHTML = bought ? `${def.name}<br />Installed` : `${def.name}<br />${def.desc}`;
+      });
+    }
+
+    function updateHud() {
+      hudName.textContent = game.commander || "-";
+      hudCycle.textContent = fmt(game.cycle);
+      hudLevel.textContent = game.level;
+      hudCrew.textContent = `${game.workers.length}/${game.housing}`;
+      hudEnergy.textContent = fmt(game.resources.energy);
+      hudOre.textContent = fmt(game.resources.ore);
+      hudFood.textContent = fmt(game.resources.food);
+      hudCrystal.textContent = fmt(game.resources.crystal);
+      hudScience.textContent = fmt(game.resources.science);
+      hudMorale.textContent = `${Math.floor(game.morale)}%`;
+      logLine.textContent = game.log;
+      updateButtons();
+    }
+
+    function updateSoundButton() {
+      soundBtn.textContent = audioEnabled ? "Sound: On" : "Sound: Off";
+      soundBtn.setAttribute("aria-pressed", String(audioEnabled));
+    }
 
     function ensureBackgroundLayers() {
-      if (stars.length !== STAR_COUNT) {
-        stars = Array.from({ length: STAR_COUNT }, () => ({
+      if (stars.length !== 100) {
+        stars = Array.from({ length: 100 }, () => ({
           x: Math.random(),
           y: Math.random(),
           size: rand(0.7, 2.5),
@@ -589,8 +729,8 @@
         }));
       }
 
-      if (dust.length !== DUST_COUNT) {
-        dust = Array.from({ length: DUST_COUNT }, () => ({
+      if (dust.length !== 46) {
+        dust = Array.from({ length: 46 }, () => ({
           x: Math.random(),
           y: Math.random(),
           size: rand(18, 58),
@@ -606,222 +746,38 @@
       viewWidth = window.innerWidth;
       viewHeight = window.innerHeight;
       dpr = clamp(window.devicePixelRatio || 1, 1, 2);
-
       canvas.width = Math.floor(viewWidth * dpr);
       canvas.height = Math.floor(viewHeight * dpr);
       canvas.style.width = `${viewWidth}px`;
       canvas.style.height = `${viewHeight}px`;
-
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      player.x = clamp(player.x, player.size, viewWidth - player.size);
-      player.y = clamp(player.y, player.size, viewHeight - player.size);
       ensureBackgroundLayers();
-
-      foods = foods.filter(
-        (f) =>
-          f.x > 24 &&
-          f.x < viewWidth - 24 &&
-          f.y > 24 &&
-          f.y < viewHeight - 24
-      );
-
-      while (foods.length < getFoodTarget()) {
-        spawnFood();
-      }
+      clampWorldObjects();
     }
 
-    function getScores() {
-      const raw = safeJsonParse(getStorageItem(STORAGE_KEYS.scores), []);
-      if (!Array.isArray(raw)) return [];
+    function clampWorldObjects() {
+      const objects = [
+        ...game.buildings,
+        ...game.sites,
+        ...game.nodes,
+        ...game.beacons,
+        ...game.workers
+      ];
 
-      return raw
-        .filter(
-          (entry) =>
-            entry &&
-            typeof entry.id === "string" &&
-            typeof entry.name === "string" &&
-            typeof entry.score === "number" &&
-            Number.isFinite(entry.score)
-        )
-        .map((entry) => ({
-          id: entry.id,
-          name: sanitizeName(entry.name),
-          score: Math.max(START_TAIL_LENGTH, Math.floor(entry.score))
-        }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 10);
-    }
-
-    function getPersonalBest() {
-      const entry = getScores().find((s) => s.id === playerId);
-      return entry ? entry.score : START_TAIL_LENGTH;
-    }
-
-    function saveScore(name, score) {
-      const cleanName = sanitizeName(name);
-      if (!cleanName) return;
-
-      const nextScore = Math.max(START_TAIL_LENGTH, Math.floor(score));
-      const scores = getScores();
-      const byId = new Map(scores.map((entry) => [entry.id, { ...entry }]));
-
-      if (byId.has(playerId)) {
-        const existing = byId.get(playerId);
-        existing.score = Math.max(existing.score, nextScore);
-        existing.name = cleanName;
-      } else {
-        byId.set(playerId, {
-          id: playerId,
-          name: cleanName,
-          score: nextScore
-        });
-      }
-
-      const finalScores = [...byId.values()]
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 10);
-
-      setStorageItem(STORAGE_KEYS.scores, JSON.stringify(finalScores));
-    }
-
-    function renderLeaderboard() {
-      const scores = getScores();
-      scoresList.replaceChildren();
-
-      if (scores.length === 0) {
-        const li = document.createElement("li");
-        li.append(
-          createScoreSpan("score-name", "No scores yet"),
-          createScoreSpan("score-value", "0")
-        );
-        scoresList.appendChild(li);
-        return;
-      }
-
-      scores.forEach((entry, index) => {
-        const li = document.createElement("li");
-        const rank = index < 3 ? ["1st", "2nd", "3rd"][index] : `#${index + 1}`;
-
-        li.append(
-          createScoreSpan("score-rank", rank),
-          createScoreSpan("score-name", entry.name),
-          createScoreSpan("score-value", entry.score)
-        );
-
-        scoresList.appendChild(li);
+      objects.forEach((obj) => {
+        obj.x = clamp(obj.x, 32, viewWidth - 32);
+        obj.y = clamp(obj.y, 32, viewHeight - 32);
       });
     }
 
-    function createScoreSpan(className, value) {
-      const span = document.createElement("span");
-      span.className = className;
-      span.textContent = String(value);
-      return span;
-    }
-
-    function getPowerText() {
-      const parts = [];
-
-      if (feverTime > 0) {
-        parts.push(`Fever ${feverTime.toFixed(1)}s`);
-      }
-
-      if (magnetTime > 0) {
-        parts.push(`Magnet ${magnetTime.toFixed(1)}s`);
-      }
-
-      if (shieldTime > 0) {
-        parts.push(`Shield ${shieldTime.toFixed(1)}s`);
-      }
-
-      if (comboCount >= 2 && globalTime - lastFoodCollectTime <= getComboWindow()) {
-        parts.push(`Combo x${comboCount}`);
-      }
-
-      return parts.length ? parts.join(" | ") : "None";
-    }
-
-    function getDashText() {
-      if (dashTime > 0) return "Dashing";
-      if (dashEnergy >= DASH_MAX && dashCooldown <= 0) return "Ready";
-
-      return `${Math.floor(dashEnergy)}%`;
-    }
-
-    function getFoodTarget() {
-      return FOOD_COUNT + Math.min(8, Math.floor((runLevel - 1) / 2)) + (feverTime > 0 ? 6 : 0);
-    }
-
-    function getHazardTarget() {
-      if (!gameStarted || runLevel < HAZARD_MIN_LEVEL) return 0;
-
-      return Math.min(HAZARD_MAX_COUNT, Math.floor((runLevel - 1) * 0.85));
-    }
-
-    function getComboWindow() {
-      return feverTime > 0 ? COMBO_WINDOW_MS + 1300 : COMBO_WINDOW_MS;
-    }
-
-    function getObjectiveText() {
-      if (!objective) return "—";
-
-      if (objective.type === "eat") {
-        return `Eat ${objective.target} (${objective.progress}/${objective.target})`;
-      }
-
-      if (objective.type === "survive") {
-        return `Survive ${objective.target}s (${Math.min(objective.target, Math.floor(objective.progress))}/${objective.target})`;
-      }
-
-      if (objective.type === "combo") {
-        return `Reach combo x${objective.target} (${Math.min(comboCount, objective.target)}/${objective.target})`;
-      }
-
-      if (objective.type === "dash") {
-        return `Dash-eat ${objective.target} (${objective.progress}/${objective.target})`;
-      }
-
-      if (objective.type === "rift") {
-        return "Enter a rift";
-      }
-
-      return "—";
-    }
-
-    function updateHud() {
-      hudName.textContent = currentUser || "—";
-      hudLevel.textContent = runLevel;
-      hudLength.textContent = maxTailLength;
-      hudBest.textContent = Math.max(getPersonalBest(), maxTailLength);
-      hudDash.textContent = getDashText();
-      hudPower.textContent = getPowerText();
-      hudObjective.textContent = getObjectiveText();
-
-      if (!gameStarted) {
-        hudStatus.textContent = "Idle";
-      } else if (gameOver) {
-        hudStatus.textContent = "Game Over";
-      } else if (paused) {
-        hudStatus.textContent = "Paused";
-      } else {
-        hudStatus.textContent = "Running";
-      }
-    }
-
-    function showToast(text, duration = 1.3) {
-      toastText = text;
-      toastTime = duration;
-    }
-
-    function updateSoundButton() {
-      soundBtn.textContent = audioEnabled ? "Sound: On" : "Sound: Off";
-      soundBtn.setAttribute("aria-pressed", String(audioEnabled));
+    function updateAudio() {
+      if (!audioEnabled || !audioCtx || !masterGain) return;
+      const moraleVolume = 0.24 + game.morale / 500;
+      masterGain.gain.setTargetAtTime(moraleVolume, audioCtx.currentTime, 0.12);
     }
 
     function ensureAudio() {
       if (!audioEnabled) return false;
-
       try {
         if (!audioCtx) {
           const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -835,20 +791,15 @@
           masterGain = audioCtx.createGain();
           musicGain = audioCtx.createGain();
           sfxGain = audioCtx.createGain();
-
-          masterGain.gain.value = 0.32;
+          masterGain.gain.value = 0.34;
           musicGain.gain.value = 0.16;
           sfxGain.gain.value = 0.42;
-
           musicGain.connect(masterGain);
           sfxGain.connect(masterGain);
           masterGain.connect(audioCtx.destination);
         }
 
-        if (audioCtx.state === "suspended") {
-          audioCtx.resume();
-        }
-
+        if (audioCtx.state === "suspended") audioCtx.resume();
         startMusicLoop();
         return true;
       } catch {
@@ -874,16 +825,14 @@
 
     function startMusicLoop() {
       if (musicTimer || !audioEnabled || !audioCtx) return;
-
       musicTimer = setInterval(() => {
-        if (!audioEnabled || !audioCtx || !gameStarted || paused || gameOver) return;
+        if (!audioEnabled || !audioCtx || !game.running || game.paused) return;
         playMusicStep();
-      }, 430);
+      }, 440);
     }
 
     function stopMusicLoop() {
       if (!musicTimer) return;
-
       clearInterval(musicTimer);
       musicTimer = null;
     }
@@ -892,56 +841,41 @@
       const notes = [196, 246.94, 293.66, 392, 329.63, 293.66, 246.94, 261.63];
       const bass = [98, 98, 123.47, 123.47, 130.81, 130.81, 110, 110];
       const step = musicStep % notes.length;
-
       playTone(notes[step], 0.32, "triangle", step % 2 === 0 ? 0.035 : 0.022, 0, musicGain);
-
-      if (step % 2 === 0) {
-        playTone(bass[step], 0.46, "sine", 0.025, 0, musicGain);
-      }
-
+      if (step % 2 === 0) playTone(bass[step], 0.46, "sine", 0.025, 0, musicGain);
       musicStep += 1;
     }
 
     function playTone(frequency, duration = 0.16, type = "sine", volume = 0.16, delay = 0, targetGain = sfxGain) {
       if (!audioEnabled || !audioCtx || !targetGain) return;
-
       const now = audioCtx.currentTime + delay;
       const oscillator = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-
       oscillator.type = type;
       oscillator.frequency.setValueAtTime(frequency, now);
       gain.gain.setValueAtTime(0.0001, now);
       gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), now + 0.015);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
       oscillator.connect(gain);
       gain.connect(targetGain);
       oscillator.start(now);
       oscillator.stop(now + duration + 0.03);
     }
 
-    function playNoise(duration = 0.2, volume = 0.16, frequency = 500) {
+    function playNoise(duration = 0.18, volume = 0.14, frequency = 520) {
       if (!audioEnabled || !audioCtx || !sfxGain) return;
-
       const now = audioCtx.currentTime;
       const sampleRate = audioCtx.sampleRate;
       const buffer = audioCtx.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
       const data = buffer.getChannelData(0);
-
-      for (let i = 0; i < data.length; i++) {
-        data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
-      }
-
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
       const source = audioCtx.createBufferSource();
       const filter = audioCtx.createBiquadFilter();
       const gain = audioCtx.createGain();
-
       filter.type = "lowpass";
       filter.frequency.setValueAtTime(frequency, now);
       gain.gain.setValueAtTime(volume, now);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
       source.buffer = buffer;
       source.connect(filter);
       filter.connect(gain);
@@ -950,399 +884,38 @@
       source.stop(now + duration + 0.02);
     }
 
-    function playPickupSound(type) {
+    function playDispatchSound() {
       if (!ensureAudio()) return;
-
-      if (type === "gold") {
-        playTone(659.25, 0.12, "triangle", 0.18);
-        playTone(987.77, 0.18, "sine", 0.13, 0.05);
-      } else if (type === "magnet") {
-        playTone(392, 0.14, "sawtooth", 0.11);
-        playTone(783.99, 0.22, "triangle", 0.12, 0.04);
-      } else if (type === "shield") {
-        playTone(329.63, 0.16, "triangle", 0.14);
-        playTone(493.88, 0.2, "sine", 0.12, 0.04);
-      } else {
-        playTone(523.25 + Math.min(comboCount, 8) * 18, 0.11, "sine", 0.13);
-      }
+      playTone(392, 0.1, "triangle", 0.1);
+      playTone(587.33, 0.12, "sine", 0.08, 0.04);
     }
 
-    function playCrashSound() {
+    function playDropoffSound(resourceType) {
       if (!ensureAudio()) return;
-
-      playNoise(0.34, 0.22, 320);
-      playTone(164.81, 0.28, "sawtooth", 0.12);
-      playTone(82.41, 0.42, "sine", 0.1, 0.06);
+      const freq = resourceType === "ore" ? 329.63 : resourceType === "food" ? 440 : 659.25;
+      playTone(freq, 0.11, "triangle", 0.12);
     }
 
-    function playDashSound() {
+    function playBuildSound() {
       if (!ensureAudio()) return;
-
-      playTone(329.63, 0.09, "sawtooth", 0.11);
-      playTone(659.25, 0.14, "triangle", 0.11, 0.035);
+      playNoise(0.14, 0.1, 750);
+      playTone(523.25, 0.18, "triangle", 0.12, 0.04);
+      playTone(783.99, 0.2, "sine", 0.09, 0.1);
     }
 
-    function playRiftSound() {
+    function playExpandSound() {
       if (!ensureAudio()) return;
-
       playTone(261.63, 0.18, "triangle", 0.12);
       playTone(523.25, 0.26, "sine", 0.12, 0.06);
       playTone(1046.5, 0.32, "triangle", 0.08, 0.13);
     }
 
-    function playMineBreakSound() {
-      if (!ensureAudio()) return;
-
-      playNoise(0.16, 0.16, 680);
-      playTone(440, 0.12, "triangle", 0.1);
+    function spawnRipple(x, y, hue = 52, strength = 1) {
+      ripples.push({ x, y, hue, age: 0, life: 36 + strength * 10, radius: 8 + strength * 6, maxRadius: 76 + strength * 36 });
+      if (ripples.length > 22) ripples.splice(0, ripples.length - 22);
     }
 
-    function setNewObjective() {
-      const objectivePool = runLevel >= 4
-        ? ["eat", "survive", "combo", "dash", "rift"]
-        : runLevel >= 2
-          ? ["eat", "survive", "combo", "rift"]
-          : ["eat", "survive", "combo"];
-      const cycleType = objectivePool[objectiveRotation % objectivePool.length];
-      objectiveRotation++;
-
-      if (cycleType === "eat") {
-        const target = clamp(4 + Math.floor(runLevel / 2), 4, 10);
-        objective = {
-          type: "eat",
-          target,
-          progress: 0,
-          reward: 8 + Math.min(10, runLevel)
-        };
-        return;
-      }
-
-      if (cycleType === "survive") {
-        const target = clamp(14 + runLevel * 2, 16, 34);
-        objective = {
-          type: "survive",
-          target,
-          progress: 0,
-          reward: 9 + Math.min(11, runLevel)
-        };
-        return;
-      }
-
-      if (cycleType === "combo") {
-        objective = {
-          type: "combo",
-          target: clamp(4 + Math.floor(runLevel / 2), 4, 8),
-          progress: 0,
-          reward: 9 + Math.min(10, runLevel)
-        };
-        return;
-      }
-
-      if (cycleType === "dash") {
-        objective = {
-          type: "dash",
-          target: clamp(3 + Math.floor(runLevel / 3), 3, 7),
-          progress: 0,
-          reward: 10 + Math.min(12, runLevel)
-        };
-        return;
-      }
-
-      objective = {
-        type: "rift",
-        target: 1,
-        progress: 0,
-        reward: 12 + Math.min(12, runLevel)
-      };
-      spawnRift(true);
-    }
-
-    function completeObjective() {
-      if (!objective) return;
-
-      const reward = objective.reward;
-      maxTailLength += reward;
-      objectivesCompleted += 1;
-      runLevel += 1;
-      spawnEatParticles(player.x, player.y, 170, 250, 20);
-      spawnRipple(player.x, player.y, 205, 1.5);
-      playTone(783.99, 0.16, "triangle", 0.14);
-      playTone(1174.66, 0.22, "sine", 0.1, 0.08);
-      syncHazards();
-
-      if (runLevel >= RIFT_MIN_LEVEL && runLevel % 2 === 0) {
-        spawnRift(true);
-      }
-
-      showToast(`Sector ${runLevel}! +${reward} tail`, 1.5);
-      setNewObjective();
-      updateHud();
-    }
-
-    function resetGame() {
-      player.x = viewWidth / 2;
-      player.y = viewHeight / 2;
-      player.vx = 0;
-      player.vy = 0;
-
-      maxTailLength = START_TAIL_LENGTH;
-      foods = [];
-      particles = [];
-      ripples = [];
-      hazards = [];
-      rift = null;
-      tail = [];
-
-      magnetTime = 0;
-      shieldTime = 0;
-      graceTime = START_GRACE_SECONDS;
-      feverTime = 0;
-      dashEnergy = DASH_MAX;
-      dashTime = 0;
-      dashCooldown = 0;
-      dashVector = { x: 1, y: 0 };
-      riftCooldown = 7;
-      runLevel = 1;
-      comboCount = 0;
-      lastFoodCollectTime = -Infinity;
-      toastText = "";
-      toastTime = 0;
-      objectiveRotation = 0;
-      objectivesCompleted = 0;
-      pointerTarget = null;
-      activePointerId = null;
-      lastTapTime = 0;
-      screenShake = 0;
-      flashTime = 0;
-      setNewObjective();
-
-      const spacing = player.size * 0.72;
-      for (let i = 0; i < maxTailLength; i++) {
-        tail.push({
-          x: player.x - (i + 1) * spacing,
-          y: player.y
-        });
-      }
-
-      for (let i = 0; i < FOOD_COUNT; i++) {
-        spawnFood();
-      }
-
-      updateHud();
-    }
-
-    function spawnFood(typeOverride = null, center = null) {
-      const margin = 36;
-
-      for (let attempt = 0; attempt < 80; attempt++) {
-        const x = center
-          ? clamp(center.x + rand(-150, 150), margin, Math.max(margin + 1, viewWidth - margin))
-          : rand(margin, Math.max(margin + 1, viewWidth - margin));
-        const y = center
-          ? clamp(center.y + rand(-150, 150), margin, Math.max(margin + 1, viewHeight - margin))
-          : rand(margin, Math.max(margin + 1, viewHeight - margin));
-
-        const tooCloseToPlayer =
-          !center && distanceXY(x, y, player.x, player.y) < 140;
-
-        const tooCloseToFood = foods.some((food) => distanceXY(x, y, food.x, food.y) < 34);
-        const tooCloseToHazard = hazards.some((hazard) => distanceXY(x, y, hazard.x, hazard.y) < hazard.size + 34);
-
-        const tooCloseToTail = tail.some((seg, index) => {
-          if (index < 10) return false;
-          return distanceXY(x, y, seg.x, seg.y) < 22;
-        });
-
-        if (!tooCloseToPlayer && !tooCloseToFood && !tooCloseToHazard && !tooCloseToTail) {
-          let type = typeOverride || "normal";
-          const roll = Math.random();
-
-          if (!typeOverride) {
-            const feverBonus = feverTime > 0 ? 0.06 : 0;
-
-            if (roll < MAGNET_FOOD_CHANCE + feverBonus) {
-              type = "magnet";
-            } else if (roll < MAGNET_FOOD_CHANCE + SHIELD_FOOD_CHANCE + feverBonus * 1.6) {
-              type = "shield";
-            } else if (roll < MAGNET_FOOD_CHANCE + SHIELD_FOOD_CHANCE + GOLD_FOOD_CHANCE + feverBonus * 2.2) {
-              type = "gold";
-            }
-          }
-
-          foods.push({
-            x,
-            y,
-            size: type === "magnet" ? 10.2 : type === "shield" ? 10.6 : type === "gold" ? 10.8 : 9.5,
-            seed: Math.random() * Math.PI * 2,
-            type
-          });
-          return;
-        }
-      }
-
-      foods.push({
-        x: rand(margin, Math.max(margin + 1, viewWidth - margin)),
-        y: rand(margin, Math.max(margin + 1, viewHeight - margin)),
-        size: typeOverride === "magnet" ? 10.2 : typeOverride === "shield" ? 10.6 : typeOverride === "gold" ? 10.8 : 9.5,
-        seed: Math.random() * Math.PI * 2,
-        type: typeOverride || "normal"
-      });
-    }
-
-    function spawnHazard() {
-      const margin = 70;
-
-      for (let attempt = 0; attempt < 80; attempt++) {
-        const x = rand(margin, Math.max(margin + 1, viewWidth - margin));
-        const y = rand(margin, Math.max(margin + 1, viewHeight - margin));
-        const tooCloseToPlayer = distanceXY(x, y, player.x, player.y) < 230;
-        const tooCloseToFood = foods.some((food) => distanceXY(x, y, food.x, food.y) < 80);
-        const tooCloseToHazard = hazards.some((hazard) => distanceXY(x, y, hazard.x, hazard.y) < 115);
-
-        if (!tooCloseToPlayer && !tooCloseToFood && !tooCloseToHazard) {
-          hazards.push({
-            x,
-            y,
-            vx: rand(-0.32, 0.32),
-            vy: rand(-0.32, 0.32),
-            size: rand(16, 23),
-            phase: rand(0, Math.PI * 2)
-          });
-          return;
-        }
-      }
-    }
-
-    function syncHazards() {
-      const target = getHazardTarget();
-
-      while (hazards.length < target) {
-        spawnHazard();
-      }
-
-      while (hazards.length > target) {
-        hazards.pop();
-      }
-    }
-
-    function spawnRift(force = false) {
-      if (rift || runLevel < RIFT_MIN_LEVEL) return;
-      if (!force && riftCooldown > 0) return;
-
-      const margin = 90;
-      let x = viewWidth * 0.5;
-      let y = viewHeight * 0.5;
-
-      for (let attempt = 0; attempt < 80; attempt++) {
-        x = rand(margin, Math.max(margin + 1, viewWidth - margin));
-        y = rand(margin, Math.max(margin + 1, viewHeight - margin));
-
-        if (distanceXY(x, y, player.x, player.y) > 230 && !hazards.some((hazard) => distanceXY(x, y, hazard.x, hazard.y) < 130)) {
-          break;
-        }
-      }
-
-      rift = {
-        x,
-        y,
-        size: 42,
-        age: 0,
-        life: RIFT_LIFE_SECONDS
-      };
-      riftCooldown = 18;
-      spawnRipple(x, y, 285, 1.35);
-    }
-
-    function activateRift() {
-      if (!rift) return;
-
-      const { x, y } = rift;
-      rift = null;
-      feverTime = FEVER_DURATION;
-      magnetTime = Math.max(magnetTime, 2.2);
-      dashEnergy = DASH_MAX;
-      comboCount = Math.max(comboCount, 3);
-      lastFoodCollectTime = globalTime;
-
-      for (let i = 0; i < 8; i++) {
-        spawnFood(i % 3 === 0 ? "gold" : null, { x, y });
-      }
-
-      spawnEatParticles(x, y, 250, 305, 32);
-      spawnRipple(x, y, 285, 2.4);
-      flashScreen(0.22, 5);
-      playRiftSound();
-      showToast("Fever rift! Orbs are juiced", 1.55);
-
-      if (objective && objective.type === "rift") {
-        objective.progress = 1;
-        completeObjective();
-      }
-    }
-
-    function getDashDirection() {
-      const left = keys["a"] || keys["arrowleft"] ? 1 : 0;
-      const right = keys["d"] || keys["arrowright"] ? 1 : 0;
-      const up = keys["w"] || keys["arrowup"] ? 1 : 0;
-      const down = keys["s"] || keys["arrowdown"] ? 1 : 0;
-
-      let dx = right - left;
-      let dy = down - up;
-
-      if (dx === 0 && dy === 0 && pointerTarget) {
-        dx = pointerTarget.x - player.x;
-        dy = pointerTarget.y - player.y;
-      }
-
-      if (dx === 0 && dy === 0 && Math.hypot(player.vx, player.vy) > 0.25) {
-        dx = player.vx;
-        dy = player.vy;
-      }
-
-      const mag = Math.hypot(dx, dy) || 1;
-      return { x: dx / mag, y: dy / mag };
-    }
-
-    function startDash() {
-      if (!gameStarted || gameOver || paused || dashCooldown > 0 || dashEnergy < DASH_COST) return false;
-
-      dashVector = getDashDirection();
-      dashEnergy = Math.max(0, dashEnergy - DASH_COST);
-      dashTime = DASH_DURATION;
-      dashCooldown = DASH_COOLDOWN;
-      graceTime = Math.max(graceTime, DASH_DURATION + 0.08);
-      player.vx = dashVector.x * DASH_SPEED;
-      player.vy = dashVector.y * DASH_SPEED;
-      spawnRipple(player.x, player.y, 200, 1.1);
-      spawnEatParticles(player.x, player.y, 188, 220, 12);
-      playDashSound();
-      return true;
-    }
-
-    function useShieldSave(message = "Shield saved you! Tail trimmed") {
-      if (shieldTime <= 0) return false;
-
-      shieldTime = 0;
-      graceTime = SHIELD_GRACE_SECONDS;
-      maxTailLength = Math.max(START_TAIL_LENGTH, maxTailLength - SHIELD_TAIL_TRIM);
-      tail.length = Math.min(tail.length, maxTailLength);
-      comboCount = 0;
-      spawnEatParticles(player.x, player.y, 105, 150, 26);
-      spawnRipple(player.x, player.y, 136, 1.8);
-      flashScreen(0.18, 5);
-      playTone(220, 0.14, "sawtooth", 0.11);
-      playTone(440, 0.2, "triangle", 0.13, 0.06);
-      showToast(message, 1.5);
-      updateHud();
-      return true;
-    }
-
-    function handlePlayerHit(message) {
-      if (useShieldSave(message)) return;
-      endGame();
-    }
-
-    function spawnEatParticles(x, y, hueMin = 42, hueMax = 62, count = 12) {
+    function spawnParticles(x, y, hueMin = 42, hueMax = 62, count = 12) {
       for (let i = 0; i < count; i++) {
         particles.push({
           x,
@@ -1351,435 +924,577 @@
           vy: rand(-2.6, 2.6),
           size: rand(2.2, 4.8),
           age: 0,
-          life: rand(18, 30),
+          life: rand(18, 34),
           hue: rand(hueMin, hueMax)
         });
       }
-
-      if (particles.length > 220) {
-        particles.splice(0, particles.length - 220);
-      }
+      if (particles.length > 260) particles.splice(0, particles.length - 260);
     }
 
-    function spawnRipple(x, y, hue = 52, strength = 1) {
-      ripples.push({
-        x,
-        y,
-        hue,
-        age: 0,
-        life: 34 + strength * 10,
-        radius: 8 + strength * 6,
-        maxRadius: 82 + strength * 38
-      });
-
-      if (ripples.length > MAX_RIPPLES) {
-        ripples.splice(0, ripples.length - MAX_RIPPLES);
-      }
-    }
-
-    function flashScreen(duration = 0.18, shake = 4) {
+    function flashScreen(duration = 0.16, shake = 3) {
       flashTime = Math.max(flashTime, duration);
       screenShake = Math.max(screenShake, shake);
     }
 
-    function updateVisualEffects(dt, deltaSeconds) {
-      if (screenShake > 0) {
-        screenShake = Math.max(0, screenShake - dt * 0.32);
+    function getColonyCenter() {
+      const hubs = game.buildings.filter((building) => building.kind === "hub" || building.kind === "outpost");
+      const nearest = hubs.reduce((best, hub) => {
+        const dist = distanceXY(playerViewX(), playerViewY(), hub.x, hub.y);
+        return !best || dist < best.dist ? { hub, dist } : best;
+      }, null);
+      return nearest ? nearest.hub : game.buildings[0];
+    }
+
+    function playerViewX() {
+      return viewWidth / 2;
+    }
+
+    function playerViewY() {
+      return viewHeight / 2;
+    }
+
+    function nearestHubTo(x, y) {
+      return game.buildings
+        .filter((building) => building.kind === "hub" || building.kind === "outpost")
+        .reduce((best, hub) => {
+          const dist = distanceXY(x, y, hub.x, hub.y);
+          return !best || dist < best.dist ? { hub, dist } : best;
+        }, null).hub;
+    }
+
+    function makeBuilding(kind, x, y) {
+      const def = kind === "hub"
+        ? { name: "Command Hub", color: "#6fd3ff", effect: "hub" }
+        : BUILDINGS[kind];
+      return {
+        id: cryptoRandomId(),
+        kind,
+        name: def.name,
+        x,
+        y,
+        size: kind === "hub" || kind === "outpost" ? 38 : 24,
+        color: def.color,
+        phase: rand(0, Math.PI * 2)
+      };
+    }
+
+    function makeWorker(index, home) {
+      return {
+        id: cryptoRandomId(),
+        name: `Spacehand ${index + 1}`,
+        x: home.x + rand(-26, 26),
+        y: home.y + rand(-26, 26),
+        tx: home.x,
+        ty: home.y,
+        homeId: home.id,
+        state: "idle",
+        job: null,
+        targetId: null,
+        carry: null,
+        work: 0,
+        orbit: rand(0, Math.PI * 2),
+        color: ["#6fd3ff", "#73ffb3", "#ffe34d", "#c89bff", "#ff91ad"][index % 5]
+      };
+    }
+
+    function cryptoRandomId() {
+      if (globalThis.crypto && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+      return "id-" + Math.random().toString(36).slice(2, 12);
+    }
+
+    function resetGame() {
+      const cx = viewWidth / 2;
+      const cy = viewHeight / 2;
+      game.cycle = 0;
+      game.level = 1;
+      game.resources = { energy: 92, ore: 74, food: 62, crystal: 24, science: 0 };
+      game.housing = 5;
+      game.morale = 92;
+      game.workerSpeed = 86;
+      game.cargoBonus = 0;
+      game.scoutBonus = 0;
+      game.upgrades = new Set();
+      game.buildings = [makeBuilding("hub", cx, cy)];
+      game.sites = [];
+      game.workers = [];
+      game.nodes = [];
+      game.beacons = [];
+      game.log = "Dispatch your first crew.";
+      selectedCommand = "ore";
+      selectedObject = null;
+      particles = [];
+      ripples = [];
+      screenShake = 0;
+      flashTime = 0;
+
+      for (let i = 0; i < 3; i++) game.workers.push(makeWorker(i, game.buildings[0]));
+      seedResourceField(cx, cy, 1);
+      spawnBeacon(cx + rand(-260, 260), cy + rand(-220, 220));
+      updateHud();
+    }
+
+    function seedResourceField(cx, cy, tier = 1) {
+      const count = 8 + tier * 2;
+      const types = ["ore", "food", "crystal"];
+      for (let i = 0; i < count; i++) {
+        const angle = rand(0, Math.PI * 2);
+        const radius = rand(130, 350 + tier * 60);
+        spawnNode(types[i % types.length], cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius, tier);
+      }
+    }
+
+    function spawnNode(type, x, y, tier = game.level) {
+      const margin = 54;
+      game.nodes.push({
+        id: cryptoRandomId(),
+        type,
+        x: clamp(x, margin, viewWidth - margin),
+        y: clamp(y, margin, viewHeight - margin),
+        amount: Math.floor(rand(70, 135) + tier * 24),
+        max: Math.floor(rand(100, 170) + tier * 28),
+        size: type === "ore" ? rand(18, 25) : type === "food" ? rand(16, 22) : rand(14, 20),
+        phase: rand(0, Math.PI * 2)
+      });
+    }
+
+    function spawnBeacon(x, y) {
+      const margin = 74;
+      game.beacons.push({
+        id: cryptoRandomId(),
+        x: clamp(x, margin, viewWidth - margin),
+        y: clamp(y, margin, viewHeight - margin),
+        size: 36,
+        progress: 0,
+        phase: rand(0, Math.PI * 2)
+      });
+    }
+
+    function findIdleWorker() {
+      return game.workers.find((worker) => worker.state === "idle");
+    }
+
+    function findById(collection, id) {
+      return collection.find((item) => item.id === id);
+    }
+
+    function assignWorkerToNode(worker, node) {
+      worker.state = "travel";
+      worker.job = node.type;
+      worker.targetId = node.id;
+      worker.carry = null;
+      worker.work = 0;
+      worker.tx = node.x;
+      worker.ty = node.y;
+      setLog(`${worker.name} dispatched for ${RESOURCE_META[node.type].name.toLowerCase()}.`);
+      spawnRipple(worker.x, worker.y, 196, 0.5);
+      playDispatchSound();
+    }
+
+    function assignWorkerToBeacon(worker, beacon) {
+      worker.state = "travel";
+      worker.job = "scout";
+      worker.targetId = beacon.id;
+      worker.carry = null;
+      worker.work = 0;
+      worker.tx = beacon.x;
+      worker.ty = beacon.y;
+      setLog(`${worker.name} is scouting a beacon.`);
+      spawnRipple(worker.x, worker.y, 270, 0.7);
+      playDispatchSound();
+    }
+
+    function assignWorkerToSite(worker, site) {
+      worker.state = "travel";
+      worker.job = "build";
+      worker.targetId = site.id;
+      worker.carry = null;
+      worker.work = 0;
+      worker.tx = site.x;
+      worker.ty = site.y;
+      site.workerId = worker.id;
+      setLog(`${worker.name} is building ${site.name}.`);
+      spawnRipple(worker.x, worker.y, 45, 0.7);
+      playDispatchSound();
+    }
+
+    function commandNearest(type) {
+      const worker = findIdleWorker();
+      if (!worker) {
+        setLog("No idle spacehands available.");
+        return;
       }
 
-      if (flashTime > 0) {
-        flashTime = Math.max(0, flashTime - deltaSeconds);
+      if (type === "scout") {
+        const beacon = nearestTarget(game.beacons, worker.x, worker.y);
+        if (!beacon) {
+          setLog("No beacons to scout. Build an outpost or finish current work.");
+          return;
+        }
+        assignWorkerToBeacon(worker, beacon);
+        return;
       }
+
+      const node = nearestTarget(game.nodes.filter((item) => item.type === type && item.amount > 0), worker.x, worker.y);
+      if (!node) {
+        setLog(`No ${RESOURCE_META[type].name.toLowerCase()} node in range. Scout more space.`);
+        return;
+      }
+      assignWorkerToNode(worker, node);
+    }
+
+    function nearestTarget(items, x, y) {
+      return items.reduce((best, item) => {
+        const dist = distanceXY(x, y, item.x, item.y);
+        return !best || dist < best.dist ? { item, dist } : best;
+      }, null)?.item;
+    }
+
+    function createSite(kind) {
+      const def = BUILDINGS[kind];
+      if (!spend(def.cost)) {
+        setLog(`Need ${costText(def.cost)} for ${def.name}.`);
+        return;
+      }
+
+      const anchor = game.buildings[game.buildings.length - 1] || game.buildings[0];
+      const index = game.sites.length + game.buildings.length;
+      const angle = index * 1.42 + rand(-0.18, 0.18);
+      const radius = kind === "outpost" ? rand(205, 295) : rand(78, 142);
+      const site = {
+        id: cryptoRandomId(),
+        kind,
+        name: def.name,
+        x: clamp(anchor.x + Math.cos(angle) * radius, 44, viewWidth - 44),
+        y: clamp(anchor.y + Math.sin(angle) * radius, 44, viewHeight - 44),
+        progress: 0,
+        needed: def.buildTime,
+        workerId: null,
+        color: def.color
+      };
+
+      game.sites.push(site);
+      const worker = findIdleWorker();
+      if (worker) assignWorkerToSite(worker, site);
+      setLog(`${def.name} blueprint placed.`);
+      updateHud();
+    }
+
+    function buyUpgrade(key) {
+      const upgrade = UPGRADES[key];
+      if (game.upgrades.has(key)) return;
+      if (!spend(upgrade.cost)) {
+        setLog(`Need ${costText(upgrade.cost)} for ${upgrade.name}.`);
+        return;
+      }
+
+      game.upgrades.add(key);
+      upgrade.apply();
+      spawnRipple(game.buildings[0].x, game.buildings[0].y, 205, 1.4);
+      playBuildSound();
+      setLog(`${upgrade.name} installed.`);
+      updateHud();
+    }
+
+    function clickWorld(x, y) {
+      if (!game.running || game.paused) return;
+      const target = pickObject(x, y);
+      if (!target) {
+        selectedObject = null;
+        setLog("Select a resource, beacon, or command.");
+        return;
+      }
+
+      selectedObject = target.object;
+      if (target.type === "node") {
+        selectedCommand = target.object.type;
+        commandGrid.querySelector(`[data-command="${selectedCommand}"]`)?.classList.add("active");
+        const worker = findIdleWorker();
+        if (worker) assignWorkerToNode(worker, target.object);
+        else setLog("No idle spacehands available.");
+      } else if (target.type === "beacon") {
+        selectedCommand = "scout";
+        const worker = findIdleWorker();
+        if (worker) assignWorkerToBeacon(worker, target.object);
+        else setLog("No idle spacehands available.");
+      } else if (target.type === "site") {
+        const worker = findIdleWorker();
+        if (worker) assignWorkerToSite(worker, target.object);
+        else setLog("No idle builder available.");
+      } else if (target.type === "worker") {
+        setLog(`${target.object.name}: ${workerStatus(target.object)}.`);
+      } else if (target.type === "building") {
+        setLog(`${target.object.name}: online.`);
+      }
+      updateButtons();
+    }
+
+    function pickObject(x, y) {
+      const candidates = [
+        ...game.workers.map((object) => ({ type: "worker", object, radius: 16 })),
+        ...game.nodes.map((object) => ({ type: "node", object, radius: object.size + 14 })),
+        ...game.beacons.map((object) => ({ type: "beacon", object, radius: object.size + 12 })),
+        ...game.sites.map((object) => ({ type: "site", object, radius: 30 })),
+        ...game.buildings.map((object) => ({ type: "building", object, radius: object.size + 8 }))
+      ];
+
+      return candidates
+        .map((candidate) => ({ ...candidate, dist: distanceXY(x, y, candidate.object.x, candidate.object.y) }))
+        .filter((candidate) => candidate.dist <= candidate.radius)
+        .sort((a, b) => a.dist - b.dist)[0] || null;
+    }
+
+    function workerStatus(worker) {
+      if (worker.state === "idle") return "idle near the colony";
+      if (worker.state === "return") return `returning with ${worker.carry?.type || "cargo"}`;
+      if (worker.job === "build") return "building";
+      if (worker.job === "scout") return "scouting";
+      return `gathering ${worker.job}`;
+    }
+
+    function applyBuildingEffect(building) {
+      const kind = building.kind;
+      if (kind === "solar") game.resources.energy += 16;
+      if (kind === "habitat") {
+        game.housing += 3;
+        if (game.workers.length < game.housing) game.workers.push(makeWorker(game.workers.length, nearestHubTo(building.x, building.y)));
+      }
+      if (kind === "garden") game.resources.food += 18;
+      if (kind === "lab") game.resources.science += 14;
+      if (kind === "dock") {
+        game.housing += 1;
+        game.workers.push(makeWorker(game.workers.length, nearestHubTo(building.x, building.y)));
+      }
+      if (kind === "outpost") {
+        game.level += 1;
+        game.housing += 2;
+        seedResourceField(building.x, building.y, game.level);
+        spawnBeacon(building.x + rand(-340, 340), building.y + rand(-280, 280));
+      }
+    }
+
+    function updateWorkers(deltaSeconds) {
+      for (const worker of game.workers) {
+        if (worker.state === "idle") {
+          const home = findById(game.buildings, worker.homeId) || game.buildings[0];
+          worker.orbit += deltaSeconds * (0.6 + game.morale / 180);
+          worker.tx = home.x + Math.cos(worker.orbit) * 36;
+          worker.ty = home.y + Math.sin(worker.orbit) * 26;
+          moveWorker(worker, deltaSeconds, 0.55);
+          continue;
+        }
+
+        if (worker.state === "travel") {
+          const arrived = moveWorker(worker, deltaSeconds, 1);
+          if (arrived) {
+            if (worker.job === "build") worker.state = "build";
+            else worker.state = "work";
+          }
+          continue;
+        }
+
+        if (worker.state === "work") {
+          worker.work += deltaSeconds * (game.morale / 90);
+          if (worker.job === "scout") {
+            if (worker.work >= 4.2) finishScout(worker);
+          } else {
+            const node = findById(game.nodes, worker.targetId);
+            if (!node || node.amount <= 0) {
+              worker.state = "idle";
+              worker.job = null;
+              worker.targetId = null;
+              setLog("A resource node ran dry.");
+            } else if (worker.work >= 3.1) {
+              const meta = RESOURCE_META[node.type];
+              const amount = Math.min(node.amount, meta.yield + game.cargoBonus + Math.floor(game.level * 0.8));
+              node.amount -= amount;
+              worker.carry = { type: node.type, amount };
+              const hub = nearestHubTo(worker.x, worker.y);
+              worker.tx = hub.x;
+              worker.ty = hub.y;
+              worker.state = "return";
+              worker.work = 0;
+              if (node.amount <= 0) spawnRipple(node.x, node.y, 45, 0.7);
+            }
+          }
+          continue;
+        }
+
+        if (worker.state === "build") {
+          const site = findById(game.sites, worker.targetId);
+          if (!site) {
+            worker.state = "idle";
+            worker.job = null;
+            continue;
+          }
+
+          site.progress += deltaSeconds * (0.9 + game.morale / 160);
+          spawnConstructionSparks(site.x, site.y);
+          if (site.progress >= site.needed) finishSite(site, worker);
+          continue;
+        }
+
+        if (worker.state === "return") {
+          const arrived = moveWorker(worker, deltaSeconds, 1);
+          if (arrived) finishReturn(worker);
+        }
+      }
+    }
+
+    function moveWorker(worker, deltaSeconds, speedMultiplier) {
+      const dx = worker.tx - worker.x;
+      const dy = worker.ty - worker.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 2.4) {
+        worker.x = worker.tx;
+        worker.y = worker.ty;
+        return true;
+      }
+
+      const powerPenalty = game.resources.energy <= 0 ? 0.45 : 1;
+      const speed = game.workerSpeed * speedMultiplier * powerPenalty * (0.72 + game.morale / 180);
+      const step = Math.min(dist, speed * deltaSeconds);
+      worker.x += (dx / dist) * step;
+      worker.y += (dy / dist) * step;
+
+      if (Math.random() < 0.28) {
+        particles.push({
+          x: worker.x - (dx / dist) * 7,
+          y: worker.y - (dy / dist) * 7,
+          vx: rand(-0.45, 0.45),
+          vy: rand(-0.45, 0.45),
+          size: rand(1.2, 2.4),
+          age: 0,
+          life: rand(14, 24),
+          hue: 195
+        });
+      }
+      return false;
+    }
+
+    function finishReturn(worker) {
+      if (worker.carry) {
+        game.resources[worker.carry.type] += worker.carry.amount;
+        spawnRipple(worker.x, worker.y, worker.carry.type === "ore" ? 45 : worker.carry.type === "food" ? 126 : 190, 0.8);
+        playDropoffSound(worker.carry.type);
+        setLog(`${worker.name} delivered ${worker.carry.amount} ${worker.carry.type}.`);
+      }
+      worker.state = "idle";
+      worker.job = null;
+      worker.targetId = null;
+      worker.carry = null;
+      worker.work = 0;
+    }
+
+    function finishScout(worker) {
+      const beacon = findById(game.beacons, worker.targetId);
+      if (beacon) {
+        game.beacons = game.beacons.filter((item) => item.id !== beacon.id);
+        const reveals = 3 + game.scoutBonus;
+        const types = ["ore", "food", "crystal"];
+        for (let i = 0; i < reveals; i++) {
+          const angle = rand(0, Math.PI * 2);
+          const radius = rand(80, 230);
+          spawnNode(types[(i + game.level) % types.length], beacon.x + Math.cos(angle) * radius, beacon.y + Math.sin(angle) * radius, game.level + 1);
+        }
+        if (Math.random() < 0.44 && game.workers.length < game.housing) {
+          game.workers.push(makeWorker(game.workers.length, nearestHubTo(beacon.x, beacon.y)));
+          setLog("Beacon decoded. A lost spacehand joined the colony.");
+        } else {
+          setLog("Beacon decoded. New resource fields revealed.");
+        }
+        game.resources.science += 8 + game.level * 2;
+        game.level += 1;
+        spawnBeacon(beacon.x + rand(-360, 360), beacon.y + rand(-300, 300));
+        spawnRipple(beacon.x, beacon.y, 270, 2.2);
+        spawnParticles(beacon.x, beacon.y, 245, 300, 34);
+        playExpandSound();
+        flashScreen(0.2, 3);
+      }
+      worker.state = "idle";
+      worker.job = null;
+      worker.targetId = null;
+      worker.work = 0;
+    }
+
+    function finishSite(site, worker) {
+      game.sites = game.sites.filter((item) => item.id !== site.id);
+      const building = makeBuilding(site.kind, site.x, site.y);
+      game.buildings.push(building);
+      applyBuildingEffect(building);
+      worker.homeId = nearestHubTo(site.x, site.y).id;
+      worker.state = "idle";
+      worker.job = null;
+      worker.targetId = null;
+      worker.work = 0;
+      spawnRipple(site.x, site.y, site.kind === "outpost" ? 45 : 195, 1.8);
+      spawnParticles(site.x, site.y, 40, 210, 28);
+      playBuildSound();
+      setLog(`${site.name} online.`);
+      updateHud();
+    }
+
+    function spawnConstructionSparks(x, y) {
+      if (Math.random() > 0.18) return;
+      particles.push({
+        x: x + rand(-16, 16),
+        y: y + rand(-16, 16),
+        vx: rand(-0.8, 0.8),
+        vy: rand(-0.8, 0.8),
+        size: rand(1.5, 3.2),
+        age: 0,
+        life: rand(16, 28),
+        hue: rand(42, 190)
+      });
+    }
+
+    function updateSites() {
+      for (const site of game.sites) {
+        if (!site.workerId || !findById(game.workers, site.workerId) || findById(game.workers, site.workerId).state === "idle") {
+          const worker = findIdleWorker();
+          if (worker) assignWorkerToSite(worker, site);
+        }
+      }
+    }
+
+    function updateEconomy(deltaSeconds) {
+      const counts = countBuildings();
+      const energyRate = 0.34 + counts.solar * 1.34 - game.workers.length * 0.07 - counts.lab * 0.2 - counts.dock * 0.22;
+      const foodRate = counts.garden * 0.55 - game.workers.length * 0.1;
+      const scienceRate = counts.lab * 0.22 + counts.dock * 0.04;
+      game.resources.energy = clamp(game.resources.energy + energyRate * deltaSeconds, 0, 9999);
+      game.resources.food = clamp(game.resources.food + foodRate * deltaSeconds, 0, 9999);
+      game.resources.science = clamp(game.resources.science + scienceRate * deltaSeconds, 0, 9999);
+
+      if (game.resources.food <= 0 || game.resources.energy <= 0) {
+        game.morale = clamp(game.morale - deltaSeconds * 4.5, 18, 100);
+      } else {
+        const moraleTarget = 72 + counts.garden * 3 + counts.habitat * 2 + Math.min(12, game.resources.food / 25);
+        game.morale = lerp(game.morale, clamp(moraleTarget, 30, 100), 0.006 * deltaSeconds * 60);
+      }
+
+      game.cycle += deltaSeconds;
+      updateAudio();
+    }
+
+    function countBuildings() {
+      const counts = { hub: 0, solar: 0, habitat: 0, garden: 0, lab: 0, dock: 0, outpost: 0 };
+      game.buildings.forEach((building) => {
+        counts[building.kind] = (counts[building.kind] || 0) + 1;
+      });
+      return counts;
+    }
+
+    function updateVisualEffects(dt, deltaSeconds) {
+      if (screenShake > 0) screenShake = Math.max(0, screenShake - dt * 0.32);
+      if (flashTime > 0) flashTime = Math.max(0, flashTime - deltaSeconds);
 
       for (let i = ripples.length - 1; i >= 0; i--) {
         const ripple = ripples[i];
         ripple.age += dt;
         ripple.radius = lerp(ripple.radius, ripple.maxRadius, 0.12 * dt);
-
-        if (ripple.age >= ripple.life) {
-          ripples.splice(i, 1);
-        }
-      }
-    }
-
-    function setNameError(message) {
-      nameError.textContent = message;
-    }
-
-    function startGame() {
-      const cleanName = sanitizeName(usernameInput.value);
-
-      if (!cleanName) {
-        setNameError("Enter a username before starting.");
-        usernameInput.focus();
-        usernameInput.select();
-        return;
+        if (ripple.age >= ripple.life) ripples.splice(i, 1);
       }
 
-      setNameError("");
-      currentUser = cleanName;
-      usernameInput.value = cleanName;
-      setStorageItem(STORAGE_KEYS.lastUsername, cleanName);
-
-      gameStarted = true;
-      gameOver = false;
-      paused = false;
-
-      menu.hidden = true;
-      backBtn.hidden = false;
-      hud.hidden = false;
-
-      ensureAudio();
-      resetGame();
-      updateHud();
-    }
-
-    function endGame() {
-      if (gameOver) return;
-
-      gameOver = true;
-      paused = false;
-      flashScreen(0.35, 8);
-      playCrashSound();
-      saveScore(currentUser, maxTailLength);
-      renderLeaderboard();
-      updateHud();
-    }
-
-    function goBack() {
-      if (gameStarted && currentUser) {
-        saveScore(currentUser, maxTailLength);
-      }
-
-      gameStarted = false;
-      gameOver = false;
-      paused = false;
-
-      Object.keys(keys).forEach((key) => {
-        keys[key] = false;
-      });
-      pointerTarget = null;
-      activePointerId = null;
-
-      resetGame();
-      renderLeaderboard();
-      updateHud();
-
-      menu.hidden = false;
-      backBtn.hidden = true;
-      hud.hidden = true;
-    }
-
-    function handleFoodPickup(food) {
-      let growth = FOOD_GROWTH;
-
-      if (food.type === "gold") {
-        growth = GOLD_FOOD_GROWTH;
-        spawnEatParticles(food.x, food.y, 34, 56, 18);
-        showToast("Golden orb! Big boost", 1.2);
-      } else if (food.type === "magnet") {
-        growth = MAGNET_FOOD_GROWTH;
-        magnetTime = Math.max(magnetTime, MAGNET_DURATION);
-        spawnEatParticles(food.x, food.y, 180, 235, 18);
-        showToast("Magnet activated", 1.2);
-      } else if (food.type === "shield") {
-        growth = SHIELD_FOOD_GROWTH;
-        shieldTime = Math.max(shieldTime, SHIELD_DURATION);
-        graceTime = Math.max(graceTime, 0.5);
-        spawnEatParticles(food.x, food.y, 105, 150, 18);
-        showToast("Shield charged", 1.2);
-      } else {
-        spawnEatParticles(food.x, food.y, 42, 62, 12);
-      }
-
-      const effectHue = food.type === "magnet" ? 204 : food.type === "shield" ? 136 : food.type === "gold" ? 46 : 55;
-      spawnRipple(food.x, food.y, effectHue, food.type === "normal" ? 0.7 : 1.25);
-      playPickupSound(food.type);
-      if (feverTime > 0) {
-        growth += 3;
-      }
-      maxTailLength += growth;
-      dashEnergy = Math.min(DASH_MAX, dashEnergy + DASH_PICKUP_RECHARGE + (food.type === "gold" ? 6 : 0));
-
-      if (globalTime - lastFoodCollectTime <= getComboWindow()) {
-        comboCount += 1;
-      } else {
-        comboCount = 1;
-      }
-
-      lastFoodCollectTime = globalTime;
-
-      if (comboCount > 0 && comboCount % 5 === 0) {
-        maxTailLength += 4;
-        spawnEatParticles(player.x, player.y, 190, 260, 16);
-        showToast(`Combo x${comboCount}! +4 bonus tail`, 1.2);
-      }
-
-      if (objective) {
-        if (objective.type === "eat") {
-          objective.progress += 1;
-          if (objective.progress >= objective.target) {
-            completeObjective();
-          }
-        } else if (objective.type === "combo") {
-          objective.progress = comboCount;
-          if (comboCount >= objective.target) {
-            completeObjective();
-          }
-        } else if (objective.type === "dash" && dashTime > 0) {
-          objective.progress += 1;
-          if (objective.progress >= objective.target) {
-            completeObjective();
-          }
-        }
-      }
-
-      while (foods.length < getFoodTarget()) {
-        spawnFood();
-      }
-      updateHud();
-    }
-
-    function updateHazards(dt) {
-      for (let i = hazards.length - 1; i >= 0; i--) {
-        const hazard = hazards[i];
-        hazard.x += hazard.vx * dt;
-        hazard.y += hazard.vy * dt;
-
-        if (hazard.x < hazard.size || hazard.x > viewWidth - hazard.size) {
-          hazard.vx *= -1;
-          hazard.x = clamp(hazard.x, hazard.size, viewWidth - hazard.size);
-        }
-
-        if (hazard.y < hazard.size || hazard.y > viewHeight - hazard.size) {
-          hazard.vy *= -1;
-          hazard.y = clamp(hazard.y, hazard.size, viewHeight - hazard.size);
-        }
-
-        const hitDistance = hazard.size + player.size * 0.62;
-        if (distance(player, hazard) < hitDistance) {
-          if (dashTime > 0) {
-            hazards.splice(i, 1);
-            dashEnergy = Math.min(DASH_MAX, dashEnergy + 22);
-            maxTailLength += 3;
-            spawnEatParticles(hazard.x, hazard.y, 325, 360, 26);
-            spawnRipple(hazard.x, hazard.y, 340, 1.7);
-            flashScreen(0.12, 4);
-            playMineBreakSound();
-            showToast("Dash break! +3 tail", 1.1);
-          } else if (graceTime <= 0) {
-            handlePlayerHit("Shield blocked a void mine");
-          }
-        }
-      }
-    }
-
-    function updateRift(dt, deltaSeconds) {
-      if (!rift) return;
-
-      rift.age += dt;
-      rift.life -= deltaSeconds;
-
-      if (rift.life <= 0) {
-        spawnRipple(rift.x, rift.y, 285, 0.8);
-        rift = null;
-        riftCooldown = 12;
-        return;
-      }
-
-      if (distance(player, rift) < rift.size + player.size * 0.6) {
-        activateRift();
-      }
-    }
-
-    function update(dt, deltaSeconds) {
-      if (toastTime > 0) {
-        toastTime = Math.max(0, toastTime - deltaSeconds);
-      }
-
-      updateVisualEffects(dt, deltaSeconds);
-
-      if (!gameStarted || gameOver || paused) {
-        updateParticles(dt);
-        updateHud();
-        return;
-      }
-
-      if (magnetTime > 0) {
-        magnetTime = Math.max(0, magnetTime - deltaSeconds);
-      }
-
-      if (shieldTime > 0) {
-        shieldTime = Math.max(0, shieldTime - deltaSeconds);
-      }
-
-      if (graceTime > 0) {
-        graceTime = Math.max(0, graceTime - deltaSeconds);
-      }
-
-      if (feverTime > 0) {
-        feverTime = Math.max(0, feverTime - deltaSeconds);
-      }
-
-      if (dashTime > 0) {
-        dashTime = Math.max(0, dashTime - deltaSeconds);
-      }
-
-      if (dashCooldown > 0) {
-        dashCooldown = Math.max(0, dashCooldown - deltaSeconds);
-      }
-
-      dashEnergy = Math.min(DASH_MAX, dashEnergy + (DASH_RECHARGE_PER_SECOND + (feverTime > 0 ? 5 : 0)) * deltaSeconds);
-
-      if (riftCooldown > 0) {
-        riftCooldown = Math.max(0, riftCooldown - deltaSeconds);
-      } else if (runLevel >= RIFT_MIN_LEVEL && !rift && Math.random() < 0.015 * dt) {
-        spawnRift();
-      }
-
-      if (comboCount > 0 && globalTime - lastFoodCollectTime > getComboWindow()) {
-        comboCount = 0;
-        if (objective && objective.type === "combo") {
-          objective.progress = 0;
-        }
-      }
-
-      if (objective && objective.type === "survive") {
-        objective.progress += deltaSeconds;
-        if (objective.progress >= objective.target) {
-          completeObjective();
-        }
-      }
-
-      const left = keys["a"] || keys["arrowleft"] ? 1 : 0;
-      const right = keys["d"] || keys["arrowright"] ? 1 : 0;
-      const up = keys["w"] || keys["arrowup"] ? 1 : 0;
-      const down = keys["s"] || keys["arrowdown"] ? 1 : 0;
-
-      let moveX = right - left;
-      let moveY = down - up;
-
-      if (moveX === 0 && moveY === 0 && pointerTarget) {
-        const dx = pointerTarget.x - player.x;
-        const dy = pointerTarget.y - player.y;
-        const pointerDistance = Math.hypot(dx, dy);
-
-        if (pointerDistance > player.size * 0.75) {
-          moveX = dx / pointerDistance;
-          moveY = dy / pointerDistance;
-        }
-      }
-
-      if (moveX !== 0 || moveY !== 0) {
-        const mag = Math.hypot(moveX, moveY) || 1;
-        moveX /= mag;
-        moveY /= mag;
-      }
-
-      const speedBonus = Math.min(1.56, 1 + (maxTailLength - START_TAIL_LENGTH) * 0.0014 + (runLevel - 1) * 0.012 + (feverTime > 0 ? 0.08 : 0));
-      let targetVX = moveX * player.baseSpeed * speedBonus;
-      let targetVY = moveY * player.baseSpeed * speedBonus;
-      let smoothing = clamp(0.18 * dt, 0.12, 0.35);
-
-      if (dashTime > 0) {
-        targetVX = dashVector.x * DASH_SPEED;
-        targetVY = dashVector.y * DASH_SPEED;
-        smoothing = clamp(0.42 * dt, 0.26, 0.68);
-      }
-
-      player.vx = lerp(player.vx, targetVX, smoothing);
-      player.vy = lerp(player.vy, targetVY, smoothing);
-
-      if (moveX === 0) player.vx *= Math.pow(0.82, dt);
-      if (moveY === 0) player.vy *= Math.pow(0.82, dt);
-
-      player.x += player.vx * dt;
-      player.y += player.vy * dt;
-
-      player.x = clamp(player.x, player.size, viewWidth - player.size);
-      player.y = clamp(player.y, player.size, viewHeight - player.size);
-
-      while (tail.length < maxTailLength) {
-        const last = tail[tail.length - 1] || { x: player.x, y: player.y };
-        tail.push({ x: last.x, y: last.y });
-      }
-
-      let prevX = player.x;
-      let prevY = player.y;
-      const targetDist = player.size * 0.68;
-
-      for (let i = 0; i < tail.length; i++) {
-        const seg = tail[i];
-        const dx = prevX - seg.x;
-        const dy = prevY - seg.y;
-        const dist = Math.hypot(dx, dy) || 0.0001;
-
-        const followStrength = i === 0 ? 0.46 : 0.36;
-        const pull = Math.max(0, dist - targetDist) * followStrength * dt;
-
-        if (dist > targetDist) {
-          seg.x += (dx / dist) * pull;
-          seg.y += (dy / dist) * pull;
-        } else {
-          seg.x += dx * 0.055 * dt;
-          seg.y += dy * 0.055 * dt;
-        }
-
-        prevX = seg.x;
-        prevY = seg.y;
-      }
-
-      if (magnetTime > 0) {
-        for (const food of foods) {
-          const dx = player.x - food.x;
-          const dy = player.y - food.y;
-          const dist = Math.hypot(dx, dy) || 0.0001;
-
-          if (dist < MAGNET_RADIUS) {
-            const pull = (1 - dist / MAGNET_RADIUS) * 3.2 * dt;
-            food.x += (dx / dist) * pull;
-            food.y += (dy / dist) * pull;
-            food.x = clamp(food.x, food.size, viewWidth - food.size);
-            food.y = clamp(food.y, food.size, viewHeight - food.size);
-          }
-        }
-      }
-
-      updateHazards(dt);
-      if (gameOver) {
-        updateParticles(dt);
-        updateHud();
-        return;
-      }
-      updateRift(dt, deltaSeconds);
-
-      if (graceTime <= 0 && dashTime <= 0) {
-        for (let i = 14; i < tail.length; i += 2) {
-          if (distance(player, tail[i]) < player.size * 0.84) {
-            handlePlayerHit("Shield saved you from your tail");
-            break;
-          }
-        }
-      }
-
-      for (let i = foods.length - 1; i >= 0; i--) {
-        const food = foods[i];
-        if (distance(player, food) < player.size + food.size * 0.55) {
-          foods.splice(i, 1);
-          handleFoodPickup(food);
-        }
-      }
-
-      syncHazards();
-      while (foods.length < getFoodTarget()) {
-        spawnFood();
-      }
-
-      updateParticles(dt);
-      updateHud();
-    }
-
-    function updateParticles(dt) {
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.age += dt;
@@ -1787,12 +1502,24 @@
         p.y += p.vy * dt * 1.45;
         p.vx *= Math.pow(0.97, dt);
         p.vy *= Math.pow(0.97, dt);
-        p.vy += 0.035 * dt;
-
-        if (p.age >= p.life) {
-          particles.splice(i, 1);
-        }
+        if (p.age >= p.life) particles.splice(i, 1);
       }
+    }
+
+    function update(deltaSeconds) {
+      const dt = deltaSeconds * 60;
+      updateVisualEffects(dt, deltaSeconds);
+
+      if (!game.running || game.paused) {
+        updateHud();
+        return;
+      }
+
+      updateWorkers(deltaSeconds);
+      updateSites();
+      updateEconomy(deltaSeconds);
+      game.nodes = game.nodes.filter((node) => node.amount > 0 || distanceXY(node.x, node.y, viewWidth / 2, viewHeight / 2) < 400);
+      updateHud();
     }
 
     function drawBackground() {
@@ -1800,10 +1527,8 @@
       gradient.addColorStop(0, "#090d1a");
       gradient.addColorStop(0.45, "#122d2e");
       gradient.addColorStop(1, "#06100c");
-
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, viewWidth, viewHeight);
-
       drawNebula();
       drawGrid();
       drawDust();
@@ -1818,8 +1543,7 @@
         Math.max(viewWidth, viewHeight) * 0.7
       );
       vignette.addColorStop(0, "rgba(0,0,0,0)");
-      vignette.addColorStop(1, "rgba(0,0,0,0.32)");
-
+      vignette.addColorStop(1, "rgba(0,0,0,0.34)");
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, viewWidth, viewHeight);
     }
@@ -1831,7 +1555,6 @@
         { x: 0.78 + Math.cos(drift * 1.7) * 0.04, y: 0.18, r: 0.28, color: "rgba(120, 255, 172, 0.1)" },
         { x: 0.55, y: 0.86 + Math.sin(drift * 2.1) * 0.03, r: 0.38, color: "rgba(255, 226, 90, 0.08)" }
       ];
-
       for (const glow of glows) {
         const x = glow.x * viewWidth;
         const y = glow.y * viewHeight;
@@ -1844,15 +1567,32 @@
       }
     }
 
+    function drawGrid() {
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.046)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= viewWidth; x += 44) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, viewHeight);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= viewHeight; y += 44) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(viewWidth, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     function drawDust() {
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-
       for (const mote of dust) {
         const x = ((mote.x + globalTime * 0.00001 * mote.speed * 18) % 1) * viewWidth;
         const y = (mote.y + Math.sin(globalTime * 0.0008 + mote.phase) * 0.018) * viewHeight;
         const glow = ctx.createRadialGradient(x, y, 0, x, y, mote.size);
-
         glow.addColorStop(0, `hsla(${mote.hue}, 95%, 72%, ${mote.alpha})`);
         glow.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = glow;
@@ -1860,238 +1600,268 @@
         ctx.arc(x, y, mote.size, 0, Math.PI * 2);
         ctx.fill();
       }
-
       ctx.restore();
     }
 
     function drawStars() {
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-
       for (const star of stars) {
         const driftX = (star.x + globalTime * 0.000001 * star.drift) % 1;
         const x = driftX * viewWidth;
         const y = star.y * viewHeight;
         const twinkle = 0.34 + Math.sin(globalTime * star.twinkle + star.phase) * 0.28;
-
         ctx.fillStyle = `hsla(${star.hue}, 90%, 82%, ${clamp(twinkle, 0.1, 0.78)})`;
         ctx.beginPath();
         ctx.arc(x, y, star.size, 0, Math.PI * 2);
         ctx.fill();
-
-        if (star.size > 1.8) {
-          ctx.strokeStyle = `hsla(${star.hue}, 90%, 82%, ${twinkle * 0.22})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(x - star.size * 2.2, y);
-          ctx.lineTo(x + star.size * 2.2, y);
-          ctx.moveTo(x, y - star.size * 2.2);
-          ctx.lineTo(x, y + star.size * 2.2);
-          ctx.stroke();
-        }
       }
-
       ctx.restore();
     }
 
-    function drawGrid() {
-      ctx.save();
-      ctx.strokeStyle = "rgba(255,255,255,0.05)";
-      ctx.lineWidth = 1;
-
-      for (let x = 0; x <= viewWidth; x += GRID_SIZE) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, viewHeight);
-        ctx.stroke();
-      }
-
-      for (let y = 0; y <= viewHeight; y += GRID_SIZE) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(viewWidth, y);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-
-    function drawFoods() {
-      for (const food of foods) {
-        const pulse = 1 + Math.sin(globalTime * 0.006 + food.seed) * 0.13;
-        const outer = food.size * 2.5 * pulse;
-
-        let coreColor = "#ffeb3b";
-        let innerGlow = "rgba(255, 250, 170, 0.95)";
-        let midGlow = "rgba(255, 235, 59, 0.45)";
-        let outerGlow = "rgba(255, 235, 59, 0)";
-        let crossColor = "rgba(255, 247, 170, 0.35)";
-
-        if (food.type === "gold") {
-          coreColor = "#ffd54f";
-          innerGlow = "rgba(255, 224, 130, 0.98)";
-          midGlow = "rgba(255, 193, 7, 0.52)";
-          outerGlow = "rgba(255, 160, 0, 0)";
-          crossColor = "rgba(255, 224, 130, 0.5)";
-        } else if (food.type === "magnet") {
-          coreColor = "#77e6ff";
-          innerGlow = "rgba(130, 245, 255, 0.96)";
-          midGlow = "rgba(111, 211, 255, 0.42)";
-          outerGlow = "rgba(90, 210, 255, 0)";
-          crossColor = "rgba(160, 240, 255, 0.45)";
-        } else if (food.type === "shield") {
-          coreColor = "#7cff9f";
-          innerGlow = "rgba(170, 255, 190, 0.96)";
-          midGlow = "rgba(90, 245, 140, 0.42)";
-          outerGlow = "rgba(90, 245, 140, 0)";
-          crossColor = "rgba(185, 255, 205, 0.5)";
-        }
-
-        const glow = ctx.createRadialGradient(food.x, food.y, 0, food.x, food.y, outer);
-        glow.addColorStop(0, innerGlow);
-        glow.addColorStop(0.35, midGlow);
-        glow.addColorStop(1, outerGlow);
-
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(food.x, food.y, outer, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (food.type === "magnet") {
-          ctx.strokeStyle = "rgba(135, 235, 255, 0.65)";
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.arc(
-            food.x,
-            food.y,
-            food.size * 1.55,
-            globalTime * 0.004 + food.seed,
-            globalTime * 0.004 + food.seed + Math.PI * 1.35
-          );
-          ctx.stroke();
-        } else if (food.type === "shield") {
-          ctx.strokeStyle = "rgba(185, 255, 205, 0.62)";
-          ctx.lineWidth = 1.6;
-          ctx.beginPath();
-          ctx.moveTo(food.x, food.y - food.size * 1.8);
-          ctx.lineTo(food.x + food.size * 1.35, food.y - food.size * 0.35);
-          ctx.lineTo(food.x + food.size * 0.9, food.y + food.size * 1.35);
-          ctx.lineTo(food.x, food.y + food.size * 1.9);
-          ctx.lineTo(food.x - food.size * 0.9, food.y + food.size * 1.35);
-          ctx.lineTo(food.x - food.size * 1.35, food.y - food.size * 0.35);
-          ctx.closePath();
-          ctx.stroke();
-        } else {
-          ctx.strokeStyle = crossColor;
-          ctx.lineWidth = 1.4;
-          ctx.beginPath();
-          ctx.moveTo(food.x - food.size * 1.5, food.y);
-          ctx.lineTo(food.x + food.size * 1.5, food.y);
-          ctx.moveTo(food.x, food.y - food.size * 1.5);
-          ctx.lineTo(food.x, food.y + food.size * 1.5);
-          ctx.stroke();
-        }
-
-        ctx.fillStyle = coreColor;
-        ctx.beginPath();
-        ctx.arc(food.x, food.y, food.size * pulse, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "rgba(255,255,255,0.8)";
-        ctx.beginPath();
-        ctx.arc(food.x - food.size * 0.22, food.y - food.size * 0.22, food.size * 0.28, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    function drawRift() {
-      if (!rift) return;
-
-      const pulse = 1 + Math.sin(globalTime * 0.009) * 0.08;
-      const lifeAlpha = clamp(rift.life / RIFT_LIFE_SECONDS, 0.25, 1);
-      const radius = rift.size * pulse;
-
+    function drawRipples() {
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-
-      const glow = ctx.createRadialGradient(rift.x, rift.y, 0, rift.x, rift.y, radius * 2.6);
-      glow.addColorStop(0, `rgba(205, 135, 255, ${0.58 * lifeAlpha})`);
-      glow.addColorStop(0.38, `rgba(95, 210, 255, ${0.24 * lifeAlpha})`);
-      glow.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(rift.x, rift.y, radius * 2.6, 0, Math.PI * 2);
-      ctx.fill();
-
-      for (let ring = 0; ring < 3; ring++) {
-        ctx.strokeStyle = ring === 0
-          ? `rgba(206, 145, 255, ${0.82 * lifeAlpha})`
-          : `rgba(110, 230, 255, ${0.42 * lifeAlpha})`;
-        ctx.lineWidth = 2.2 - ring * 0.45;
+      for (const ripple of ripples) {
+        const t = ripple.age / ripple.life;
+        const alpha = Math.max(0, 1 - t) * 0.55;
+        ctx.strokeStyle = `hsla(${ripple.hue}, 100%, 70%, ${alpha})`;
+        ctx.lineWidth = Math.max(1, 5 * (1 - t));
         ctx.beginPath();
-        ctx.ellipse(
-          rift.x,
-          rift.y,
-          radius + ring * 9,
-          radius * (0.48 + ring * 0.08),
-          globalTime * 0.0025 + ring * 1.1,
-          0,
-          Math.PI * 2
-        );
+        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
         ctx.stroke();
       }
-
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.78 * lifeAlpha})`;
-      ctx.beginPath();
-      ctx.arc(rift.x, rift.y, 4.4 + Math.sin(globalTime * 0.012) * 1.2, 0, Math.PI * 2);
-      ctx.fill();
-
       ctx.restore();
     }
 
-    function drawHazards() {
+    function drawConnections() {
       ctx.save();
+      ctx.strokeStyle = "rgba(111, 211, 255, 0.18)";
+      ctx.lineWidth = 1.2;
+      for (let i = 1; i < game.buildings.length; i++) {
+        const building = game.buildings[i];
+        const hub = nearestHubTo(building.x, building.y);
+        ctx.beginPath();
+        ctx.moveTo(hub.x, hub.y);
+        ctx.lineTo(building.x, building.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
 
-      for (const hazard of hazards) {
-        const pulse = 1 + Math.sin(globalTime * 0.008 + hazard.phase) * 0.12;
-        const radius = hazard.size * pulse;
-        const glow = ctx.createRadialGradient(hazard.x, hazard.y, 0, hazard.x, hazard.y, radius * 2.7);
-
-        glow.addColorStop(0, "rgba(255, 115, 160, 0.58)");
-        glow.addColorStop(0.45, "rgba(255, 70, 110, 0.22)");
+    function drawBuildings() {
+      for (const building of game.buildings) {
+        ctx.save();
+        const pulse = 1 + Math.sin(globalTime * 0.005 + building.phase) * 0.04;
+        const size = building.size * pulse;
+        const glow = ctx.createRadialGradient(building.x, building.y, 0, building.x, building.y, size * 2.8);
+        glow.addColorStop(0, `${hexToRgba(building.color, 0.46)}`);
         glow.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(hazard.x, hazard.y, radius * 2.7, 0, Math.PI * 2);
+        ctx.arc(building.x, building.y, size * 2.8, 0, Math.PI * 2);
         ctx.fill();
 
+        ctx.fillStyle = "rgba(8, 16, 28, 0.92)";
+        roundRect(ctx, building.x - size, building.y - size, size * 2, size * 2, 8);
+        ctx.fill();
+        ctx.strokeStyle = building.color;
+        ctx.lineWidth = 2;
+        roundRect(ctx, building.x - size, building.y - size, size * 2, size * 2, 8);
+        ctx.stroke();
+
+        ctx.fillStyle = building.color;
+        ctx.beginPath();
+        ctx.arc(building.x, building.y, size * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (building.kind === "solar") drawSolarPanels(building.x, building.y, size, building.color);
+        if (building.kind === "habitat") drawRing(building.x, building.y, size, building.color);
+        if (building.kind === "garden") drawLeaf(building.x, building.y, size, building.color);
+        if (building.kind === "lab") drawAntenna(building.x, building.y, size, building.color);
+        if (building.kind === "dock") drawDock(building.x, building.y, size, building.color);
+        if (building.kind === "outpost") drawOutpost(building.x, building.y, size, building.color);
+        ctx.restore();
+      }
+    }
+
+    function drawSolarPanels(x, y, size, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.4;
+      for (const side of [-1, 1]) {
+        ctx.strokeRect(x + side * size * 0.74, y - size * 0.32, side * size * 0.58, size * 0.64);
+      }
+    }
+
+    function drawRing(x, y, size, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(x, y, size * 0.95, size * 0.42, globalTime * 0.001, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function drawLeaf(x, y, size, color) {
+      ctx.fillStyle = hexToRgba(color, 0.55);
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.14, y, size * 0.26, size * 0.52, -0.6, 0, Math.PI * 2);
+      ctx.ellipse(x + size * 0.18, y, size * 0.22, size * 0.45, 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawAntenna(x, y, size, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x, y - size * 0.3);
+      ctx.lineTo(x, y - size * 1.15);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y - size * 1.22, 3, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawDock(x, y, size, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.75, y + size * 0.4);
+      ctx.lineTo(x + size * 0.75, y + size * 0.4);
+      ctx.moveTo(x - size * 0.55, y - size * 0.4);
+      ctx.lineTo(x + size * 0.55, y - size * 0.4);
+      ctx.stroke();
+    }
+
+    function drawOutpost(x, y, size, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(x, y, size * 1.15, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function drawSites() {
+      for (const site of game.sites) {
+        const progress = clamp(site.progress / site.needed, 0, 1);
         ctx.save();
-        ctx.translate(hazard.x, hazard.y);
-        ctx.rotate(globalTime * 0.002 + hazard.phase);
-        ctx.strokeStyle = "rgba(255, 190, 210, 0.62)";
-        ctx.lineWidth = 1.5;
-
-        for (let spike = 0; spike < 6; spike++) {
-          const angle = (Math.PI * 2 * spike) / 6;
-          ctx.beginPath();
-          ctx.moveTo(Math.cos(angle) * radius * 0.58, Math.sin(angle) * radius * 0.58);
-          ctx.lineTo(Math.cos(angle) * radius * 1.22, Math.sin(angle) * radius * 1.22);
-          ctx.stroke();
-        }
-
-        ctx.fillStyle = "#ff4f7c";
+        ctx.strokeStyle = "rgba(255,255,255,0.34)";
+        ctx.setLineDash([6, 6]);
+        roundRect(ctx, site.x - 24, site.y - 24, 48, 48, 8);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.strokeStyle = site.color;
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.arc(site.x, site.y, 32, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(255,255,255,0.82)";
+        ctx.font = "bold 11px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(`${Math.floor(progress * 100)}%`, site.x, site.y + 4);
+        ctx.restore();
+      }
+    }
+
+    function drawNodes() {
+      for (const node of game.nodes) {
+        const meta = RESOURCE_META[node.type];
+        const t = clamp(node.amount / node.max, 0, 1);
+        const pulse = 1 + Math.sin(globalTime * 0.006 + node.phase) * 0.12;
+        const radius = node.size * (0.72 + t * 0.38) * pulse;
+        const glow = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, radius * 2.7);
+        glow.addColorStop(0, meta.glow);
+        glow.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius * 2.7, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = "rgba(30, 0, 18, 0.62)";
+        ctx.fillStyle = node.type === "ore" ? "#4d3d35" : node.type === "food" ? "#204c34" : "#183e54";
+        ctx.strokeStyle = meta.color;
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.46, 0, Math.PI * 2);
+        if (node.type === "crystal") {
+          ctx.moveTo(node.x, node.y - radius);
+          ctx.lineTo(node.x + radius * 0.78, node.y - radius * 0.16);
+          ctx.lineTo(node.x + radius * 0.42, node.y + radius);
+          ctx.lineTo(node.x - radius * 0.62, node.y + radius * 0.72);
+          ctx.lineTo(node.x - radius * 0.78, node.y - radius * 0.22);
+          ctx.closePath();
+        } else {
+          ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+
+    function drawBeacons() {
+      for (const beacon of game.beacons) {
+        const pulse = 1 + Math.sin(globalTime * 0.009 + beacon.phase) * 0.1;
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        const radius = beacon.size * pulse;
+        const glow = ctx.createRadialGradient(beacon.x, beacon.y, 0, beacon.x, beacon.y, radius * 2.9);
+        glow.addColorStop(0, "rgba(205, 135, 255, 0.48)");
+        glow.addColorStop(0.45, "rgba(95, 210, 255, 0.2)");
+        glow.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(beacon.x, beacon.y, radius * 2.9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(206, 145, 255, 0.78)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(beacon.x, beacon.y, radius, radius * 0.46, globalTime * 0.0025, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(beacon.x, beacon.y, radius * 0.62, radius * 1.08, -globalTime * 0.002, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.beginPath();
+        ctx.arc(beacon.x, beacon.y, 4, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
+    }
 
-      ctx.restore();
+    function drawWorkers() {
+      for (const worker of game.workers) {
+        if (worker.state !== "idle") {
+          ctx.save();
+          ctx.strokeStyle = "rgba(111, 211, 255, 0.22)";
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(worker.x, worker.y);
+          ctx.lineTo(worker.tx, worker.ty);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        ctx.save();
+        const speedAngle = Math.atan2(worker.ty - worker.y, worker.tx - worker.x);
+        ctx.translate(worker.x, worker.y);
+        ctx.rotate(Number.isFinite(speedAngle) ? speedAngle : 0);
+        ctx.fillStyle = "rgba(255,255,255,0.86)";
+        ctx.beginPath();
+        ctx.arc(0, 0, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = worker.color;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = worker.color;
+        ctx.fillRect(-12, -4, 6, 8);
+        if (worker.carry) {
+          ctx.fillStyle = RESOURCE_META[worker.carry.type].color;
+          ctx.beginPath();
+          ctx.arc(-16, 0, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
     }
 
     function drawParticles() {
@@ -2104,229 +1874,41 @@
       }
     }
 
-    function drawRipples() {
+    function drawSelection() {
+      if (!selectedObject) return;
       ctx.save();
-      ctx.globalCompositeOperation = "screen";
-
-      for (const ripple of ripples) {
-        const t = ripple.age / ripple.life;
-        const alpha = Math.max(0, 1 - t) * 0.55;
-
-        ctx.strokeStyle = `hsla(${ripple.hue}, 100%, 70%, ${alpha})`;
-        ctx.lineWidth = Math.max(1, 5 * (1 - t));
-        ctx.beginPath();
-        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.fillStyle = `hsla(${ripple.hue}, 100%, 62%, ${alpha * 0.12})`;
-        ctx.beginPath();
-        ctx.arc(ripple.x, ripple.y, ripple.radius * 0.7, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.restore();
-    }
-
-    function drawTail() {
-      const chain = [player, ...tail];
-
-      ctx.save();
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      for (let i = chain.length - 1; i > 0; i--) {
-        const curr = chain[i];
-        const prev = chain[i - 1];
-        const t = i / (chain.length - 1);
-        const radius = Math.max(4, player.size * (1 - t * 0.78));
-        const hue = 205 - t * 65;
-        const sat = 96 - t * 18;
-        const light = 68 - t * 16;
-        const alpha = 0.22 + (1 - t) * 0.42;
-
-        ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
-        ctx.lineWidth = radius * 1.42;
-        ctx.beginPath();
-        ctx.moveTo(prev.x, prev.y);
-        ctx.lineTo(curr.x, curr.y);
-        ctx.stroke();
-
-        const glow = ctx.createRadialGradient(curr.x, curr.y, 0, curr.x, curr.y, radius * 2.8);
-        glow.addColorStop(0, `hsla(${hue}, 100%, 74%, 0.88)`);
-        glow.addColorStop(0.4, `hsla(${hue}, 100%, 58%, 0.26)`);
-        glow.addColorStop(1, "rgba(0,0,0,0)");
-
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(curr.x, curr.y, radius * 2.6, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = `hsl(${hue}, ${sat}%, ${light}%)`;
-        ctx.beginPath();
-        ctx.arc(curr.x, curr.y, radius, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "rgba(255,255,255,0.34)";
-        ctx.beginPath();
-        ctx.arc(curr.x - radius * 0.24, curr.y - radius * 0.24, radius * 0.23, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.restore();
-    }
-
-    function drawPlayer() {
-      const speedGlow = Math.min(1, Math.hypot(player.vx, player.vy) / 5.5);
-      const outerRadius = player.size * (2.25 + speedGlow * 0.18);
-
-      if (magnetTime > 0) {
-        ctx.save();
-        ctx.strokeStyle = "rgba(125, 235, 255, 0.6)";
-        ctx.lineWidth = 2.4;
-        ctx.beginPath();
-        ctx.arc(
-          player.x,
-          player.y,
-          player.size + 7 + Math.sin(globalTime * 0.01) * 1.5,
-          globalTime * 0.004,
-          globalTime * 0.004 + Math.PI * 1.45
-        );
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      if (shieldTime > 0 || graceTime > 0) {
-        ctx.save();
-        const shieldAlpha = shieldTime > 0 ? 0.68 : 0.38 + Math.sin(globalTime * 0.018) * 0.14;
-        ctx.strokeStyle = `rgba(125, 255, 160, ${shieldAlpha})`;
-        ctx.lineWidth = shieldTime > 0 ? 3.2 : 2;
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, player.size + 12, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      if (dashTime > 0) {
-        ctx.save();
-        ctx.strokeStyle = "rgba(160, 235, 255, 0.76)";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(player.x - dashVector.x * 48, player.y - dashVector.y * 48);
-        ctx.lineTo(player.x - dashVector.x * 10, player.y - dashVector.y * 10);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      const glow = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, outerRadius);
-      glow.addColorStop(0, "rgba(130, 205, 255, 0.98)");
-      glow.addColorStop(0.38, "rgba(71, 171, 255, 0.28)");
-      glow.addColorStop(1, "rgba(0, 125, 255, 0)");
-
-      ctx.fillStyle = glow;
+      ctx.strokeStyle = "rgba(255,255,255,0.82)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.arc(player.x, player.y, outerRadius, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#29a8ff";
-      ctx.beginPath();
-      ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
-      ctx.fill();
-
-      const speed = Math.hypot(player.vx, player.vy);
-      const heading = speed > 0.25 ? Math.atan2(player.vy, player.vx) : -Math.PI / 6;
-
-      ctx.save();
-      ctx.translate(player.x, player.y);
-      ctx.rotate(heading);
-
-      const nose = ctx.createLinearGradient(-player.size * 0.2, 0, player.size * 1.3, 0);
-      nose.addColorStop(0, "rgba(255,255,255,0)");
-      nose.addColorStop(1, "rgba(255,255,255,0.38)");
-      ctx.fillStyle = nose;
-      ctx.beginPath();
-      ctx.moveTo(player.size * 1.15, 0);
-      ctx.lineTo(player.size * 0.18, -player.size * 0.52);
-      ctx.lineTo(player.size * 0.18, player.size * 0.52);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = "rgba(8, 16, 35, 0.72)";
-      ctx.beginPath();
-      ctx.arc(player.size * 0.34, -player.size * 0.33, player.size * 0.13, 0, Math.PI * 2);
-      ctx.arc(player.size * 0.34, player.size * 0.33, player.size * 0.13, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-
-      ctx.fillStyle = "rgba(255,255,255,0.85)";
-      ctx.beginPath();
-      ctx.arc(player.x - player.size * 0.26, player.y - player.size * 0.28, player.size * 0.32, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    function drawToast() {
-      if (toastTime <= 0 || !toastText || !gameStarted) return;
-
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, toastTime * 1.7);
-
-      const width = Math.min(420, viewWidth - 40);
-      const height = 44;
-      const x = (viewWidth - width) / 2;
-      const y = 22;
-
-      ctx.fillStyle = "rgba(10, 16, 30, 0.78)";
-      roundRect(ctx, x, y, width, height, 8);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255,255,255,0.12)";
-      ctx.lineWidth = 1.1;
-      roundRect(ctx, x, y, width, height, 8);
+      ctx.arc(selectedObject.x, selectedObject.y, (selectedObject.size || 24) + 18, 0, Math.PI * 2);
       ctx.stroke();
-
-      ctx.fillStyle = "rgba(255,255,255,0.96)";
-      ctx.font = "bold 18px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText(toastText, viewWidth / 2, y + 28);
-
       ctx.restore();
     }
 
-    function drawOverlayCard(title, subtitle, line2) {
+    function drawLabels() {
       ctx.save();
-
-      ctx.fillStyle = "rgba(0,0,0,0.58)";
-      ctx.fillRect(0, 0, viewWidth, viewHeight);
-
-      const panelWidth = Math.min(500, viewWidth - 40);
-      const panelHeight = 190;
-      const x = (viewWidth - panelWidth) / 2;
-      const y = (viewHeight - panelHeight) / 2;
-
-      ctx.fillStyle = "rgba(10, 16, 30, 0.82)";
-      roundRect(ctx, x, y, panelWidth, panelHeight, 8);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255,255,255,0.12)";
-      ctx.lineWidth = 1.2;
-      roundRect(ctx, x, y, panelWidth, panelHeight, 8);
-      ctx.stroke();
-
+      ctx.font = "12px Arial";
       ctx.textAlign = "center";
-
-      ctx.fillStyle = "white";
-      ctx.font = "bold 44px Arial";
-      ctx.fillText(title, viewWidth / 2, y + 70);
-
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      ctx.font = "bold 22px Arial";
-      ctx.fillText(subtitle, viewWidth / 2, y + 112);
-
       ctx.fillStyle = "rgba(255,255,255,0.72)";
-      ctx.font = "16px Arial";
-      ctx.fillText(line2, viewWidth / 2, y + 145);
-
+      for (const node of game.nodes) {
+        if (distanceXY(node.x, node.y, viewWidth / 2, viewHeight / 2) < 460) {
+          ctx.fillText(`${RESOURCE_META[node.type].name} ${Math.floor(node.amount)}`, node.x, node.y + node.size + 18);
+        }
+      }
+      for (const site of game.sites) {
+        ctx.fillText(site.name, site.x, site.y + 44);
+      }
       ctx.restore();
+    }
+
+    function hexToRgba(hex, alpha) {
+      const clean = hex.replace("#", "");
+      const value = parseInt(clean, 16);
+      const r = (value >> 16) & 255;
+      const g = (value >> 8) & 255;
+      const b = value & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
     function roundRect(context, x, y, w, h, r) {
@@ -2339,36 +1921,47 @@
       context.closePath();
     }
 
+    function drawPauseOverlay() {
+      if (!game.paused) return;
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.fillRect(0, 0, viewWidth, viewHeight);
+      const w = Math.min(440, viewWidth - 40);
+      const h = 150;
+      const x = (viewWidth - w) / 2;
+      const y = (viewHeight - h) / 2;
+      ctx.fillStyle = "rgba(10, 16, 30, 0.86)";
+      roundRect(ctx, x, y, w, h, 8);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.16)";
+      ctx.stroke();
+      ctx.textAlign = "center";
+      ctx.fillStyle = "white";
+      ctx.font = "bold 36px Arial";
+      ctx.fillText("PAUSED", viewWidth / 2, y + 62);
+      ctx.fillStyle = "rgba(255,255,255,0.76)";
+      ctx.font = "16px Arial";
+      ctx.fillText("Press P or Esc to continue", viewWidth / 2, y + 100);
+    }
+
     function draw() {
       ctx.clearRect(0, 0, viewWidth, viewHeight);
       drawBackground();
-
       const shakeX = screenShake > 0 ? rand(-screenShake, screenShake) : 0;
       const shakeY = screenShake > 0 ? rand(-screenShake, screenShake) : 0;
       ctx.save();
       ctx.translate(shakeX, shakeY);
-
       drawRipples();
-      drawRift();
-      drawFoods();
-      drawHazards();
+      drawConnections();
+      drawBeacons();
+      drawNodes();
+      drawSites();
+      drawBuildings();
+      drawWorkers();
       drawParticles();
-
-      if (gameStarted) {
-        drawTail();
-        drawPlayer();
-        drawToast();
-
-        if (paused && !gameOver) {
-          drawOverlayCard("PAUSED", `Length: ${maxTailLength}`, "Press P or Esc to continue");
-        }
-
-        if (gameOver) {
-          drawOverlayCard("GAME OVER", `Final Length: ${maxTailLength}`, "Press Enter to return to menu");
-        }
-      }
-
+      drawSelection();
+      drawLabels();
       ctx.restore();
+      drawPauseOverlay();
 
       if (flashTime > 0) {
         ctx.fillStyle = `rgba(255, 245, 220, ${Math.min(0.18, flashTime * 0.55)})`;
@@ -2378,142 +1971,118 @@
 
     function gameLoop(timestamp) {
       if (!lastFrameTime) lastFrameTime = timestamp;
-      const deltaMs = clamp(timestamp - lastFrameTime, 8, 40);
+      const deltaMs = clamp(timestamp - lastFrameTime, 8, 50);
       lastFrameTime = timestamp;
       globalTime = timestamp;
-
-      const dt = deltaMs / 16.6667;
-      const deltaSeconds = deltaMs / 1000;
-      update(dt, deltaSeconds);
+      update(deltaMs / 1000);
       draw();
-
       requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+      const cleanName = sanitizeName(commanderInput.value);
+      if (!cleanName) {
+        nameError.textContent = "Enter a commander name before launching.";
+        commanderInput.focus();
+        commanderInput.select();
+        return;
+      }
+
+      nameError.textContent = "";
+      game.commander = cleanName;
+      setStorageItem(STORAGE_KEYS.commander, cleanName);
+      game.running = true;
+      game.paused = false;
+      menu.hidden = true;
+      hud.hidden = false;
+      controls.hidden = false;
+      backBtn.hidden = false;
+      ensureAudio();
+      resetGame();
+      setLog("Colony online. Dispatch a worker.");
+    }
+
+    function goBack() {
+      game.running = false;
+      game.paused = false;
+      menu.hidden = false;
+      hud.hidden = true;
+      controls.hidden = true;
+      backBtn.hidden = true;
+      selectedObject = null;
+      updateHud();
     }
 
     playBtn.addEventListener("click", startGame);
     backBtn.addEventListener("click", goBack);
     soundBtn.addEventListener("click", () => toggleAudio());
 
-    usernameInput.addEventListener("input", () => {
-      if (nameError.textContent) setNameError("");
+    commanderInput.addEventListener("input", () => {
+      if (nameError.textContent) nameError.textContent = "";
     });
 
-    usernameInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        startGame();
-      }
+    commanderInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") startGame();
+    });
+
+    commandGrid.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-command]");
+      if (!button) return;
+      selectedCommand = button.dataset.command;
+      commandNearest(selectedCommand);
+      updateButtons();
+    });
+
+    buildGrid.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-build]");
+      if (!button || button.disabled) return;
+      createSite(button.dataset.build);
+    });
+
+    upgradeGrid.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-upgrade]");
+      if (!button || button.disabled) return;
+      buyUpgrade(button.dataset.upgrade);
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      if (!game.running) return;
+      const rect = canvas.getBoundingClientRect();
+      clickWorld(event.clientX - rect.left, event.clientY - rect.top);
     });
 
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
-      const isTyping = event.target === usernameInput;
-
-      if (isTyping) {
-        return;
-      }
-
-      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) {
-        event.preventDefault();
-      }
-
-      keys[key] = true;
-
-      if (key === " " || key === "shift") {
-        if (event.repeat) return;
-        startDash();
-      }
+      if (event.target === commanderInput) return;
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) event.preventDefault();
 
       if (key === "m") {
-        if (event.repeat) return;
-        toggleAudio();
+        if (!event.repeat) toggleAudio();
       }
 
-      if (gameStarted && !gameOver && (key === "p" || key === "escape")) {
-        if (event.repeat) return;
-        paused = !paused;
-        updateHud();
+      if ((key === "p" || key === "escape") && game.running) {
+        if (!event.repeat) {
+          game.paused = !game.paused;
+          setLog(game.paused ? "Colony paused." : "Colony resumed.");
+        }
       }
 
-      if (gameOver && key === "enter") {
-        if (event.repeat) return;
-        goBack();
-      }
-    });
-
-    window.addEventListener("keyup", (event) => {
-      keys[event.key.toLowerCase()] = false;
-    });
-
-    window.addEventListener("blur", () => {
-      Object.keys(keys).forEach((key) => {
-        keys[key] = false;
-      });
-      pointerTarget = null;
-      activePointerId = null;
-    });
-
-    function setPointerTarget(event) {
-      const rect = canvas.getBoundingClientRect();
-      pointerTarget = {
-        x: clamp(event.clientX - rect.left, 0, viewWidth),
-        y: clamp(event.clientY - rect.top, 0, viewHeight)
-      };
-    }
-
-    canvas.addEventListener("pointerdown", (event) => {
-      if (!gameStarted || gameOver) return;
-
-      event.preventDefault();
-      activePointerId = event.pointerId;
-      canvas.setPointerCapture(activePointerId);
-      setPointerTarget(event);
-
-      const now = performance.now();
-      if (now - lastTapTime < 320) {
-        startDash();
-      }
-      lastTapTime = now;
-    });
-
-    canvas.addEventListener("pointermove", (event) => {
-      if (event.pointerId !== activePointerId || !gameStarted || gameOver) return;
-
-      event.preventDefault();
-      setPointerTarget(event);
-    });
-
-    function clearPointerTarget(event) {
-      if (event.pointerId !== activePointerId) return;
-
-      pointerTarget = null;
-      activePointerId = null;
-    }
-
-    canvas.addEventListener("pointerup", clearPointerTarget);
-    canvas.addEventListener("pointercancel", clearPointerTarget);
-    canvas.addEventListener("lostpointercapture", () => {
-      pointerTarget = null;
-      activePointerId = null;
-    });
-
-    window.addEventListener("beforeunload", () => {
-      if (gameStarted && currentUser) {
-        saveScore(currentUser, maxTailLength);
+      if (key === " ") {
+        const hub = game.buildings[0];
+        selectedObject = hub;
+        setLog("Command Hub selected.");
       }
     });
 
     window.addEventListener("resize", resizeCanvas);
 
-    const savedUsername = sanitizeName(getStorageItem(STORAGE_KEYS.lastUsername) || "");
-    if (savedUsername) {
-      usernameInput.value = savedUsername;
-    }
+    audioEnabled = getStorageItem(STORAGE_KEYS.soundEnabled) === "true";
+    updateSoundButton();
+    const savedName = sanitizeName(getStorageItem(STORAGE_KEYS.commander) || "");
+    if (savedName) commanderInput.value = savedName;
 
+    buildPanels();
     resizeCanvas();
-    renderLeaderboard();
-    resetGame();
-    hud.hidden = true;
-    backBtn.hidden = true;
     updateHud();
     requestAnimationFrame(gameLoop);
   </script>
