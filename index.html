@@ -211,7 +211,7 @@
     #hud {
       top: 16px;
       right: 16px;
-      width: min(332px, calc(100vw - 32px));
+      width: min(390px, calc(100vw - 32px));
       padding: 14px 14px 12px;
       border-radius: var(--radius);
       background: var(--panel);
@@ -254,6 +254,57 @@
       font-size: 13px;
     }
 
+    .resource-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .resource-pill {
+      min-width: 0;
+      padding: 7px 8px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .resource-pill span {
+      display: block;
+      overflow: hidden;
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 11px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .resource-pill strong {
+      display: block;
+      margin-top: 3px;
+      overflow: hidden;
+      color: white;
+      font-size: 13px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .meter {
+      height: 6px;
+      margin-top: 8px;
+      overflow: hidden;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .meter span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent-2), var(--good));
+      transition: width 0.18s ease;
+    }
+
     #logLine {
       margin-top: 10px;
       padding-top: 10px;
@@ -264,10 +315,46 @@
       min-height: 36px;
     }
 
+    #inspector,
+    #milestones {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    #inspector strong,
+    #milestones strong {
+      color: white;
+    }
+
+    .mini-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .mini-list div {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .mini-list span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     #controls {
       left: 16px;
       bottom: 16px;
-      width: min(368px, calc(100vw - 32px));
+      width: min(430px, calc(100vw - 32px));
+      max-height: calc(100vh - 106px);
+      overflow-y: auto;
       padding: 14px;
       border-radius: var(--radius);
       background: var(--panel-strong);
@@ -289,7 +376,9 @@
 
     .command-btn,
     .build-btn,
-    .upgrade-btn {
+    .upgrade-btn,
+    .directive-btn,
+    .action-btn {
       min-height: 42px;
       padding: 9px 10px;
       color: var(--text);
@@ -300,16 +389,24 @@
       line-height: 1.25;
     }
 
-    .command-btn.active {
+    .command-btn.active,
+    .directive-btn.active {
       color: #071114;
       background: linear-gradient(180deg, #95e7ff, var(--accent-2));
       border-color: rgba(111, 211, 255, 0.72);
     }
 
     .build-btn.ready,
-    .upgrade-btn.ready {
+    .upgrade-btn.ready,
+    .action-btn.ready {
       border-color: rgba(115, 255, 179, 0.44);
       box-shadow: inset 0 0 0 1px rgba(115, 255, 179, 0.08);
+    }
+
+    .build-btn.locked,
+    .upgrade-btn.locked {
+      opacity: 0.62;
+      border-color: rgba(255, 227, 77, 0.18);
     }
 
     #backBtn {
@@ -359,6 +456,8 @@
         right: 10px;
         left: 10px;
         width: auto;
+        max-height: 43vh;
+        overflow-y: auto;
       }
 
       #controls {
@@ -420,7 +519,7 @@
       <div class="feature-list">
         <div>Spacehands work, wander, socialize, maintain stations, and take jobs on their own.</div>
         <div>Build solar arrays, habitats, gardens, labs, docks, and outposts across a wider sector.</div>
-        <div>Scout strange beacons, expand the map, and zoom into the colony’s daily life.</div>
+        <div>Scout strange beacons, expand the map, and zoom into the colony's daily life.</div>
       </div>
     </div>
   </div>
@@ -435,13 +534,22 @@
       <div class="hud-row"><span>Cycle</span><strong id="hudCycle">0</strong></div>
       <div class="hud-row"><span>Level</span><strong id="hudLevel">1</strong></div>
       <div class="hud-row"><span>Crew</span><strong id="hudCrew">0/0</strong></div>
-      <div class="hud-row"><span>Energy</span><strong id="hudEnergy">0</strong></div>
-      <div class="hud-row"><span>Ore</span><strong id="hudOre">0</strong></div>
-      <div class="hud-row"><span>Food</span><strong id="hudFood">0</strong></div>
-      <div class="hud-row"><span>Crystal</span><strong id="hudCrystal">0</strong></div>
-      <div class="hud-row"><span>Science</span><strong id="hudScience">0</strong></div>
+      <div class="hud-row"><span>Buildings</span><strong id="hudBuildings">0</strong></div>
+      <div class="hud-row"><span>Directive</span><strong id="hudDirective">Balanced</strong></div>
       <div class="hud-row"><span>Morale</span><strong id="hudMorale">0%</strong></div>
+      <div class="hud-row"><span>Storage</span><strong id="hudStorage">0</strong></div>
     </div>
+    <div class="resource-strip">
+      <div class="resource-pill"><span>Energy</span><strong id="hudEnergy">0</strong></div>
+      <div class="resource-pill"><span>Ore</span><strong id="hudOre">0</strong></div>
+      <div class="resource-pill"><span>Food</span><strong id="hudFood">0</strong></div>
+      <div class="resource-pill"><span>Crystal</span><strong id="hudCrystal">0</strong></div>
+      <div class="resource-pill"><span>Science</span><strong id="hudScience">0</strong></div>
+      <div class="resource-pill"><span>Discovery</span><strong id="hudDiscovery">0%</strong></div>
+    </div>
+    <div class="meter"><span id="discoveryMeter"></span></div>
+    <div id="inspector"><strong>Selected</strong><br /><span id="inspectorLine">Click a worker, building, resource, or beacon.</span></div>
+    <div id="milestones"><strong>Milestones</strong><div class="mini-list" id="milestoneList"></div></div>
     <div id="logLine">Ready.</div>
   </div>
 
@@ -453,6 +561,12 @@
       <button class="command-btn" type="button" data-command="crystal">Collect Crystal<br />Blue crystal clusters</button>
       <button class="command-btn" type="button" data-command="scout">Scout Beacon<br />Reveal new space</button>
     </div>
+
+    <div class="panel-title">Directive</div>
+    <div class="button-grid" id="directiveGrid"></div>
+
+    <div class="panel-title">Sandbox Actions</div>
+    <div class="button-grid" id="actionGrid"></div>
 
     <div class="panel-title">Build</div>
     <div class="button-grid" id="buildGrid"></div>
@@ -474,6 +588,8 @@
     const controls = document.getElementById("controls");
     const cameraHint = document.getElementById("cameraHint");
     const commandGrid = document.getElementById("commandGrid");
+    const directiveGrid = document.getElementById("directiveGrid");
+    const actionGrid = document.getElementById("actionGrid");
     const buildGrid = document.getElementById("buildGrid");
     const upgradeGrid = document.getElementById("upgradeGrid");
 
@@ -482,12 +598,19 @@
     const hudCycle = document.getElementById("hudCycle");
     const hudLevel = document.getElementById("hudLevel");
     const hudCrew = document.getElementById("hudCrew");
+    const hudBuildings = document.getElementById("hudBuildings");
+    const hudDirective = document.getElementById("hudDirective");
+    const hudStorage = document.getElementById("hudStorage");
     const hudEnergy = document.getElementById("hudEnergy");
     const hudOre = document.getElementById("hudOre");
     const hudFood = document.getElementById("hudFood");
     const hudCrystal = document.getElementById("hudCrystal");
     const hudScience = document.getElementById("hudScience");
+    const hudDiscovery = document.getElementById("hudDiscovery");
+    const discoveryMeter = document.getElementById("discoveryMeter");
     const hudMorale = document.getElementById("hudMorale");
+    const inspectorLine = document.getElementById("inspectorLine");
+    const milestoneList = document.getElementById("milestoneList");
     const logLine = document.getElementById("logLine");
 
     const STORAGE_KEYS = {
@@ -498,66 +621,192 @@
     const BUILDINGS = {
       solar: {
         name: "Solar Array",
-        cost: { ore: 45, crystal: 8 },
-        buildTime: 5,
+        cost: { ore: 58, crystal: 12 },
+        buildTime: 7,
         color: "#ffe34d",
-        effect: "energy"
+        effect: "energy",
+        unlock: 1,
+        desc: "Clean power for a young settlement.",
+        sprawl: 300
       },
       habitat: {
         name: "Habitat Ring",
-        cost: { ore: 55, food: 18 },
-        buildTime: 6,
+        cost: { ore: 76, food: 28 },
+        buildTime: 9,
         color: "#73ffb3",
-        effect: "housing"
+        effect: "housing",
+        unlock: 1,
+        desc: "More homes and calmer crews.",
+        sprawl: 330
       },
       garden: {
         name: "Glow Garden",
-        cost: { ore: 34, crystal: 18 },
-        buildTime: 5,
+        cost: { ore: 54, crystal: 26 },
+        buildTime: 8,
         color: "#9cff71",
-        effect: "food"
+        effect: "food",
+        unlock: 1,
+        desc: "Food, morale, and greener walkways.",
+        sprawl: 310
       },
       lab: {
         name: "Signal Lab",
-        cost: { ore: 48, crystal: 34, energy: 22 },
-        buildTime: 7,
+        cost: { ore: 110, crystal: 64, energy: 48 },
+        buildTime: 12,
         color: "#6fd3ff",
-        effect: "science"
+        effect: "science",
+        unlock: 2,
+        desc: "Turns beacon data into science.",
+        sprawl: 360
+      },
+      commons: {
+        name: "Comet Commons",
+        cost: { ore: 130, food: 62, crystal: 34 },
+        buildTime: 12,
+        color: "#ff91ad",
+        effect: "morale",
+        unlock: 2,
+        desc: "A social hub for free-time behavior.",
+        sprawl: 380
+      },
+      refinery: {
+        name: "Ore Refinery",
+        cost: { ore: 170, crystal: 72, energy: 72 },
+        buildTime: 14,
+        color: "#ffc66b",
+        effect: "industry",
+        unlock: 3,
+        desc: "Improves ore runs and cargo prep.",
+        sprawl: 420
+      },
+      observatory: {
+        name: "Star Observatory",
+        cost: { ore: 150, crystal: 118, science: 72, energy: 82 },
+        buildTime: 16,
+        color: "#a2ffed",
+        effect: "discovery",
+        unlock: 4,
+        desc: "Finds richer sectors and safer routes.",
+        sprawl: 460
       },
       dock: {
         name: "Star Dock",
-        cost: { ore: 85, crystal: 44, energy: 38 },
-        buildTime: 9,
+        cost: { ore: 210, crystal: 130, energy: 120, science: 65 },
+        buildTime: 18,
         color: "#c89bff",
-        effect: "crew"
+        effect: "crew",
+        unlock: 4,
+        desc: "Brings in rare crew and long routes.",
+        sprawl: 470
+      },
+      reactor: {
+        name: "Pulse Reactor",
+        cost: { ore: 320, crystal: 180, energy: 90, science: 120 },
+        buildTime: 20,
+        color: "#ffcf5f",
+        effect: "power",
+        unlock: 5,
+        desc: "Big energy for late-game systems.",
+        sprawl: 500
+      },
+      archive: {
+        name: "Echo Archive",
+        cost: { ore: 260, crystal: 220, science: 190, energy: 150 },
+        buildTime: 22,
+        color: "#8db6ff",
+        effect: "archive",
+        unlock: 6,
+        desc: "Stores discoveries and multiplies science.",
+        sprawl: 520
+      },
+      shield: {
+        name: "Aurora Shield",
+        cost: { ore: 360, crystal: 260, science: 230, energy: 240 },
+        buildTime: 24,
+        color: "#73ffda",
+        effect: "shield",
+        unlock: 7,
+        desc: "Stabilizes morale and resource storage.",
+        sprawl: 560
+      },
+      terraformer: {
+        name: "Mini Terraformer",
+        cost: { ore: 520, food: 260, crystal: 320, science: 360, energy: 300 },
+        buildTime: 30,
+        color: "#b9ff6b",
+        effect: "world",
+        unlock: 8,
+        desc: "Creates new food fields and a bright district.",
+        sprawl: 620
       },
       outpost: {
         name: "Outer Outpost",
-        cost: { ore: 120, crystal: 58, food: 32 },
-        buildTime: 12,
-        color: "#ffcf5f",
-        effect: "expand"
+        cost: { ore: 190, crystal: 92, food: 58, science: 30 },
+        buildTime: 18,
+        color: "#f6d365",
+        effect: "expand",
+        unlock: 2,
+        desc: "Pushes the colony into a new sector.",
+        sprawl: 980
       }
     };
 
     const UPGRADES = {
       thrusters: {
         name: "Worker Thrusters",
-        cost: { science: 28, crystal: 14 },
+        cost: { science: 64, crystal: 30 },
         desc: "Workers fly faster.",
+        unlock: 2,
         apply: () => { game.workerSpeed += 28; }
       },
       cargo: {
         name: "Cargo Pods",
-        cost: { science: 38, ore: 28 },
+        cost: { science: 92, ore: 80 },
         desc: "Workers carry more.",
-        apply: () => { game.cargoBonus += 5; }
+        unlock: 3,
+        apply: () => { game.cargoBonus += 7; }
       },
       scanners: {
         name: "Deep Scanners",
-        cost: { science: 48, crystal: 28, energy: 30 },
+        cost: { science: 135, crystal: 80, energy: 80 },
         desc: "Scouting reveals more nodes.",
+        unlock: 3,
         apply: () => { game.scoutBonus += 1; }
+      },
+      storage: {
+        name: "Pocket Silos",
+        cost: { science: 150, ore: 120, crystal: 75 },
+        desc: "Raises resource storage.",
+        unlock: 4,
+        apply: () => { game.storageBonus += 360; }
+      },
+      civicAI: {
+        name: "Civic AI",
+        cost: { science: 210, crystal: 120, energy: 140 },
+        desc: "Autonomous crews pick smarter tasks.",
+        unlock: 5,
+        apply: () => { game.autoWorkBonus += 0.2; }
+      },
+      fabrication: {
+        name: "Fabrication Arms",
+        cost: { science: 260, ore: 230, energy: 180 },
+        desc: "Construction finishes faster.",
+        unlock: 6,
+        apply: () => { game.buildSpeedBonus += 0.35; }
+      },
+      beaconMath: {
+        name: "Beacon Math",
+        cost: { science: 340, crystal: 210, energy: 220 },
+        desc: "Scouting adds more discovery.",
+        unlock: 7,
+        apply: () => { game.beaconBonus += 0.35; }
+      },
+      orbitalLanes: {
+        name: "Orbital Lanes",
+        cost: { science: 460, ore: 360, crystal: 260, energy: 300 },
+        desc: "Workers cross the sector much faster.",
+        unlock: 8,
+        apply: () => { game.workerSpeed += 48; game.cargoBonus += 8; }
       }
     };
 
@@ -567,16 +816,90 @@
       crystal: { name: "Crystal", color: "#7de7ff", glow: "rgba(125, 231, 255, 0.34)", yield: 10 }
     };
 
+    const DIRECTIVES = {
+      balanced: { name: "Balanced", desc: "Workers mix life, upkeep, and jobs." },
+      industry: { name: "Industry", desc: "Workers favor ore and construction." },
+      growth: { name: "Growth", desc: "Workers favor food, housing, and morale." },
+      research: { name: "Research", desc: "Workers favor crystals and labs." },
+      explore: { name: "Explore", desc: "Workers scout beacons more often." },
+      leisure: { name: "Leisure", desc: "Workers socialize and recover morale." }
+    };
+
+    const ACTIONS = {
+      survey: {
+        name: "Survey Pulse",
+        desc: "Spend 30 energy to reveal a nearby find.",
+        cost: { energy: 30 },
+        cooldown: 18
+      },
+      rally: {
+        name: "Rally Crew",
+        desc: "Spend 18 food to raise morale and gather workers.",
+        cost: { food: 18 },
+        cooldown: 28
+      },
+      cleanup: {
+        name: "Clear Markers",
+        desc: "Remove drained fields and quiet the map.",
+        cost: {},
+        cooldown: 12
+      },
+      prospect: {
+        name: "Prospector Burst",
+        desc: "Spend 35 science to seed rich resources.",
+        cost: { science: 35, energy: 20 },
+        cooldown: 35
+      }
+    };
+
+    const MILESTONES = [
+      {
+        id: "firstDistrict",
+        name: "First District",
+        desc: "Build 3 structures",
+        reward: { science: 45, crystal: 25 },
+        test: () => game.buildings.length >= 4
+      },
+      {
+        id: "happyCrew",
+        name: "Crew Culture",
+        desc: "Reach 90 morale with 8 crew",
+        reward: { food: 80, science: 70 },
+        test: () => game.morale >= 90 && game.workers.length >= 8
+      },
+      {
+        id: "deepRange",
+        name: "Deep Range",
+        desc: "Scout 4 beacons",
+        reward: { ore: 130, crystal: 95, science: 110 },
+        test: () => game.stats.beaconsScouted >= 4
+      },
+      {
+        id: "sectorNetwork",
+        name: "Sector Network",
+        desc: "Build 3 outposts",
+        reward: { energy: 180, science: 170 },
+        test: () => countBuildings().outpost >= 3
+      },
+      {
+        id: "megaColony",
+        name: "Mega Colony",
+        desc: "Run 18 buildings and 16 crew",
+        reward: { ore: 280, food: 220, crystal: 180, science: 240 },
+        test: () => game.buildings.length >= 18 && game.workers.length >= 16
+      }
+    ];
+
     const WORLD = {
-      width: 4300,
-      height: 3100,
-      padding: 190
+      width: 6800,
+      height: 5000,
+      padding: 260
     };
 
     const CAMERA = {
-      minZoom: 0.42,
+      minZoom: 0.26,
       maxZoom: 2.35,
-      startZoom: 0.82
+      startZoom: 0.62
     };
 
     const AUTONOMY_STATES = new Set(["idle", "roam", "socialize", "maintain", "rest"]);
@@ -587,7 +910,21 @@
     const lerp = (a, b, t) => a + (b - a) * t;
     const rand = (min, max) => Math.random() * (max - min) + min;
     const distanceXY = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
-    const fmt = (value) => Math.floor(value).toString();
+    const fmt = (value) => formatNumber(value);
+
+    function formatNumber(value) {
+      const number = Math.max(0, Number(value) || 0);
+      if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}m`;
+      if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`;
+      return Math.floor(number).toString();
+    }
+
+    function formatCycle(seconds) {
+      const total = Math.floor(seconds);
+      const minutes = Math.floor(total / 60);
+      const rem = total % 60;
+      return minutes > 0 ? `${minutes}m ${rem}s` : `${rem}s`;
+    }
 
     let viewWidth = window.innerWidth;
     let viewHeight = window.innerHeight;
@@ -634,12 +971,22 @@
       commander: "",
       cycle: 0,
       level: 1,
+      discovery: 0,
+      nextDiscovery: 120,
+      directive: "balanced",
       resources: { energy: 92, ore: 74, food: 62, crystal: 24, science: 0 },
       housing: 5,
+      storageBonus: 0,
       morale: 92,
       workerSpeed: 86,
       cargoBonus: 0,
       scoutBonus: 0,
+      buildSpeedBonus: 0,
+      autoWorkBonus: 0,
+      beaconBonus: 0,
+      actionCooldowns: {},
+      completedMilestones: new Set(),
+      stats: { beaconsScouted: 0, actionsUsed: 0 },
       buildings: [],
       sites: [],
       workers: [],
@@ -703,7 +1050,9 @@
     }
 
     function costText(cost) {
-      return Object.entries(cost).map(([key, amount]) => `${amount} ${key}`).join(", ");
+      const entries = Object.entries(cost || {});
+      if (!entries.length) return "Free";
+      return entries.map(([key, amount]) => `${formatNumber(amount)} ${key}`).join(", ");
     }
 
     function createButton(label, sub, className, attrs) {
@@ -711,11 +1060,22 @@
       button.className = className;
       button.type = "button";
       button.innerHTML = `${label}<br />${sub}`;
+      button.title = `${label}: ${sub}`;
       Object.entries(attrs).forEach(([key, value]) => button.dataset[key] = value);
       return button;
     }
 
     function buildPanels() {
+      directiveGrid.replaceChildren();
+      Object.entries(DIRECTIVES).forEach(([key, def]) => {
+        directiveGrid.appendChild(createButton(def.name, def.desc, "directive-btn", { directive: key }));
+      });
+
+      actionGrid.replaceChildren();
+      Object.entries(ACTIONS).forEach(([key, def]) => {
+        actionGrid.appendChild(createButton(def.name, def.desc, "action-btn", { action: key }));
+      });
+
       buildGrid.replaceChildren();
       Object.entries(BUILDINGS).forEach(([key, def]) => {
         buildGrid.appendChild(createButton(def.name, costText(def.cost), "build-btn", { build: key }));
@@ -727,42 +1087,144 @@
       });
     }
 
+    function isBuildingUnlocked(key) {
+      return game.level >= (BUILDINGS[key]?.unlock || 1);
+    }
+
+    function isUpgradeUnlocked(key) {
+      return game.level >= (UPGRADES[key]?.unlock || 1);
+    }
+
+    function cooldownText(key) {
+      const value = game.actionCooldowns[key] || 0;
+      return value > 0 ? `${Math.ceil(value)}s` : "";
+    }
+
     function updateButtons() {
       document.querySelectorAll(".command-btn").forEach((button) => {
         button.classList.toggle("active", button.dataset.command === selectedCommand);
       });
 
-      document.querySelectorAll(".build-btn").forEach((button) => {
-        const def = BUILDINGS[button.dataset.build];
-        const ready = canAfford(def.cost);
+      document.querySelectorAll(".directive-btn").forEach((button) => {
+        const key = button.dataset.directive;
+        button.classList.toggle("active", key === game.directive);
+      });
+
+      document.querySelectorAll(".action-btn").forEach((button) => {
+        const key = button.dataset.action;
+        const def = ACTIONS[key];
+        const cooldown = game.actionCooldowns[key] || 0;
+        const ready = cooldown <= 0 && canAfford(def.cost);
         button.disabled = !ready;
         button.classList.toggle("ready", ready);
+        button.innerHTML = cooldown > 0
+          ? `${def.name}<br />Cooldown ${cooldownText(key)}`
+          : `${def.name}<br />${costText(def.cost)}`;
+      });
+
+      document.querySelectorAll(".build-btn").forEach((button) => {
+        const key = button.dataset.build;
+        const def = BUILDINGS[key];
+        const unlocked = isBuildingUnlocked(key);
+        const ready = unlocked && canAfford(def.cost);
+        button.disabled = !ready;
+        button.classList.toggle("ready", ready);
+        button.classList.toggle("locked", !unlocked);
+        button.innerHTML = unlocked
+          ? `${def.name}<br />${costText(def.cost)}`
+          : `${def.name}<br />Unlock L${def.unlock}`;
       });
 
       document.querySelectorAll(".upgrade-btn").forEach((button) => {
         const key = button.dataset.upgrade;
         const def = UPGRADES[key];
         const bought = game.upgrades.has(key);
-        const ready = !bought && canAfford(def.cost);
+        const unlocked = isUpgradeUnlocked(key);
+        const ready = unlocked && !bought && canAfford(def.cost);
         button.disabled = bought || !ready;
         button.classList.toggle("ready", ready);
-        button.innerHTML = bought ? `${def.name}<br />Installed` : `${def.name}<br />${def.desc}`;
+        button.classList.toggle("locked", !unlocked);
+        if (bought) button.innerHTML = `${def.name}<br />Installed`;
+        else if (!unlocked) button.innerHTML = `${def.name}<br />Unlock L${def.unlock}`;
+        else button.innerHTML = `${def.name}<br />${costText(def.cost)}`;
       });
     }
 
     function updateHud() {
       hudName.textContent = game.commander || "-";
-      hudCycle.textContent = fmt(game.cycle);
+      hudCycle.textContent = formatCycle(game.cycle);
       hudLevel.textContent = game.level;
       hudCrew.textContent = `${game.workers.length}/${game.housing}`;
-      hudEnergy.textContent = fmt(game.resources.energy);
-      hudOre.textContent = fmt(game.resources.ore);
-      hudFood.textContent = fmt(game.resources.food);
-      hudCrystal.textContent = fmt(game.resources.crystal);
-      hudScience.textContent = fmt(game.resources.science);
+      hudBuildings.textContent = game.buildings.length;
+      hudDirective.textContent = DIRECTIVES[game.directive]?.name || "Balanced";
+      hudStorage.textContent = fmt(resourceCapacity());
+      hudEnergy.textContent = `${fmt(game.resources.energy)}`;
+      hudOre.textContent = `${fmt(game.resources.ore)}`;
+      hudFood.textContent = `${fmt(game.resources.food)}`;
+      hudCrystal.textContent = `${fmt(game.resources.crystal)}`;
+      hudScience.textContent = `${fmt(game.resources.science)}`;
+      const discoveryPercent = clamp(game.discovery / game.nextDiscovery, 0, 1);
+      hudDiscovery.textContent = `${Math.floor(discoveryPercent * 100)}%`;
+      discoveryMeter.style.width = `${discoveryPercent * 100}%`;
       hudMorale.textContent = `${Math.floor(game.morale)}%`;
+      updateInspector();
+      updateMilestonePanel();
       logLine.textContent = game.log;
       updateButtons();
+    }
+
+    function resourceCapacity() {
+      const counts = countBuildings();
+      return 520
+        + game.level * 145
+        + game.storageBonus
+        + counts.habitat * 115
+        + counts.outpost * 160
+        + counts.archive * 340
+        + counts.shield * 300
+        + counts.terraformer * 220;
+    }
+
+    function capResources() {
+      const cap = resourceCapacity();
+      for (const key of Object.keys(game.resources)) {
+        const resourceCap = key === "energy" ? cap * 1.35 : key === "science" ? cap * 1.15 : cap;
+        game.resources[key] = clamp(game.resources[key], 0, resourceCap);
+      }
+    }
+
+    function updateInspector() {
+      if (!selectedObject) {
+        inspectorLine.textContent = "Click a worker, building, resource, or beacon.";
+        return;
+      }
+      if (selectedObject.name && selectedObject.state) {
+        inspectorLine.textContent = `${selectedObject.name}: ${workerStatus(selectedObject)}. Mood ${Math.floor(selectedObject.mood)}.`;
+        return;
+      }
+      if (selectedObject.type && RESOURCE_META[selectedObject.type]) {
+        inspectorLine.textContent = `${RESOURCE_META[selectedObject.type].name} field: ${fmt(selectedObject.amount)} left. Click to assign a worker.`;
+        return;
+      }
+      if (selectedObject.progress !== undefined && selectedObject.needed !== undefined) {
+        inspectorLine.textContent = `${selectedObject.name}: ${Math.floor(selectedObject.progress / selectedObject.needed * 100)}% built.`;
+        return;
+      }
+      if (selectedObject.kind) {
+        const def = selectedObject.kind === "hub" ? { desc: "The colony's heart." } : BUILDINGS[selectedObject.kind];
+        inspectorLine.textContent = `${selectedObject.name}: ${def?.desc || "online"}`;
+        return;
+      }
+      inspectorLine.textContent = "Beacon: scout it to reveal space, science, and new fields.";
+    }
+
+    function updateMilestonePanel() {
+      const remaining = MILESTONES.filter((milestone) => !game.completedMilestones.has(milestone.id)).slice(0, 3);
+      const completed = game.completedMilestones.size;
+      const rows = remaining.map((milestone) => `<div><span>${milestone.name}</span><strong>${milestone.desc}</strong></div>`);
+      if (!rows.length) rows.push("<div><span>Sandbox</span><strong>Keep expanding</strong></div>");
+      rows.unshift(`<div><span>Completed</span><strong>${completed}/${MILESTONES.length}</strong></div>`);
+      milestoneList.innerHTML = rows.join("");
     }
 
     function updateSoundButton() {
@@ -1078,7 +1540,22 @@
       const def = kind === "hub"
         ? { name: "Command Hub", color: "#6fd3ff", effect: "hub" }
         : BUILDINGS[kind];
-      const sizes = { hub: 48, solar: 36, habitat: 42, garden: 34, lab: 36, dock: 44, outpost: 46 };
+      const sizes = {
+        hub: 50,
+        solar: 36,
+        habitat: 44,
+        garden: 36,
+        lab: 38,
+        commons: 40,
+        refinery: 46,
+        observatory: 44,
+        dock: 46,
+        reactor: 50,
+        archive: 46,
+        shield: 52,
+        terraformer: 54,
+        outpost: 48
+      };
       return {
         id: cryptoRandomId(),
         kind,
@@ -1131,12 +1608,22 @@
       const cy = 0;
       game.cycle = 0;
       game.level = 1;
-      game.resources = { energy: 118, ore: 110, food: 92, crystal: 38, science: 0 };
+      game.discovery = 0;
+      game.nextDiscovery = 120;
+      game.directive = "balanced";
+      game.resources = { energy: 145, ore: 138, food: 110, crystal: 56, science: 0 };
       game.housing = 7;
+      game.storageBonus = 0;
       game.morale = 92;
-      game.workerSpeed = 148;
+      game.workerSpeed = 142;
       game.cargoBonus = 0;
       game.scoutBonus = 0;
+      game.buildSpeedBonus = 0;
+      game.autoWorkBonus = 0;
+      game.beaconBonus = 0;
+      game.actionCooldowns = {};
+      game.completedMilestones = new Set();
+      game.stats = { beaconsScouted: 0, actionsUsed: 0 };
       game.upgrades = new Set();
       game.buildings = [makeBuilding("hub", cx, cy)];
       game.sites = [];
@@ -1157,22 +1644,22 @@
 
       for (let i = 0; i < 5; i++) game.workers.push(makeWorker(i, game.buildings[0]));
       seedResourceField(cx, cy, 1);
-      spawnBeacon(cx + rand(-740, 740), cy + rand(-520, 520));
+      spawnBeacon(cx + rand(-980, 980), cy + rand(-720, 720));
       updateHud();
     }
 
     function seedResourceField(cx, cy, tier = 1) {
-      const count = 10 + tier * 3;
+      const count = 7 + tier * 2;
       const types = ["ore", "food", "crystal"];
       for (let i = 0; i < count; i++) {
-        const point = findOpenPoint(cx, cy, 420, 920 + tier * 120, 118, 58);
+        const point = findOpenPoint(cx, cy, 560, 1260 + tier * 160, 190, 72);
         spawnNode(types[i % types.length], point.x, point.y, tier);
       }
     }
 
     function spawnNode(type, x, y, tier = game.level) {
       const margin = 90;
-      const amount = Math.floor(rand(90, 175) + tier * 34);
+      const amount = Math.floor(rand(115, 230) + tier * 44);
       game.nodes.push({
         id: cryptoRandomId(),
         type,
@@ -1187,7 +1674,7 @@
 
     function spawnBeacon(x, y) {
       const margin = 120;
-      const point = findOpenPoint(x, y, 0, 260, 180, 28);
+      const point = findOpenPoint(x, y, 180, 520, 280, 42);
       game.beacons.push({
         id: cryptoRandomId(),
         x: clampWorldX(point.x, margin),
@@ -1349,6 +1836,10 @@
 
     function createSite(kind) {
       const def = BUILDINGS[kind];
+      if (!isBuildingUnlocked(kind)) {
+        setLog(`${def.name} unlocks at level ${def.unlock}. Scout and finish milestones.`);
+        return;
+      }
       if (!spend(def.cost)) {
         setLog(`Need ${costText(def.cost)} for ${def.name}.`);
         return;
@@ -1357,14 +1848,15 @@
       const anchor = selectedObject && selectedObject.kind ? selectedObject : getColonyCenter();
       const index = game.sites.length + game.buildings.length;
       const angle = index * 1.42 + rand(-0.18, 0.18);
-      const radius = kind === "outpost" ? rand(620, 860) : rand(180, 320);
+      const radius = kind === "outpost" ? rand(980, 1320) : rand(def.sprawl * 0.7, def.sprawl * 1.18);
+      const minGap = kind === "outpost" ? 520 : clamp(def.sprawl * 0.72, 230, 440);
       const point = findOpenPoint(
         anchor.x + Math.cos(angle) * radius,
         anchor.y + Math.sin(angle) * radius,
         0,
-        kind === "outpost" ? 260 : 180,
-        kind === "outpost" ? 260 : 180,
-        60
+        kind === "outpost" ? 420 : 260,
+        minGap,
+        86
       );
       const site = {
         id: cryptoRandomId(),
@@ -1388,6 +1880,10 @@
     function buyUpgrade(key) {
       const upgrade = UPGRADES[key];
       if (game.upgrades.has(key)) return;
+      if (!isUpgradeUnlocked(key)) {
+        setLog(`${upgrade.name} unlocks at level ${upgrade.unlock}.`);
+        return;
+      }
       if (!spend(upgrade.cost)) {
         setLog(`Need ${costText(upgrade.cost)} for ${upgrade.name}.`);
         return;
@@ -1399,6 +1895,84 @@
       playBuildSound();
       setLog(`${upgrade.name} installed.`);
       updateHud();
+    }
+
+    function setDirective(key) {
+      if (!DIRECTIVES[key]) return;
+      game.directive = key;
+      setLog(`${DIRECTIVES[key].name} directive active.`);
+      updateHud();
+    }
+
+    function useAction(key) {
+      const action = ACTIONS[key];
+      if (!action) return;
+      if ((game.actionCooldowns[key] || 0) > 0) {
+        setLog(`${action.name} is recharging.`);
+        return;
+      }
+      if (!spend(action.cost)) {
+        setLog(`Need ${costText(action.cost)} for ${action.name}.`);
+        return;
+      }
+      game.actionCooldowns[key] = action.cooldown;
+      game.stats.actionsUsed += 1;
+      if (key === "survey") runSurveyPulse();
+      if (key === "rally") runRallyCrew();
+      if (key === "cleanup") runCleanup();
+      if (key === "prospect") runProspectorBurst();
+      updateHud();
+    }
+
+    function runSurveyPulse() {
+      const center = screenToWorld(viewWidth * 0.56, viewHeight * 0.46);
+      if (Math.random() < 0.52 || game.beacons.length < 2) {
+        spawnBeacon(center.x + rand(-520, 520), center.y + rand(-420, 420));
+        addDiscovery(18);
+        setLog("Survey pulse found a beacon signature.");
+      } else {
+        const type = ["ore", "food", "crystal"][Math.floor(rand(0, 3))];
+        const point = findOpenPoint(center.x, center.y, 220, 760, 240, 46);
+        spawnNode(type, point.x, point.y, game.level + 1);
+        addDiscovery(12);
+        setLog(`Survey pulse revealed a rich ${RESOURCE_META[type].name.toLowerCase()} field.`);
+      }
+      playExpandSound();
+      flashScreen(0.12, 1.5);
+    }
+
+    function runRallyCrew() {
+      const hub = getColonyCenter();
+      game.morale = clamp(game.morale + 8, 18, 100);
+      for (const worker of game.workers) {
+        if (!worker.manual && AUTONOMY_STATES.has(worker.state)) {
+          worker.state = "socialize";
+          worker.activity = "joining the rally";
+          worker.tx = hub.x + rand(-140, 140);
+          worker.ty = hub.y + rand(-110, 110);
+          worker.agendaTimer = rand(5, 10);
+        }
+      }
+      spawnRipple(hub.x, hub.y, 126, 1.8);
+      setLog("Crew rally started. Morale rises.");
+    }
+
+    function runCleanup() {
+      const before = game.nodes.length;
+      game.nodes = game.nodes.filter((node) => node.amount > 0);
+      setLog(`Cleared ${before - game.nodes.length} drained markers.`);
+    }
+
+    function runProspectorBurst() {
+      const center = screenToWorld(viewWidth * 0.52, viewHeight * 0.48);
+      const types = ["ore", "food", "crystal", "ore"];
+      for (let i = 0; i < 4; i++) {
+        const point = findOpenPoint(center.x, center.y, 320, 980, 260, 48);
+        spawnNode(types[i], point.x, point.y, game.level + 2);
+      }
+      addDiscovery(24);
+      setLog("Prospector burst seeded new resource fields.");
+      spawnRipple(center.x, center.y, 55, 1.4);
     }
 
     function clickWorld(x, y) {
@@ -1460,22 +2034,64 @@
 
     function applyBuildingEffect(building) {
       const kind = building.kind;
-      if (kind === "solar") game.resources.energy += 16;
+      if (kind === "solar") game.resources.energy += 26;
       if (kind === "habitat") {
-        game.housing += 3;
+        game.housing += 4;
         if (game.workers.length < game.housing) game.workers.push(makeWorker(game.workers.length, nearestHubTo(building.x, building.y)));
       }
-      if (kind === "garden") game.resources.food += 18;
-      if (kind === "lab") game.resources.science += 14;
-      if (kind === "dock") {
+      if (kind === "garden") {
+        game.resources.food += 34;
+        game.morale = clamp(game.morale + 2, 18, 100);
+      }
+      if (kind === "lab") game.resources.science += 32;
+      if (kind === "commons") {
         game.housing += 1;
+        game.morale = clamp(game.morale + 10, 18, 100);
+      }
+      if (kind === "refinery") {
+        game.resources.ore += 70;
+        game.cargoBonus += 2;
+      }
+      if (kind === "observatory") {
+        game.scoutBonus += 1;
+        addDiscovery(58);
+      }
+      if (kind === "dock") {
+        game.housing += 2;
         game.workers.push(makeWorker(game.workers.length, nearestHubTo(building.x, building.y)));
       }
+      if (kind === "reactor") game.resources.energy += 160;
+      if (kind === "archive") {
+        game.resources.science += 140;
+        game.storageBonus += 180;
+      }
+      if (kind === "shield") {
+        game.storageBonus += 260;
+        game.morale = clamp(game.morale + 6, 18, 100);
+      }
+      if (kind === "terraformer") {
+        game.resources.food += 210;
+        seedResourceField(building.x, building.y, game.level + 2);
+        addDiscovery(120);
+      }
       if (kind === "outpost") {
-        game.level += 1;
         game.housing += 2;
         seedResourceField(building.x, building.y, game.level);
-        spawnBeacon(building.x + rand(-760, 760), building.y + rand(-580, 580));
+        spawnBeacon(building.x + rand(-1080, 1080), building.y + rand(-840, 840));
+        addDiscovery(85 + game.level * 18);
+      }
+      capResources();
+    }
+
+    function addDiscovery(amount) {
+      game.discovery += amount * (1 + game.beaconBonus);
+      while (game.discovery >= game.nextDiscovery) {
+        game.discovery -= game.nextDiscovery;
+        game.level += 1;
+        game.nextDiscovery = Math.floor(game.nextDiscovery * 1.55 + 70);
+        game.resources.science += 35 + game.level * 9;
+        setLog(`Sector level ${game.level} reached. New projects unlocked.`);
+        spawnRipple(camera.x, camera.y, 205, 1.2);
       }
     }
 
@@ -1528,7 +2144,19 @@
     }
 
     function chooseAutonomousAction(worker) {
-      const autoWorkChance = game.nodes.length > 0 && (game.resources.food < 70 || game.resources.ore < 90 || game.resources.crystal < 40 ? 0.42 : 0.18);
+      if (game.directive === "explore" && game.beacons.length && Math.random() < 0.28 + game.autoWorkBonus * 0.25) {
+        const beacon = nearestTarget(game.beacons, worker.x, worker.y);
+        if (beacon) {
+          assignWorkerToBeacon(worker, beacon, false);
+          return;
+        }
+      }
+
+      const pressure = game.resources.food < 95 || game.resources.ore < 130 || game.resources.crystal < 70;
+      const directiveWork = ["industry", "growth", "research"].includes(game.directive) ? 0.2 : 0;
+      const autoWorkChance = game.nodes.length > 0
+        ? clamp((pressure ? 0.44 : 0.16) + directiveWork + game.autoWorkBonus, 0, 0.82)
+        : 0;
       if (Math.random() < autoWorkChance) {
         const type = chooseNeededResource();
         const node = nearestTarget(game.nodes.filter((item) => item.type === type && item.amount > 0), worker.x, worker.y);
@@ -1540,7 +2168,9 @@
 
       const roll = Math.random();
       const home = findById(game.buildings, worker.homeId) || game.buildings[0];
-      if (roll < 0.32 && game.workers.length > 1) {
+      const leisureBias = game.directive === "leisure" ? 0.22 : game.directive === "growth" ? 0.08 : 0;
+      const maintainBias = game.directive === "industry" ? 0.12 : 0;
+      if (roll < 0.28 + leisureBias && game.workers.length > 1) {
         const buddy = nearestTarget(game.workers.filter((item) => item.id !== worker.id), worker.x, worker.y);
         worker.state = "socialize";
         worker.socialId = buddy?.id || null;
@@ -1548,7 +2178,7 @@
         worker.tx = (buddy?.x || home.x) + rand(-34, 34);
         worker.ty = (buddy?.y || home.y) + rand(-28, 28);
         worker.agendaTimer = rand(4.5, 9.5);
-      } else if (roll < 0.58) {
+      } else if (roll < 0.54 + maintainBias) {
         const building = game.buildings[Math.floor(rand(0, game.buildings.length))] || home;
         worker.state = "maintain";
         worker.socialId = null;
@@ -1578,9 +2208,9 @@
 
     function chooseNeededResource() {
       const needs = [
-        { type: "food", score: 120 - game.resources.food + rand(0, 30) },
-        { type: "ore", score: 140 - game.resources.ore + rand(0, 24) },
-        { type: "crystal", score: 78 - game.resources.crystal + rand(0, 34) }
+        { type: "food", score: 140 - game.resources.food + rand(0, 30) + (game.directive === "growth" ? 80 : 0) },
+        { type: "ore", score: 170 - game.resources.ore + rand(0, 24) + (game.directive === "industry" ? 90 : 0) },
+        { type: "crystal", score: 95 - game.resources.crystal + rand(0, 34) + (game.directive === "research" ? 90 : 0) }
       ];
       needs.sort((a, b) => b.score - a.score);
       return needs[0].type;
@@ -1613,7 +2243,7 @@
               setLog("A resource node ran dry.");
             } else if (worker.work >= 3.1) {
               const meta = RESOURCE_META[node.type];
-              const amount = Math.min(node.amount, meta.yield + game.cargoBonus + Math.floor(game.level * 0.8));
+              const amount = Math.min(node.amount, meta.yield + game.cargoBonus + Math.floor(game.level * 1.1));
               node.amount -= amount;
               worker.carry = { type: node.type, amount };
               const hub = nearestHubTo(worker.x, worker.y);
@@ -1634,7 +2264,7 @@
             continue;
           }
 
-          site.progress += deltaSeconds * (0.9 + game.morale / 160);
+          site.progress += deltaSeconds * (0.72 + game.morale / 190 + game.buildSpeedBonus);
           spawnConstructionSparks(site.x, site.y);
           if (site.progress >= site.needed) finishSite(site, worker);
           continue;
@@ -1692,10 +2322,10 @@
       const beacon = findById(game.beacons, worker.targetId);
       if (beacon) {
         game.beacons = game.beacons.filter((item) => item.id !== beacon.id);
-        const reveals = 3 + game.scoutBonus;
+        const reveals = 2 + game.scoutBonus;
         const types = ["ore", "food", "crystal"];
         for (let i = 0; i < reveals; i++) {
-          const point = findOpenPoint(beacon.x, beacon.y, 180, 520, 132, 38);
+          const point = findOpenPoint(beacon.x, beacon.y, 320, 760, 230, 48);
           spawnNode(types[(i + game.level) % types.length], point.x, point.y, game.level + 1);
         }
         if (Math.random() < 0.44 && game.workers.length < game.housing) {
@@ -1704,9 +2334,10 @@
         } else {
           setLog("Beacon decoded. New resource fields revealed.");
         }
-        game.resources.science += 8 + game.level * 2;
-        game.level += 1;
-        spawnBeacon(beacon.x + rand(-780, 780), beacon.y + rand(-620, 620));
+        game.resources.science += 24 + game.level * 6;
+        game.stats.beaconsScouted += 1;
+        addDiscovery(58 + game.level * 14);
+        spawnBeacon(beacon.x + rand(-1160, 1160), beacon.y + rand(-900, 900));
         spawnRipple(beacon.x, beacon.y, 270, 2.2);
         spawnParticles(beacon.x, beacon.y, 245, 300, 34);
         playExpandSound();
@@ -1753,28 +2384,63 @@
       }
     }
 
+    function updateActionCooldowns(deltaSeconds) {
+      for (const key of Object.keys(game.actionCooldowns)) {
+        game.actionCooldowns[key] = Math.max(0, game.actionCooldowns[key] - deltaSeconds);
+      }
+    }
+
     function updateEconomy(deltaSeconds) {
       const counts = countBuildings();
-      const energyRate = 0.34 + counts.solar * 1.34 - game.workers.length * 0.07 - counts.lab * 0.2 - counts.dock * 0.22;
-      const foodRate = counts.garden * 0.55 - game.workers.length * 0.1;
-      const scienceRate = counts.lab * 0.22 + counts.dock * 0.04;
-      game.resources.energy = clamp(game.resources.energy + energyRate * deltaSeconds, 0, 9999);
-      game.resources.food = clamp(game.resources.food + foodRate * deltaSeconds, 0, 9999);
-      game.resources.science = clamp(game.resources.science + scienceRate * deltaSeconds, 0, 9999);
+      const energyRate = 0.22
+        + counts.solar * 0.78
+        + counts.reactor * 2.4
+        - game.workers.length * 0.09
+        - counts.lab * 0.18
+        - counts.dock * 0.22
+        - counts.shield * 0.3
+        - counts.terraformer * 0.46;
+      const foodRate = counts.garden * 0.38 + counts.terraformer * 1.1 - game.workers.length * 0.12;
+      const scienceRate = counts.lab * 0.16 + counts.observatory * 0.18 + counts.archive * 0.52 + counts.dock * 0.04;
+      game.resources.energy += energyRate * deltaSeconds;
+      game.resources.food += foodRate * deltaSeconds;
+      game.resources.science += scienceRate * deltaSeconds;
+      game.resources.ore += counts.refinery * 0.11 * deltaSeconds;
 
       if (game.resources.food <= 0 || game.resources.energy <= 0) {
         game.morale = clamp(game.morale - deltaSeconds * 4.5, 18, 100);
       } else {
-        const moraleTarget = 72 + counts.garden * 3 + counts.habitat * 2 + Math.min(12, game.resources.food / 25);
+        const moraleTarget = 68
+          + counts.garden * 2.4
+          + counts.habitat * 1.6
+          + counts.commons * 5
+          + counts.shield * 3
+          + Math.min(10, game.resources.food / 38);
         game.morale = lerp(game.morale, clamp(moraleTarget, 30, 100), 0.006 * deltaSeconds * 60);
       }
 
+      capResources();
       game.cycle += deltaSeconds;
       updateAudio();
     }
 
     function countBuildings() {
-      const counts = { hub: 0, solar: 0, habitat: 0, garden: 0, lab: 0, dock: 0, outpost: 0 };
+      const counts = {
+        hub: 0,
+        solar: 0,
+        habitat: 0,
+        garden: 0,
+        lab: 0,
+        commons: 0,
+        refinery: 0,
+        observatory: 0,
+        dock: 0,
+        reactor: 0,
+        archive: 0,
+        shield: 0,
+        terraformer: 0,
+        outpost: 0
+      };
       game.buildings.forEach((building) => {
         counts[building.kind] = (counts[building.kind] || 0) + 1;
       });
@@ -1806,6 +2472,7 @@
     function update(deltaSeconds) {
       const dt = deltaSeconds * 60;
       updateVisualEffects(dt, deltaSeconds);
+      updateActionCooldowns(deltaSeconds);
 
       if (!game.running || game.paused) {
         updateHud();
@@ -1816,7 +2483,23 @@
       updateSites();
       updateEconomy(deltaSeconds);
       game.nodes = game.nodes.filter((node) => node.amount > 0);
+      checkMilestones();
       updateHud();
+    }
+
+    function checkMilestones() {
+      for (const milestone of MILESTONES) {
+        if (game.completedMilestones.has(milestone.id) || !milestone.test()) continue;
+        game.completedMilestones.add(milestone.id);
+        Object.entries(milestone.reward).forEach(([key, amount]) => {
+          game.resources[key] += amount;
+        });
+        addDiscovery(35);
+        capResources();
+        spawnRipple(camera.x, camera.y, 52, 1.6);
+        setLog(`${milestone.name} complete. Supplies granted.`);
+        break;
+      }
     }
 
     function drawBackground() {
@@ -2022,7 +2705,14 @@
         if (building.kind === "habitat") drawRing(0, 0, size, building.color);
         if (building.kind === "garden") drawLeaf(0, 0, size, building.color);
         if (building.kind === "lab") drawAntenna(0, 0, size, building.color);
+        if (building.kind === "commons") drawCommons(0, 0, size, building.color);
+        if (building.kind === "refinery") drawRefinery(0, 0, size, building.color);
+        if (building.kind === "observatory") drawObservatory(0, 0, size, building.color);
         if (building.kind === "dock") drawDock(0, 0, size, building.color);
+        if (building.kind === "reactor") drawReactor(0, 0, size, building.color);
+        if (building.kind === "archive") drawArchive(0, 0, size, building.color);
+        if (building.kind === "shield") drawShield(0, 0, size, building.color);
+        if (building.kind === "terraformer") drawTerraformer(0, 0, size, building.color);
         if (building.kind === "outpost") drawOutpost(0, 0, size, building.color);
         ctx.restore();
       }
@@ -2116,6 +2806,59 @@
       ctx.restore();
     }
 
+    function drawCommons(x, y, size, color) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5 / camera.zoom;
+      for (let i = 0; i < 5; i++) {
+        const angle = i / 5 * Math.PI * 2 + globalTime * 0.00045;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(angle) * size * 0.55, y + Math.sin(angle) * size * 0.42, size * 0.13, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = hexToRgba(color, 0.42);
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawRefinery(x, y, size, color) {
+      ctx.save();
+      ctx.fillStyle = hexToRgba(color, 0.34);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.7 / camera.zoom;
+      for (let i = -1; i <= 1; i++) {
+        roundRect(ctx, x + i * size * 0.34 - size * 0.1, y - size * 0.62, size * 0.2, size * 1.12, 4);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.78, y + size * 0.45);
+      ctx.lineTo(x + size * 0.78, y + size * 0.45);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawObservatory(x, y, size, color) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.8 / camera.zoom;
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.72, Math.PI, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.48, y + size * 0.22);
+      ctx.lineTo(x, y - size * 0.88);
+      ctx.lineTo(x + size * 0.48, y + size * 0.22);
+      ctx.stroke();
+      ctx.fillStyle = hexToRgba(color, 0.75);
+      ctx.beginPath();
+      ctx.arc(x, y - size * 0.3, size * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
     function drawDock(x, y, size, color) {
       ctx.save();
       ctx.strokeStyle = color;
@@ -2129,6 +2872,67 @@
       ctx.fillStyle = hexToRgba(color, 0.28);
       roundRect(ctx, x - size * 0.9, y - size * 0.14, size * 1.8, size * 0.28, 4);
       ctx.fill();
+      ctx.restore();
+    }
+
+    function drawReactor(x, y, size, color) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2 / camera.zoom;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * (0.42 + i * 0.18), size * (0.22 + i * 0.08), globalTime * 0.0012 + i, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = hexToRgba(color, 0.72);
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawArchive(x, y, size, color) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.4 / camera.zoom;
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x + i * size * 0.18, y - size * 0.6);
+        ctx.lineTo(x + i * size * 0.18, y + size * 0.6);
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.78, 0, Math.PI * 2);
+      ctx.stroke();
+      drawTinyWindows(x, y, size * 0.44, color, 6);
+      ctx.restore();
+    }
+
+    function drawShield(x, y, size, color) {
+      ctx.save();
+      ctx.strokeStyle = hexToRgba(color, 0.7);
+      ctx.lineWidth = 2.2 / camera.zoom;
+      ctx.beginPath();
+      ctx.arc(x, y, size * 1.42, -0.35, Math.PI * 1.35);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y, size * 1.02, Math.PI * 0.64, Math.PI * 1.92);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawTerraformer(x, y, size, color) {
+      ctx.save();
+      ctx.fillStyle = hexToRgba(color, 0.36);
+      ctx.beginPath();
+      ctx.ellipse(x, y, size * 0.48, size * 0.74, -0.5, 0, Math.PI * 2);
+      ctx.ellipse(x, y, size * 0.48, size * 0.74, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5 / camera.zoom;
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.9, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.stroke();
       ctx.restore();
     }
 
@@ -2405,7 +3209,7 @@
       if (camera.zoom > 0.55) {
         for (const node of game.nodes) {
           if (objectVisible(node.x, node.y, 120) && (camera.zoom > 0.82 || node === selectedObject)) {
-            ctx.fillText(`${RESOURCE_META[node.type].name} ${Math.floor(node.amount)}`, node.x, node.y + node.size + 22 / camera.zoom);
+            ctx.fillText(`${RESOURCE_META[node.type].name} ${fmt(node.amount)}`, node.x, node.y + node.size + 22 / camera.zoom);
           }
         }
       }
@@ -2552,6 +3356,18 @@
       selectedCommand = button.dataset.command;
       commandNearest(selectedCommand);
       updateButtons();
+    });
+
+    directiveGrid.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-directive]");
+      if (!button) return;
+      setDirective(button.dataset.directive);
+    });
+
+    actionGrid.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-action]");
+      if (!button || button.disabled) return;
+      useAction(button.dataset.action);
     });
 
     buildGrid.addEventListener("click", (event) => {
