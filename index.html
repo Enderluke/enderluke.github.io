@@ -1,434 +1,1109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>2D Walking Simulator + Tail</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glow Tail Game</title>
   <style>
-    body {cv 
+    :root {
+      --bg-1: #0b1020;
+      --bg-2: #123420;
+      --panel: rgba(10, 15, 30, 0.72);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --text: #f4f7ff;
+      --muted: #bfd0ff;
+      --accent: #ffe34d;
+      --accent-2: #6fd3ff;
+      --danger: #ff5b6e;
+      --danger-hover: #ff7888;
+      --good: #73ffb3;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
       margin: 0;
+    }
+
+    body {
       overflow: hidden;
-      background: #1a1a1a;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(70, 140, 255, 0.18), transparent 28%),
+        radial-gradient(circle at 80% 15%, rgba(165, 75, 255, 0.16), transparent 25%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      color: var(--text);
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     canvas {
       display: block;
-      background: #2e7d32;
+      width: 100vw;
+      height: 100vh;
     }
 
-    /* ===== MENU UI ===== */
-    #menu {
+    #menu,
+    #hud,
+    #backBtn {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #2196f3, #9c27b0);
-      color: white;
-      font-family: Arial;
       z-index: 10;
     }
 
-    #menu h1 {
-      font-size: 48px;
-      margin-bottom: 20px;
+    #menu {
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(80, 170, 255, 0.18), transparent 25%),
+        radial-gradient(circle at 80% 20%, rgba(160, 60, 255, 0.18), transparent 22%),
+        linear-gradient(135deg, rgba(20, 35, 75, 0.76), rgba(70, 20, 80, 0.72));
+      backdrop-filter: blur(10px);
     }
 
-    #menu input {
-      padding: 10px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      margin-bottom: 15px;
+    .menu-card {
+      width: min(560px, 94vw);
+      padding: 28px 24px 22px;
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      box-shadow: var(--shadow);
       text-align: center;
     }
 
-    #menu button {
-      padding: 12px 25px;
-      font-size: 20px;
-      border: none;
-      border-radius: 10px;
-      background: #ffeb3b;
-      cursor: pointer;
-      font-weight: bold;
+    .menu-card h1 {
+      margin: 0 0 10px;
+      font-size: clamp(36px, 5vw, 54px);
+      letter-spacing: 0.02em;
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     }
 
-    #menu button:hover {
-      background: #fff176;
+    .subtitle {
+      margin: 0 auto 18px;
+      max-width: 460px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 15px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    #username {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 17px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+      text-align: center;
+    }
+
+    #username::placeholder {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    #username:focus {
+      border-color: rgba(111, 211, 255, 0.8);
+      box-shadow: 0 0 0 4px rgba(111, 211, 255, 0.16);
+      transform: translateY(-1px);
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background 0.16s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    #playBtn {
+      min-width: 120px;
+      padding: 14px 22px;
+      font-size: 18px;
+      background: linear-gradient(180deg, #fff178, var(--accent));
+      color: #111;
+      box-shadow: 0 12px 24px rgba(255, 227, 77, 0.22);
+    }
+
+    .hints {
+      margin-bottom: 18px;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     #leaderboard {
-      margin-top: 30px;
-      background: rgba(0,0,0,0.3);
-      padding: 15px;
-      border-radius: 10px;
-      max-width: 300px;
-      width: 80%;
+      text-align: left;
+      margin-top: 10px;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.09);
     }
 
     #leaderboard h2 {
-      margin-top: 0;
+      margin: 0 0 12px;
+      font-size: 20px;
       text-align: center;
     }
 
-    #leaderboard ul {
+    #scores {
       list-style: none;
-      padding: 0;
       margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
     }
 
-    #leaderboard li {
-      padding: 5px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-      text-align: center;
+    #scores li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 14px;
     }
 
-    /* ===== BACK BUTTON ===== */
-    #backBtn {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      padding: 10px 15px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background: #ff5252;
+    .score-rank {
+      font-weight: 900;
+      color: #fff1a8;
+      min-width: 32px;
+    }
+
+    .score-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+    .score-value {
+      font-weight: 800;
+      color: #cbe6ff;
+    }
+
+    #hud {
+      top: 16px;
+      right: 16px;
+      min-width: 220px;
+      padding: 14px 14px 12px;
+      border-radius: 18px;
+      background: rgba(10, 15, 28, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hud-title {
+      margin: 0 0 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .hud-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 6px 0;
+      font-size: 14px;
+    }
+
+    .hud-row span {
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .hud-row strong {
       color: white;
-      cursor: pointer;
-      z-index: 5;
-      display: none;
+      font-size: 15px;
+    }
+
+    #backBtn {
+      top: 16px;
+      left: 16px;
+      padding: 12px 16px;
+      font-size: 15px;
+      background: linear-gradient(180deg, #ff7185, var(--danger));
+      color: white;
+      box-shadow: 0 12px 24px rgba(255, 91, 110, 0.22);
     }
 
     #backBtn:hover {
-      background: #ff7979;
+      background: linear-gradient(180deg, #ff8696, var(--danger-hover));
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 640px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      #playBtn {
+        width: 100%;
+      }
+
+      #hud {
+        left: 12px;
+        right: 12px;
+        top: auto;
+        bottom: 12px;
+        min-width: 0;
+      }
+
+      #backBtn {
+        top: 12px;
+        left: 12px;
+      }
     }
   </style>
 </head>
 <body>
+  <canvas id="gameCanvas"></canvas>
 
-<div id="menu">
-  <h1>Glow Tail Game</h1>
-  <input id="username" placeholder="Enter username" />
-  <button onclick="startGame()">Play</button>
+  <div id="menu">
+    <div class="menu-card">
+      <h1>Glow Tail Game</h1>
+      <p class="subtitle">
+        Collect glowing orbs, grow longer, and avoid crashing into your own tail.
+        Smooth controls, cleaner visuals, stronger collision handling, and a better leaderboard are all built in now.
+      </p>
 
-  <div id="leaderboard">
-    <h2>🏆 Leaderboard</h2>
-    <ul id="scores"></ul>
+      <div class="form-row">
+        <input
+          id="username"
+          type="text"
+          maxlength="18"
+          autocomplete="nickname"
+          placeholder="Enter username"
+          aria-label="Username"
+        />
+        <button id="playBtn" type="button">Play</button>
+      </div>
+
+      <div class="hints">
+        WASD / Arrow Keys to move · P or Esc to pause · Enter returns to menu after game over
+      </div>
+
+      <div id="leaderboard">
+        <h2>🏆 Leaderboard</h2>
+        <ul id="scores"></ul>
+      </div>
+    </div>
   </div>
-</div>
 
-<button id="backBtn" onclick="goBack()">⬅ Back</button>
+  <button id="backBtn" type="button" hidden>⬅ Back</button>
 
-<canvas id="gameCanvas"></canvas>
+  <div id="hud" hidden>
+    <div class="hud-title">Live Stats</div>
+    <div class="hud-row"><span>Player</span><strong id="hudName">—</strong></div>
+    <div class="hud-row"><span>Length</span><strong id="hudLength">0</strong></div>
+    <div class="hud-row"><span>Best</span><strong id="hudBest">0</strong></div>
+    <div class="hud-row"><span>Status</span><strong id="hudStatus">Idle</strong></div>
+  </div>
 
-<script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+    const menu = document.getElementById("menu");
+    const playBtn = document.getElementById("playBtn");
+    const backBtn = document.getElementById("backBtn");
+    const usernameInput = document.getElementById("username");
+    const scoresList = document.getElementById("scores");
 
-// ===== PLAYER ID =====
-let playerId = localStorage.getItem("playerId");
-if (!playerId) {
-  playerId = "player-" + Math.random().toString(36).substr(2, 9);
-  localStorage.setItem("playerId", playerId);
-}
+    const hud = document.getElementById("hud");
+    const hudName = document.getElementById("hudName");
+    const hudLength = document.getElementById("hudLength");
+    const hudBest = document.getElementById("hudBest");
+    const hudStatus = document.getElementById("hudStatus");
 
-// ===== USER / MENU =====
-let currentUser = "";
-let gameStarted = false;
-let gameOver = false;
+    const STORAGE_KEYS = {
+      playerId: "glowTailPlayerId",
+      scores: "glowTailScores",
+      lastUsername: "glowTailLastUsername"
+    };
 
-function getScores() {
-  return JSON.parse(localStorage.getItem("tailScores") || "[]");
-}
+    const START_TAIL_LENGTH = 24;
+    const FOOD_COUNT = 14;
+    const FOOD_GROWTH = 7;
+    const MAX_NAME_LENGTH = 18;
+    const GRID_SIZE = 44;
 
-// ===== NO DUPES =====
-function saveScore(name, score) {
-  let scores = getScores();
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const rand = (min, max) => Math.random() * (max - min) + min;
+    const distanceXY = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
+    const distance = (a, b) => distanceXY(a.x, a.y, b.x, b.y);
 
-  const existing = scores.find(s => s.id === playerId);
+    let viewWidth = window.innerWidth;
+    let viewHeight = window.innerHeight;
+    let dpr = 1;
 
-  if (existing) {
-    if (score > existing.score) {
-      existing.score = score;
-      existing.name = name;
+    let currentUser = "";
+    let gameStarted = false;
+    let gameOver = false;
+    let paused = false;
+    let lastFrameTime = 0;
+    let globalTime = 0;
+
+    const player = {
+      x: viewWidth / 2,
+      y: viewHeight / 2,
+      size: 18,
+      baseSpeed: 4.5,
+      vx: 0,
+      vy: 0
+    };
+
+    let tail = [];
+    let maxTailLength = START_TAIL_LENGTH;
+    let foods = [];
+    let particles = [];
+
+    const keys = Object.create(null);
+
+    function safeJsonParse(value, fallback) {
+      try {
+        const parsed = JSON.parse(value);
+        return parsed ?? fallback;
+      } catch {
+        return fallback;
+      }
     }
-  } else {
-    scores.push({ name, score, id: playerId });
-  }
 
-  scores.sort((a,b) => b.score - a.score);
-  scores = scores.slice(0, 10);
+    function sanitizeName(name) {
+      return String(name || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, MAX_NAME_LENGTH);
+    }
 
-  localStorage.setItem("tailScores", JSON.stringify(scores));
-}
+    let playerId = localStorage.getItem(STORAGE_KEYS.playerId);
+    if (!playerId) {
+      playerId =
+        (globalThis.crypto && typeof crypto.randomUUID === "function")
+          ? crypto.randomUUID()
+          : "player-" + Math.random().toString(36).slice(2, 11);
 
-function renderLeaderboard() {
-  const list = document.getElementById("scores");
-  list.innerHTML = "";
-  getScores().forEach(s => {
-    const li = document.createElement("li");
-    li.textContent = `${s.name}: ${s.score}`;
-    list.appendChild(li);
-  });
-}
+      localStorage.setItem(STORAGE_KEYS.playerId, playerId);
+    }
 
-function startGame() {
-  const input = document.getElementById("username");
-  if (!input.value.trim()) {
-    alert("Enter a username!");
-    return;
-  }
-  currentUser = input.value.trim();
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("backBtn").style.display = "block";
-  gameStarted = true;
-  gameOver = false;
-}
+    function resizeCanvas() {
+      viewWidth = window.innerWidth;
+      viewHeight = window.innerHeight;
+      dpr = clamp(window.devicePixelRatio || 1, 1, 2);
 
-// ===== RESET FUNCTION =====
-function resetGame() {
-  player.x = canvas.width / 2;
-  player.y = canvas.height / 2;
+      canvas.width = Math.floor(viewWidth * dpr);
+      canvas.height = Math.floor(viewHeight * dpr);
+      canvas.style.width = `${viewWidth}px`;
+      canvas.style.height = `${viewHeight}px`;
 
-  tail = [];
-  maxTailLength = 25;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  foods = [];
-  for (let i = 0; i < 12; i++) spawnFood();
-}
+      player.x = clamp(player.x, player.size, viewWidth - player.size);
+      player.y = clamp(player.y, player.size, viewHeight - player.size);
 
-// ===== BACK BUTTON =====
-function goBack() {
-  if (gameStarted && currentUser) {
-    saveScore(currentUser, maxTailLength);
-  }
+      foods = foods.filter(
+        (f) =>
+          f.x > 24 &&
+          f.x < viewWidth - 24 &&
+          f.y > 24 &&
+          f.y < viewHeight - 24
+      );
 
-  resetGame();
+      while (foods.length < FOOD_COUNT) {
+        spawnFood();
+      }
+    }
 
-  document.getElementById("menu").style.display = "flex";
-  document.getElementById("backBtn").style.display = "none";
-  renderLeaderboard();
+    function getScores() {
+      const raw = safeJsonParse(localStorage.getItem(STORAGE_KEYS.scores), []);
+      if (!Array.isArray(raw)) return [];
 
-  gameStarted = false;
-  gameOver = false;
-}
+      return raw
+        .filter(
+          (entry) =>
+            entry &&
+            typeof entry.id === "string" &&
+            typeof entry.name === "string" &&
+            typeof entry.score === "number" &&
+            Number.isFinite(entry.score)
+        )
+        .map((entry) => ({
+          id: entry.id,
+          name: sanitizeName(entry.name),
+          score: Math.max(START_TAIL_LENGTH, Math.floor(entry.score))
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+    }
 
-renderLeaderboard();
+    function getPersonalBest() {
+      const entry = getScores().find((s) => s.id === playerId);
+      return entry ? entry.score : START_TAIL_LENGTH;
+    }
 
-// Player
-const player = {
-  x: canvas.width / 2,
-  y: canvas.height / 2,
-  size: 20,
-  speed: 4
-};
+    function saveScore(name, score) {
+      const cleanName = sanitizeName(name);
+      if (!cleanName) return;
 
-// Tail system
-let tail = [];
-let maxTailLength = 25;
+      const nextScore = Math.max(START_TAIL_LENGTH, Math.floor(score));
+      const scores = getScores();
+      const byId = new Map(scores.map((entry) => [entry.id, { ...entry }]));
 
-// Food
-let foods = [];
+      if (byId.has(playerId)) {
+        const existing = byId.get(playerId);
+        existing.score = Math.max(existing.score, nextScore);
+        existing.name = cleanName;
+      } else {
+        byId.set(playerId, {
+          id: playerId,
+          name: cleanName,
+          score: nextScore
+        });
+      }
 
-function spawnFood() {
-  foods.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    size: 10
-  });
-}
+      const finalScores = [...byId.values()]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
 
-for (let i = 0; i < 12; i++) spawnFood();
+      localStorage.setItem(STORAGE_KEYS.scores, JSON.stringify(finalScores));
+    }
 
-// Input
-const keys = {};
-window.addEventListener("keydown", e => {
-  keys[e.key.toLowerCase()] = true;
+    function renderLeaderboard() {
+      const scores = getScores();
+      scoresList.innerHTML = "";
 
-  // ===== ENTER TO RETURN AFTER GAME OVER =====
-  if (gameOver && e.key === "Enter") {
-    goBack();
-  }
-});
-window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+      if (scores.length === 0) {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span class="score-name">No scores yet</span>
+          <span class="score-value">0</span>
+        `;
+        scoresList.appendChild(li);
+        return;
+      }
 
-// Distance helper
-function distance(a, b) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
+      scores.forEach((entry, index) => {
+        const li = document.createElement("li");
+        const medal =
+          index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
 
-// Update
-function update() {
-  if (!gameStarted || gameOver) return;
+        li.innerHTML = `
+          <span class="score-rank">${medal}</span>
+          <span class="score-name">${escapeHtml(entry.name)}</span>
+          <span class="score-value">${entry.score}</span>
+        `;
 
-  if (keys["w"] || keys["arrowup"]) player.y -= player.speed;
-  if (keys["s"] || keys["arrowdown"]) player.y += player.speed;
-  if (keys["a"] || keys["arrowleft"]) player.x -= player.speed;
-  if (keys["d"] || keys["arrowright"]) player.x += player.speed;
+        scoresList.appendChild(li);
+      });
+    }
 
-  player.x = Math.max(0, Math.min(canvas.width, player.x));
-  player.y = Math.max(0, Math.min(canvas.height, player.y));
+    function escapeHtml(str) {
+      return str
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
 
-  const last = tail.length > 0 ? tail[tail.length - 1] : player;
+    function updateHud() {
+      hudName.textContent = currentUser || "—";
+      hudLength.textContent = maxTailLength;
+      hudBest.textContent = Math.max(getPersonalBest(), maxTailLength);
 
-  tail.push({
-    x: last.x + (player.x - last.x) * 0.35,
-    y: last.y + (player.y - last.y) * 0.35
-  });
+      if (!gameStarted) {
+        hudStatus.textContent = "Idle";
+      } else if (gameOver) {
+        hudStatus.textContent = "Game Over";
+      } else if (paused) {
+        hudStatus.textContent = "Paused";
+      } else {
+        hudStatus.textContent = "Running";
+      }
+    }
 
-  while (tail.length > maxTailLength) {
-    tail.shift();
-  }
+    function resetGame() {
+      player.x = viewWidth / 2;
+      player.y = viewHeight / 2;
+      player.vx = 0;
+      player.vy = 0;
 
-  // ===== COLLISION WITH TAIL (NEW) =====
-  for (let i = 0; i < tail.length - 10; i++) {
-    if (distance(player, tail[i]) < player.size * 0.8) {
+      maxTailLength = START_TAIL_LENGTH;
+      foods = [];
+      particles = [];
+      tail = [];
+
+      const spacing = player.size * 0.72;
+      for (let i = 0; i < maxTailLength; i++) {
+        tail.push({
+          x: player.x - (i + 1) * spacing,
+          y: player.y
+        });
+      }
+
+      for (let i = 0; i < FOOD_COUNT; i++) {
+        spawnFood();
+      }
+
+      updateHud();
+    }
+
+    function spawnFood() {
+      const margin = 36;
+
+      for (let attempt = 0; attempt < 80; attempt++) {
+        const x = rand(margin, Math.max(margin + 1, viewWidth - margin));
+        const y = rand(margin, Math.max(margin + 1, viewHeight - margin));
+
+        const tooCloseToPlayer =
+          distanceXY(x, y, player.x, player.y) < 140;
+
+        const tooCloseToFood = foods.some((food) => distanceXY(x, y, food.x, food.y) < 34);
+
+        const tooCloseToTail = tail.some((seg, index) => {
+          if (index < 10) return false;
+          return distanceXY(x, y, seg.x, seg.y) < 22;
+        });
+
+        if (!tooCloseToPlayer && !tooCloseToFood && !tooCloseToTail) {
+          foods.push({
+            x,
+            y,
+            size: 9.5,
+            seed: Math.random() * Math.PI * 2
+          });
+          return;
+        }
+      }
+
+      foods.push({
+        x: rand(margin, Math.max(margin + 1, viewWidth - margin)),
+        y: rand(margin, Math.max(margin + 1, viewHeight - margin)),
+        size: 9.5,
+        seed: Math.random() * Math.PI * 2
+      });
+    }
+
+    function spawnEatParticles(x, y) {
+      const count = 12;
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x,
+          y,
+          vx: rand(-2.6, 2.6),
+          vy: rand(-2.6, 2.6),
+          size: rand(2.2, 4.8),
+          age: 0,
+          life: rand(18, 30),
+          hue: rand(42, 62)
+        });
+      }
+    }
+
+    function startGame() {
+      const cleanName = sanitizeName(usernameInput.value);
+
+      if (!cleanName) {
+        alert("Enter a username!");
+        usernameInput.focus();
+        usernameInput.select();
+        return;
+      }
+
+      currentUser = cleanName;
+      usernameInput.value = cleanName;
+      localStorage.setItem(STORAGE_KEYS.lastUsername, cleanName);
+
+      gameStarted = true;
+      gameOver = false;
+      paused = false;
+
+      menu.hidden = true;
+      backBtn.hidden = false;
+      hud.hidden = false;
+
+      resetGame();
+      updateHud();
+    }
+
+    function endGame() {
+      if (gameOver) return;
+
       gameOver = true;
+      paused = false;
       saveScore(currentUser, maxTailLength);
-      return;
+      renderLeaderboard();
+      updateHud();
     }
-  }
 
-  for (let i = foods.length - 1; i >= 0; i--) {
-    if (distance(player, foods[i]) < player.size) {
-      foods.splice(i, 1);
-      maxTailLength += 8;
-      spawnFood();
+    function goBack() {
+      if (gameStarted && currentUser) {
+        saveScore(currentUser, maxTailLength);
+      }
+
+      gameStarted = false;
+      gameOver = false;
+      paused = false;
+
+      Object.keys(keys).forEach((key) => {
+        keys[key] = false;
+      });
+
+      resetGame();
+      renderLeaderboard();
+      updateHud();
+
+      menu.hidden = false;
+      backBtn.hidden = true;
+      hud.hidden = true;
     }
-  }
-}
 
-// Draw grid
-function drawGrid() {
-  const gridSize = 40;
-  ctx.strokeStyle = "rgba(255,255,255,0.05)";
-  ctx.lineWidth = 1;
+    function update(dt) {
+      if (!gameStarted || gameOver || paused) {
+        updateParticles(dt);
+        return;
+      }
 
-  for (let x = 0; x < canvas.width; x += gridSize) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
-    ctx.stroke();
-  }
+      const left = keys["a"] || keys["arrowleft"] ? 1 : 0;
+      const right = keys["d"] || keys["arrowright"] ? 1 : 0;
+      const up = keys["w"] || keys["arrowup"] ? 1 : 0;
+      const down = keys["s"] || keys["arrowdown"] ? 1 : 0;
 
-  for (let y = 0; y < canvas.height; y += gridSize) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-  }
-}
+      let moveX = right - left;
+      let moveY = down - up;
 
-// Draw
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (moveX !== 0 || moveY !== 0) {
+        const mag = Math.hypot(moveX, moveY) || 1;
+        moveX /= mag;
+        moveY /= mag;
+      }
 
-  if (!gameStarted) return;
+      const speedBonus = Math.min(1.35, 1 + (maxTailLength - START_TAIL_LENGTH) * 0.0016);
+      const targetVX = moveX * player.baseSpeed * speedBonus;
+      const targetVY = moveY * player.baseSpeed * speedBonus;
 
-  drawGrid();
+      const smoothing = clamp(0.18 * dt, 0.12, 0.35);
+      player.vx = lerp(player.vx, targetVX, smoothing);
+      player.vy = lerp(player.vy, targetVY, smoothing);
 
-  for (let i = 0; i < tail.length; i++) {
-    const seg = tail[i];
-    const t = i / tail.length;
+      if (moveX === 0) player.vx *= Math.pow(0.82, dt);
+      if (moveY === 0) player.vy *= Math.pow(0.82, dt);
 
-    const size = player.size * (0.9 - t * 0.7);
+      player.x += player.vx * dt;
+      player.y += player.vy * dt;
 
-    const r = Math.floor(80 + (1 - t) * 80);
-    const g = Math.floor(180 - t * 120);
-    const b = Math.floor(255 - t * 60);
+      player.x = clamp(player.x, player.size, viewWidth - player.size);
+      player.y = clamp(player.y, player.size, viewHeight - player.size);
 
-    const glow = ctx.createRadialGradient(seg.x, seg.y, 0, seg.x, seg.y, size * 2.5);
-    glow.addColorStop(0, `rgba(${r},${g},${b},0.9)`);
-    glow.addColorStop(1, "rgba(0,0,0,0)");
+      while (tail.length < maxTailLength) {
+        const last = tail[tail.length - 1] || { x: player.x, y: player.y };
+        tail.push({ x: last.x, y: last.y });
+      }
 
-    ctx.fillStyle = glow;
-    ctx.beginPath();
-    ctx.arc(seg.x, seg.y, size * 2.2, 0, Math.PI * 2);
-    ctx.fill();
+      let prevX = player.x;
+      let prevY = player.y;
+      const targetDist = player.size * 0.68;
 
-    ctx.fillStyle = `rgb(${r},${g},${b})`;
-    ctx.beginPath();
-    ctx.arc(seg.x, seg.y, size, 0, Math.PI * 2);
-    ctx.fill();
+      for (let i = 0; i < tail.length; i++) {
+        const seg = tail[i];
+        const dx = prevX - seg.x;
+        const dy = prevY - seg.y;
+        const dist = Math.hypot(dx, dy) || 0.0001;
 
-    ctx.fillStyle = "rgba(255,255,255,0.5)";
-    ctx.beginPath();
-    ctx.arc(seg.x - size * 0.3, seg.y - size * 0.3, size * 0.25, 0, Math.PI * 2);
-    ctx.fill();
-  }
+        const followStrength = i === 0 ? 0.46 : 0.36;
+        const pull = Math.max(0, dist - targetDist) * followStrength * dt;
 
-  foods.forEach(f => {
-    const glow = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.size * 2);
-    glow.addColorStop(0, "#fff176");
-    glow.addColorStop(1, "rgba(255,255,0,0)");
+        if (dist > targetDist) {
+          seg.x += (dx / dist) * pull;
+          seg.y += (dy / dist) * pull;
+        } else {
+          seg.x += dx * 0.055 * dt;
+          seg.y += dy * 0.055 * dt;
+        }
 
-    ctx.fillStyle = glow;
-    ctx.beginPath();
-    ctx.arc(f.x, f.y, f.size * 2, 0, Math.PI * 2);
-    ctx.fill();
+        prevX = seg.x;
+        prevY = seg.y;
+      }
 
-    ctx.fillStyle = "#ffeb3b";
-    ctx.beginPath();
-    ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
-    ctx.fill();
-  });
+      for (let i = 14; i < tail.length; i += 2) {
+        if (distance(player, tail[i]) < player.size * 0.84) {
+          endGame();
+          break;
+        }
+      }
 
-  const glow = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, player.size * 2);
-  glow.addColorStop(0, "#64b5f6");
-  glow.addColorStop(1, "rgba(0,0,255,0)");
+      for (let i = foods.length - 1; i >= 0; i--) {
+        const food = foods[i];
+        if (distance(player, food) < player.size + food.size * 0.55) {
+          foods.splice(i, 1);
+          maxTailLength += FOOD_GROWTH;
+          spawnEatParticles(food.x, food.y);
+          spawnFood();
+          updateHud();
+        }
+      }
 
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.size * 2, 0, Math.PI * 2);
-  ctx.fill();
+      updateParticles(dt);
+    }
 
-  ctx.fillStyle = "#2196f3";
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
-  ctx.fill();
+    function updateParticles(dt) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.age += dt;
+        p.x += p.vx * dt * 1.45;
+        p.y += p.vy * dt * 1.45;
+        p.vx *= Math.pow(0.97, dt);
+        p.vy *= Math.pow(0.97, dt);
+        p.vy += 0.035 * dt;
 
-  // ===== GAME OVER SCREEN =====
-  if (gameOver) {
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (p.age >= p.life) {
+          particles.splice(i, 1);
+        }
+      }
+    }
 
-    ctx.fillStyle = "white";
-    ctx.font = "bold 60px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+    function drawBackground() {
+      const gradient = ctx.createLinearGradient(0, 0, 0, viewHeight);
+      gradient.addColorStop(0, "#0d1323");
+      gradient.addColorStop(0.55, "#14392c");
+      gradient.addColorStop(1, "#09130e");
 
-    ctx.font = "24px Arial";
-    ctx.fillText("Press ENTER to return", canvas.width / 2, canvas.height / 2 + 30);
-  }
-}
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, viewWidth, viewHeight);
 
-// Loop
-function gameLoop() {
-  update();
-  draw();
-  requestAnimationFrame(gameLoop);
-}
+      drawGrid();
 
-gameLoop();
+      const vignette = ctx.createRadialGradient(
+        viewWidth / 2,
+        viewHeight / 2,
+        Math.min(viewWidth, viewHeight) * 0.15,
+        viewWidth / 2,
+        viewHeight / 2,
+        Math.max(viewWidth, viewHeight) * 0.7
+      );
+      vignette.addColorStop(0, "rgba(0,0,0,0)");
+      vignette.addColorStop(1, "rgba(0,0,0,0.32)");
 
-// Save score when leaving page
-window.addEventListener("beforeunload", () => {
-  if (gameStarted && currentUser) {
-    saveScore(currentUser, maxTailLength);
-  }
-});
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, viewWidth, viewHeight);
+    }
 
-window.addEventListener("resize", () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
-</script>
+    function drawGrid() {
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.lineWidth = 1;
 
+      for (let x = 0; x <= viewWidth; x += GRID_SIZE) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, viewHeight);
+        ctx.stroke();
+      }
+
+      for (let y = 0; y <= viewHeight; y += GRID_SIZE) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(viewWidth, y);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawFoods() {
+      for (const food of foods) {
+        const pulse = 1 + Math.sin(globalTime * 0.006 + food.seed) * 0.13;
+        const outer = food.size * 2.5 * pulse;
+
+        const glow = ctx.createRadialGradient(food.x, food.y, 0, food.x, food.y, outer);
+        glow.addColorStop(0, "rgba(255, 250, 170, 0.95)");
+        glow.addColorStop(0.35, "rgba(255, 235, 59, 0.45)");
+        glow.addColorStop(1, "rgba(255, 235, 59, 0)");
+
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(food.x, food.y, outer, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(255, 247, 170, 0.35)";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(food.x - food.size * 1.5, food.y);
+        ctx.lineTo(food.x + food.size * 1.5, food.y);
+        ctx.moveTo(food.x, food.y - food.size * 1.5);
+        ctx.lineTo(food.x, food.y + food.size * 1.5);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffeb3b";
+        ctx.beginPath();
+        ctx.arc(food.x, food.y, food.size * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.beginPath();
+        ctx.arc(food.x - food.size * 0.22, food.y - food.size * 0.22, food.size * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawParticles() {
+      for (const p of particles) {
+        const alpha = 1 - p.age / p.life;
+        ctx.fillStyle = `hsla(${p.hue}, 100%, 70%, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawTail() {
+      const chain = [player, ...tail];
+
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      for (let i = chain.length - 1; i > 0; i--) {
+        const curr = chain[i];
+        const prev = chain[i - 1];
+        const t = i / (chain.length - 1);
+        const radius = Math.max(4, player.size * (1 - t * 0.78));
+        const hue = 205 - t * 65;
+        const sat = 96 - t * 18;
+        const light = 68 - t * 16;
+        const alpha = 0.22 + (1 - t) * 0.42;
+
+        ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
+        ctx.lineWidth = radius * 1.42;
+        ctx.beginPath();
+        ctx.moveTo(prev.x, prev.y);
+        ctx.lineTo(curr.x, curr.y);
+        ctx.stroke();
+
+        const glow = ctx.createRadialGradient(curr.x, curr.y, 0, curr.x, curr.y, radius * 2.8);
+        glow.addColorStop(0, `hsla(${hue}, 100%, 74%, 0.88)`);
+        glow.addColorStop(0.4, `hsla(${hue}, 100%, 58%, 0.26)`);
+        glow.addColorStop(1, "rgba(0,0,0,0)");
+
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(curr.x, curr.y, radius * 2.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = `hsl(${hue}, ${sat}%, ${light}%)`;
+        ctx.beginPath();
+        ctx.arc(curr.x, curr.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(255,255,255,0.34)";
+        ctx.beginPath();
+        ctx.arc(curr.x - radius * 0.24, curr.y - radius * 0.24, radius * 0.23, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawPlayer() {
+      const speedGlow = Math.min(1, Math.hypot(player.vx, player.vy) / 5.5);
+      const outerRadius = player.size * (2.25 + speedGlow * 0.18);
+
+      const glow = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, outerRadius);
+      glow.addColorStop(0, "rgba(130, 205, 255, 0.98)");
+      glow.addColorStop(0.38, "rgba(71, 171, 255, 0.28)");
+      glow.addColorStop(1, "rgba(0, 125, 255, 0)");
+
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, outerRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#29a8ff";
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.beginPath();
+      ctx.arc(player.x - player.size * 0.26, player.y - player.size * 0.28, player.size * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawOverlayCard(title, subtitle, line2) {
+      ctx.save();
+
+      ctx.fillStyle = "rgba(0,0,0,0.58)";
+      ctx.fillRect(0, 0, viewWidth, viewHeight);
+
+      const panelWidth = Math.min(500, viewWidth - 40);
+      const panelHeight = 190;
+      const x = (viewWidth - panelWidth) / 2;
+      const y = (viewHeight - panelHeight) / 2;
+
+      ctx.fillStyle = "rgba(10, 16, 30, 0.82)";
+      roundRect(ctx, x, y, panelWidth, panelHeight, 22);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.lineWidth = 1.2;
+      roundRect(ctx, x, y, panelWidth, panelHeight, 22);
+      ctx.stroke();
+
+      ctx.textAlign = "center";
+
+      ctx.fillStyle = "white";
+      ctx.font = "bold 44px Arial";
+      ctx.fillText(title, viewWidth / 2, y + 70);
+
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.font = "bold 22px Arial";
+      ctx.fillText(subtitle, viewWidth / 2, y + 112);
+
+      ctx.fillStyle = "rgba(255,255,255,0.72)";
+      ctx.font = "16px Arial";
+      ctx.fillText(line2, viewWidth / 2, y + 145);
+
+      ctx.restore();
+    }
+
+    function roundRect(context, x, y, w, h, r) {
+      context.beginPath();
+      context.moveTo(x + r, y);
+      context.arcTo(x + w, y, x + w, y + h, r);
+      context.arcTo(x + w, y + h, x, y + h, r);
+      context.arcTo(x, y + h, x, y, r);
+      context.arcTo(x, y, x + w, y, r);
+      context.closePath();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, viewWidth, viewHeight);
+      drawBackground();
+      drawFoods();
+      drawParticles();
+
+      if (gameStarted) {
+        drawTail();
+        drawPlayer();
+
+        if (paused && !gameOver) {
+          drawOverlayCard("PAUSED", `Length: ${maxTailLength}`, "Press P or Esc to continue");
+        }
+
+        if (gameOver) {
+          drawOverlayCard("GAME OVER", `Final Length: ${maxTailLength}`, "Press Enter to return to menu");
+        }
+      }
+    }
+
+    function gameLoop(timestamp) {
+      if (!lastFrameTime) lastFrameTime = timestamp;
+      const deltaMs = clamp(timestamp - lastFrameTime, 8, 40);
+      lastFrameTime = timestamp;
+      globalTime = timestamp;
+
+      const dt = deltaMs / 16.6667;
+      update(dt);
+      draw();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    playBtn.addEventListener("click", startGame);
+    backBtn.addEventListener("click", goBack);
+
+    usernameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        startGame();
+      }
+    });
+
+    window.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) {
+        event.preventDefault();
+      }
+
+      keys[key] = true;
+
+      if (gameStarted && !gameOver && (key === "p" || key === "escape")) {
+        paused = !paused;
+        updateHud();
+      }
+
+      if (gameOver && key === "enter") {
+        goBack();
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      keys[event.key.toLowerCase()] = false;
+    });
+
+    window.addEventListener("blur", () => {
+      Object.keys(keys).forEach((key) => {
+        keys[key] = false;
+      });
+    });
+
+    window.addEventListener("beforeunload", () => {
+      if (gameStarted && currentUser) {
+        saveScore(currentUser, maxTailLength);
+      }
+    });
+
+    window.addEventListener("resize", resizeCanvas);
+
+    const savedUsername = sanitizeName(localStorage.getItem(STORAGE_KEYS.lastUsername) || "");
+    if (savedUsername) {
+      usernameInput.value = savedUsername;
+    }
+
+    resizeCanvas();
+    renderLeaderboard();
+    resetGame();
+    hud.hidden = true;
+    backBtn.hidden = true;
+    updateHud();
+    requestAnimationFrame(gameLoop);
+  </script>
 </body>
 </html>
