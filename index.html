@@ -356,7 +356,7 @@
       </div>
 
       <div class="hints">
-        WASD / Arrow Keys to move · Drag to steer · P or Esc to pause · M toggles sound
+        WASD / Arrow Keys to move · Space/Shift or double-tap to dash · Enter rifts for Fever · M toggles sound
       </div>
 
       <button id="soundBtn" class="secondary-btn" type="button" aria-pressed="false">Sound: Off</button>
@@ -375,8 +375,10 @@
   <div id="hud" hidden>
     <div class="hud-title">Live Stats</div>
     <div class="hud-row"><span>Player</span><strong id="hudName">—</strong></div>
+    <div class="hud-row"><span>Sector</span><strong id="hudLevel">1</strong></div>
     <div class="hud-row"><span>Length</span><strong id="hudLength">0</strong></div>
     <div class="hud-row"><span>Best</span><strong id="hudBest">0</strong></div>
+    <div class="hud-row"><span>Dash</span><strong id="hudDash">Ready</strong></div>
     <div class="hud-row"><span>Status</span><strong id="hudStatus">Idle</strong></div>
     <div class="hud-row"><span>Power</span><strong id="hudPower">None</strong></div>
     <div class="hud-row"><span>Objective</span><strong id="hudObjective">—</strong></div>
@@ -396,8 +398,10 @@
 
     const hud = document.getElementById("hud");
     const hudName = document.getElementById("hudName");
+    const hudLevel = document.getElementById("hudLevel");
     const hudLength = document.getElementById("hudLength");
     const hudBest = document.getElementById("hudBest");
+    const hudDash = document.getElementById("hudDash");
     const hudStatus = document.getElementById("hudStatus");
     const hudPower = document.getElementById("hudPower");
     const hudObjective = document.getElementById("hudObjective");
@@ -430,6 +434,18 @@
     const STAR_COUNT = 95;
     const DUST_COUNT = 44;
     const MAX_RIPPLES = 18;
+    const DASH_MAX = 100;
+    const DASH_COST = 38;
+    const DASH_PICKUP_RECHARGE = 11;
+    const DASH_RECHARGE_PER_SECOND = 7;
+    const DASH_DURATION = 0.26;
+    const DASH_COOLDOWN = 0.22;
+    const DASH_SPEED = 12.4;
+    const FEVER_DURATION = 9;
+    const RIFT_LIFE_SECONDS = 16;
+    const RIFT_MIN_LEVEL = 2;
+    const HAZARD_MIN_LEVEL = 2;
+    const HAZARD_MAX_COUNT = 8;
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const lerp = (a, b, t) => a + (b - a) * t;
@@ -464,10 +480,19 @@
     let stars = [];
     let dust = [];
     let ripples = [];
+    let hazards = [];
+    let rift = null;
 
     let magnetTime = 0;
     let shieldTime = 0;
     let graceTime = 0;
+    let feverTime = 0;
+    let dashEnergy = DASH_MAX;
+    let dashTime = 0;
+    let dashCooldown = 0;
+    let dashVector = { x: 1, y: 0 };
+    let riftCooldown = 0;
+    let runLevel = 1;
     let comboCount = 0;
     let lastFoodCollectTime = -Infinity;
     let toastText = "";
@@ -477,6 +502,7 @@
     let objectivesCompleted = 0;
     let pointerTarget = null;
     let activePointerId = null;
+    let lastTapTime = 0;
     let screenShake = 0;
     let flashTime = 0;
 
@@ -600,7 +626,7 @@
           f.y < viewHeight - 24
       );
 
-      while (foods.length < FOOD_COUNT) {
+      while (foods.length < getFoodTarget()) {
         spawnFood();
       }
     }
@@ -697,6 +723,10 @@
     function getPowerText() {
       const parts = [];
 
+      if (feverTime > 0) {
+        parts.push(`Fever ${feverTime.toFixed(1)}s`);
+      }
+
       if (magnetTime > 0) {
         parts.push(`Magnet ${magnetTime.toFixed(1)}s`);
       }
@@ -705,11 +735,32 @@
         parts.push(`Shield ${shieldTime.toFixed(1)}s`);
       }
 
-      if (comboCount >= 2 && globalTime - lastFoodCollectTime <= COMBO_WINDOW_MS) {
+      if (comboCount >= 2 && globalTime - lastFoodCollectTime <= getComboWindow()) {
         parts.push(`Combo x${comboCount}`);
       }
 
       return parts.length ? parts.join(" | ") : "None";
+    }
+
+    function getDashText() {
+      if (dashTime > 0) return "Dashing";
+      if (dashEnergy >= DASH_MAX && dashCooldown <= 0) return "Ready";
+
+      return `${Math.floor(dashEnergy)}%`;
+    }
+
+    function getFoodTarget() {
+      return FOOD_COUNT + Math.min(8, Math.floor((runLevel - 1) / 2)) + (feverTime > 0 ? 6 : 0);
+    }
+
+    function getHazardTarget() {
+      if (!gameStarted || runLevel < HAZARD_MIN_LEVEL) return 0;
+
+      return Math.min(HAZARD_MAX_COUNT, Math.floor((runLevel - 1) * 0.85));
+    }
+
+    function getComboWindow() {
+      return feverTime > 0 ? COMBO_WINDOW_MS + 1300 : COMBO_WINDOW_MS;
     }
 
     function getObjectiveText() {
@@ -727,13 +778,23 @@
         return `Reach combo x${objective.target} (${Math.min(comboCount, objective.target)}/${objective.target})`;
       }
 
+      if (objective.type === "dash") {
+        return `Dash-eat ${objective.target} (${objective.progress}/${objective.target})`;
+      }
+
+      if (objective.type === "rift") {
+        return "Enter a rift";
+      }
+
       return "—";
     }
 
     function updateHud() {
       hudName.textContent = currentUser || "—";
+      hudLevel.textContent = runLevel;
       hudLength.textContent = maxTailLength;
       hudBest.textContent = Math.max(getPersonalBest(), maxTailLength);
+      hudDash.textContent = getDashText();
       hudPower.textContent = getPowerText();
       hudObjective.textContent = getObjectiveText();
 
@@ -914,38 +975,86 @@
       playTone(82.41, 0.42, "sine", 0.1, 0.06);
     }
 
+    function playDashSound() {
+      if (!ensureAudio()) return;
+
+      playTone(329.63, 0.09, "sawtooth", 0.11);
+      playTone(659.25, 0.14, "triangle", 0.11, 0.035);
+    }
+
+    function playRiftSound() {
+      if (!ensureAudio()) return;
+
+      playTone(261.63, 0.18, "triangle", 0.12);
+      playTone(523.25, 0.26, "sine", 0.12, 0.06);
+      playTone(1046.5, 0.32, "triangle", 0.08, 0.13);
+    }
+
+    function playMineBreakSound() {
+      if (!ensureAudio()) return;
+
+      playNoise(0.16, 0.16, 680);
+      playTone(440, 0.12, "triangle", 0.1);
+    }
+
     function setNewObjective() {
-      const cycleType = ["eat", "survive", "combo"][objectiveRotation % 3];
+      const objectivePool = runLevel >= 4
+        ? ["eat", "survive", "combo", "dash", "rift"]
+        : runLevel >= 2
+          ? ["eat", "survive", "combo", "rift"]
+          : ["eat", "survive", "combo"];
+      const cycleType = objectivePool[objectiveRotation % objectivePool.length];
       objectiveRotation++;
 
       if (cycleType === "eat") {
-        const target = clamp(4 + Math.floor(objectivesCompleted / 2), 4, 8);
+        const target = clamp(4 + Math.floor(runLevel / 2), 4, 10);
         objective = {
           type: "eat",
           target,
           progress: 0,
-          reward: 8 + Math.min(8, objectivesCompleted)
+          reward: 8 + Math.min(10, runLevel)
         };
         return;
       }
 
       if (cycleType === "survive") {
-        const target = clamp(16 + objectivesCompleted * 2, 16, 30);
+        const target = clamp(14 + runLevel * 2, 16, 34);
         objective = {
           type: "survive",
           target,
           progress: 0,
-          reward: 10 + Math.min(8, objectivesCompleted)
+          reward: 9 + Math.min(11, runLevel)
+        };
+        return;
+      }
+
+      if (cycleType === "combo") {
+        objective = {
+          type: "combo",
+          target: clamp(4 + Math.floor(runLevel / 2), 4, 8),
+          progress: 0,
+          reward: 9 + Math.min(10, runLevel)
+        };
+        return;
+      }
+
+      if (cycleType === "dash") {
+        objective = {
+          type: "dash",
+          target: clamp(3 + Math.floor(runLevel / 3), 3, 7),
+          progress: 0,
+          reward: 10 + Math.min(12, runLevel)
         };
         return;
       }
 
       objective = {
-        type: "combo",
-        target: clamp(4 + Math.floor(objectivesCompleted / 2), 4, 7),
+        type: "rift",
+        target: 1,
         progress: 0,
-        reward: 9 + Math.min(8, objectivesCompleted)
+        reward: 12 + Math.min(12, runLevel)
       };
+      spawnRift(true);
     }
 
     function completeObjective() {
@@ -954,11 +1063,18 @@
       const reward = objective.reward;
       maxTailLength += reward;
       objectivesCompleted += 1;
+      runLevel += 1;
       spawnEatParticles(player.x, player.y, 170, 250, 20);
       spawnRipple(player.x, player.y, 205, 1.5);
       playTone(783.99, 0.16, "triangle", 0.14);
       playTone(1174.66, 0.22, "sine", 0.1, 0.08);
-      showToast(`Objective complete! +${reward} tail`, 1.5);
+      syncHazards();
+
+      if (runLevel >= RIFT_MIN_LEVEL && runLevel % 2 === 0) {
+        spawnRift(true);
+      }
+
+      showToast(`Sector ${runLevel}! +${reward} tail`, 1.5);
       setNewObjective();
       updateHud();
     }
@@ -973,11 +1089,20 @@
       foods = [];
       particles = [];
       ripples = [];
+      hazards = [];
+      rift = null;
       tail = [];
 
       magnetTime = 0;
       shieldTime = 0;
       graceTime = START_GRACE_SECONDS;
+      feverTime = 0;
+      dashEnergy = DASH_MAX;
+      dashTime = 0;
+      dashCooldown = 0;
+      dashVector = { x: 1, y: 0 };
+      riftCooldown = 7;
+      runLevel = 1;
       comboCount = 0;
       lastFoodCollectTime = -Infinity;
       toastText = "";
@@ -986,6 +1111,7 @@
       objectivesCompleted = 0;
       pointerTarget = null;
       activePointerId = null;
+      lastTapTime = 0;
       screenShake = 0;
       flashTime = 0;
       setNewObjective();
@@ -1005,33 +1131,42 @@
       updateHud();
     }
 
-    function spawnFood() {
+    function spawnFood(typeOverride = null, center = null) {
       const margin = 36;
 
       for (let attempt = 0; attempt < 80; attempt++) {
-        const x = rand(margin, Math.max(margin + 1, viewWidth - margin));
-        const y = rand(margin, Math.max(margin + 1, viewHeight - margin));
+        const x = center
+          ? clamp(center.x + rand(-150, 150), margin, Math.max(margin + 1, viewWidth - margin))
+          : rand(margin, Math.max(margin + 1, viewWidth - margin));
+        const y = center
+          ? clamp(center.y + rand(-150, 150), margin, Math.max(margin + 1, viewHeight - margin))
+          : rand(margin, Math.max(margin + 1, viewHeight - margin));
 
         const tooCloseToPlayer =
-          distanceXY(x, y, player.x, player.y) < 140;
+          !center && distanceXY(x, y, player.x, player.y) < 140;
 
         const tooCloseToFood = foods.some((food) => distanceXY(x, y, food.x, food.y) < 34);
+        const tooCloseToHazard = hazards.some((hazard) => distanceXY(x, y, hazard.x, hazard.y) < hazard.size + 34);
 
         const tooCloseToTail = tail.some((seg, index) => {
           if (index < 10) return false;
           return distanceXY(x, y, seg.x, seg.y) < 22;
         });
 
-        if (!tooCloseToPlayer && !tooCloseToFood && !tooCloseToTail) {
-          let type = "normal";
+        if (!tooCloseToPlayer && !tooCloseToFood && !tooCloseToHazard && !tooCloseToTail) {
+          let type = typeOverride || "normal";
           const roll = Math.random();
 
-          if (roll < MAGNET_FOOD_CHANCE) {
-            type = "magnet";
-          } else if (roll < MAGNET_FOOD_CHANCE + SHIELD_FOOD_CHANCE) {
-            type = "shield";
-          } else if (roll < MAGNET_FOOD_CHANCE + SHIELD_FOOD_CHANCE + GOLD_FOOD_CHANCE) {
-            type = "gold";
+          if (!typeOverride) {
+            const feverBonus = feverTime > 0 ? 0.06 : 0;
+
+            if (roll < MAGNET_FOOD_CHANCE + feverBonus) {
+              type = "magnet";
+            } else if (roll < MAGNET_FOOD_CHANCE + SHIELD_FOOD_CHANCE + feverBonus * 1.6) {
+              type = "shield";
+            } else if (roll < MAGNET_FOOD_CHANCE + SHIELD_FOOD_CHANCE + GOLD_FOOD_CHANCE + feverBonus * 2.2) {
+              type = "gold";
+            }
           }
 
           foods.push({
@@ -1048,10 +1183,163 @@
       foods.push({
         x: rand(margin, Math.max(margin + 1, viewWidth - margin)),
         y: rand(margin, Math.max(margin + 1, viewHeight - margin)),
-        size: 9.5,
+        size: typeOverride === "magnet" ? 10.2 : typeOverride === "shield" ? 10.6 : typeOverride === "gold" ? 10.8 : 9.5,
         seed: Math.random() * Math.PI * 2,
-        type: "normal"
+        type: typeOverride || "normal"
       });
+    }
+
+    function spawnHazard() {
+      const margin = 70;
+
+      for (let attempt = 0; attempt < 80; attempt++) {
+        const x = rand(margin, Math.max(margin + 1, viewWidth - margin));
+        const y = rand(margin, Math.max(margin + 1, viewHeight - margin));
+        const tooCloseToPlayer = distanceXY(x, y, player.x, player.y) < 230;
+        const tooCloseToFood = foods.some((food) => distanceXY(x, y, food.x, food.y) < 80);
+        const tooCloseToHazard = hazards.some((hazard) => distanceXY(x, y, hazard.x, hazard.y) < 115);
+
+        if (!tooCloseToPlayer && !tooCloseToFood && !tooCloseToHazard) {
+          hazards.push({
+            x,
+            y,
+            vx: rand(-0.32, 0.32),
+            vy: rand(-0.32, 0.32),
+            size: rand(16, 23),
+            phase: rand(0, Math.PI * 2)
+          });
+          return;
+        }
+      }
+    }
+
+    function syncHazards() {
+      const target = getHazardTarget();
+
+      while (hazards.length < target) {
+        spawnHazard();
+      }
+
+      while (hazards.length > target) {
+        hazards.pop();
+      }
+    }
+
+    function spawnRift(force = false) {
+      if (rift || runLevel < RIFT_MIN_LEVEL) return;
+      if (!force && riftCooldown > 0) return;
+
+      const margin = 90;
+      let x = viewWidth * 0.5;
+      let y = viewHeight * 0.5;
+
+      for (let attempt = 0; attempt < 80; attempt++) {
+        x = rand(margin, Math.max(margin + 1, viewWidth - margin));
+        y = rand(margin, Math.max(margin + 1, viewHeight - margin));
+
+        if (distanceXY(x, y, player.x, player.y) > 230 && !hazards.some((hazard) => distanceXY(x, y, hazard.x, hazard.y) < 130)) {
+          break;
+        }
+      }
+
+      rift = {
+        x,
+        y,
+        size: 42,
+        age: 0,
+        life: RIFT_LIFE_SECONDS
+      };
+      riftCooldown = 18;
+      spawnRipple(x, y, 285, 1.35);
+    }
+
+    function activateRift() {
+      if (!rift) return;
+
+      const { x, y } = rift;
+      rift = null;
+      feverTime = FEVER_DURATION;
+      magnetTime = Math.max(magnetTime, 2.2);
+      dashEnergy = DASH_MAX;
+      comboCount = Math.max(comboCount, 3);
+      lastFoodCollectTime = globalTime;
+
+      for (let i = 0; i < 8; i++) {
+        spawnFood(i % 3 === 0 ? "gold" : null, { x, y });
+      }
+
+      spawnEatParticles(x, y, 250, 305, 32);
+      spawnRipple(x, y, 285, 2.4);
+      flashScreen(0.22, 5);
+      playRiftSound();
+      showToast("Fever rift! Orbs are juiced", 1.55);
+
+      if (objective && objective.type === "rift") {
+        objective.progress = 1;
+        completeObjective();
+      }
+    }
+
+    function getDashDirection() {
+      const left = keys["a"] || keys["arrowleft"] ? 1 : 0;
+      const right = keys["d"] || keys["arrowright"] ? 1 : 0;
+      const up = keys["w"] || keys["arrowup"] ? 1 : 0;
+      const down = keys["s"] || keys["arrowdown"] ? 1 : 0;
+
+      let dx = right - left;
+      let dy = down - up;
+
+      if (dx === 0 && dy === 0 && pointerTarget) {
+        dx = pointerTarget.x - player.x;
+        dy = pointerTarget.y - player.y;
+      }
+
+      if (dx === 0 && dy === 0 && Math.hypot(player.vx, player.vy) > 0.25) {
+        dx = player.vx;
+        dy = player.vy;
+      }
+
+      const mag = Math.hypot(dx, dy) || 1;
+      return { x: dx / mag, y: dy / mag };
+    }
+
+    function startDash() {
+      if (!gameStarted || gameOver || paused || dashCooldown > 0 || dashEnergy < DASH_COST) return false;
+
+      dashVector = getDashDirection();
+      dashEnergy = Math.max(0, dashEnergy - DASH_COST);
+      dashTime = DASH_DURATION;
+      dashCooldown = DASH_COOLDOWN;
+      graceTime = Math.max(graceTime, DASH_DURATION + 0.08);
+      player.vx = dashVector.x * DASH_SPEED;
+      player.vy = dashVector.y * DASH_SPEED;
+      spawnRipple(player.x, player.y, 200, 1.1);
+      spawnEatParticles(player.x, player.y, 188, 220, 12);
+      playDashSound();
+      return true;
+    }
+
+    function useShieldSave(message = "Shield saved you! Tail trimmed") {
+      if (shieldTime <= 0) return false;
+
+      shieldTime = 0;
+      graceTime = SHIELD_GRACE_SECONDS;
+      maxTailLength = Math.max(START_TAIL_LENGTH, maxTailLength - SHIELD_TAIL_TRIM);
+      tail.length = Math.min(tail.length, maxTailLength);
+      comboCount = 0;
+      spawnEatParticles(player.x, player.y, 105, 150, 26);
+      spawnRipple(player.x, player.y, 136, 1.8);
+      flashScreen(0.18, 5);
+      playTone(220, 0.14, "sawtooth", 0.11);
+      playTone(440, 0.2, "triangle", 0.13, 0.06);
+      showToast(message, 1.5);
+      updateHud();
+      return true;
+    }
+
+    function handlePlayerHit(message) {
+      if (useShieldSave(message)) return;
+      endGame();
     }
 
     function spawnEatParticles(x, y, hueMin = 42, hueMax = 62, count = 12) {
@@ -1207,9 +1495,13 @@
       const effectHue = food.type === "magnet" ? 204 : food.type === "shield" ? 136 : food.type === "gold" ? 46 : 55;
       spawnRipple(food.x, food.y, effectHue, food.type === "normal" ? 0.7 : 1.25);
       playPickupSound(food.type);
+      if (feverTime > 0) {
+        growth += 3;
+      }
       maxTailLength += growth;
+      dashEnergy = Math.min(DASH_MAX, dashEnergy + DASH_PICKUP_RECHARGE + (food.type === "gold" ? 6 : 0));
 
-      if (globalTime - lastFoodCollectTime <= COMBO_WINDOW_MS) {
+      if (globalTime - lastFoodCollectTime <= getComboWindow()) {
         comboCount += 1;
       } else {
         comboCount = 1;
@@ -1234,11 +1526,70 @@
           if (comboCount >= objective.target) {
             completeObjective();
           }
+        } else if (objective.type === "dash" && dashTime > 0) {
+          objective.progress += 1;
+          if (objective.progress >= objective.target) {
+            completeObjective();
+          }
         }
       }
 
-      spawnFood();
+      while (foods.length < getFoodTarget()) {
+        spawnFood();
+      }
       updateHud();
+    }
+
+    function updateHazards(dt) {
+      for (let i = hazards.length - 1; i >= 0; i--) {
+        const hazard = hazards[i];
+        hazard.x += hazard.vx * dt;
+        hazard.y += hazard.vy * dt;
+
+        if (hazard.x < hazard.size || hazard.x > viewWidth - hazard.size) {
+          hazard.vx *= -1;
+          hazard.x = clamp(hazard.x, hazard.size, viewWidth - hazard.size);
+        }
+
+        if (hazard.y < hazard.size || hazard.y > viewHeight - hazard.size) {
+          hazard.vy *= -1;
+          hazard.y = clamp(hazard.y, hazard.size, viewHeight - hazard.size);
+        }
+
+        const hitDistance = hazard.size + player.size * 0.62;
+        if (distance(player, hazard) < hitDistance) {
+          if (dashTime > 0) {
+            hazards.splice(i, 1);
+            dashEnergy = Math.min(DASH_MAX, dashEnergy + 22);
+            maxTailLength += 3;
+            spawnEatParticles(hazard.x, hazard.y, 325, 360, 26);
+            spawnRipple(hazard.x, hazard.y, 340, 1.7);
+            flashScreen(0.12, 4);
+            playMineBreakSound();
+            showToast("Dash break! +3 tail", 1.1);
+          } else if (graceTime <= 0) {
+            handlePlayerHit("Shield blocked a void mine");
+          }
+        }
+      }
+    }
+
+    function updateRift(dt, deltaSeconds) {
+      if (!rift) return;
+
+      rift.age += dt;
+      rift.life -= deltaSeconds;
+
+      if (rift.life <= 0) {
+        spawnRipple(rift.x, rift.y, 285, 0.8);
+        rift = null;
+        riftCooldown = 12;
+        return;
+      }
+
+      if (distance(player, rift) < rift.size + player.size * 0.6) {
+        activateRift();
+      }
     }
 
     function update(dt, deltaSeconds) {
@@ -1266,7 +1617,27 @@
         graceTime = Math.max(0, graceTime - deltaSeconds);
       }
 
-      if (comboCount > 0 && globalTime - lastFoodCollectTime > COMBO_WINDOW_MS) {
+      if (feverTime > 0) {
+        feverTime = Math.max(0, feverTime - deltaSeconds);
+      }
+
+      if (dashTime > 0) {
+        dashTime = Math.max(0, dashTime - deltaSeconds);
+      }
+
+      if (dashCooldown > 0) {
+        dashCooldown = Math.max(0, dashCooldown - deltaSeconds);
+      }
+
+      dashEnergy = Math.min(DASH_MAX, dashEnergy + (DASH_RECHARGE_PER_SECOND + (feverTime > 0 ? 5 : 0)) * deltaSeconds);
+
+      if (riftCooldown > 0) {
+        riftCooldown = Math.max(0, riftCooldown - deltaSeconds);
+      } else if (runLevel >= RIFT_MIN_LEVEL && !rift && Math.random() < 0.015 * dt) {
+        spawnRift();
+      }
+
+      if (comboCount > 0 && globalTime - lastFoodCollectTime > getComboWindow()) {
         comboCount = 0;
         if (objective && objective.type === "combo") {
           objective.progress = 0;
@@ -1305,11 +1676,17 @@
         moveY /= mag;
       }
 
-      const speedBonus = Math.min(1.35, 1 + (maxTailLength - START_TAIL_LENGTH) * 0.0016);
-      const targetVX = moveX * player.baseSpeed * speedBonus;
-      const targetVY = moveY * player.baseSpeed * speedBonus;
+      const speedBonus = Math.min(1.56, 1 + (maxTailLength - START_TAIL_LENGTH) * 0.0014 + (runLevel - 1) * 0.012 + (feverTime > 0 ? 0.08 : 0));
+      let targetVX = moveX * player.baseSpeed * speedBonus;
+      let targetVY = moveY * player.baseSpeed * speedBonus;
+      let smoothing = clamp(0.18 * dt, 0.12, 0.35);
 
-      const smoothing = clamp(0.18 * dt, 0.12, 0.35);
+      if (dashTime > 0) {
+        targetVX = dashVector.x * DASH_SPEED;
+        targetVY = dashVector.y * DASH_SPEED;
+        smoothing = clamp(0.42 * dt, 0.26, 0.68);
+      }
+
       player.vx = lerp(player.vx, targetVX, smoothing);
       player.vy = lerp(player.vy, targetVY, smoothing);
 
@@ -1368,25 +1745,18 @@
         }
       }
 
-      if (graceTime <= 0) {
+      updateHazards(dt);
+      if (gameOver) {
+        updateParticles(dt);
+        updateHud();
+        return;
+      }
+      updateRift(dt, deltaSeconds);
+
+      if (graceTime <= 0 && dashTime <= 0) {
         for (let i = 14; i < tail.length; i += 2) {
           if (distance(player, tail[i]) < player.size * 0.84) {
-            if (shieldTime > 0) {
-              shieldTime = 0;
-              graceTime = SHIELD_GRACE_SECONDS;
-              maxTailLength = Math.max(START_TAIL_LENGTH, maxTailLength - SHIELD_TAIL_TRIM);
-              tail.length = Math.min(tail.length, maxTailLength);
-              comboCount = 0;
-              spawnEatParticles(player.x, player.y, 105, 150, 26);
-              spawnRipple(player.x, player.y, 136, 1.8);
-              flashScreen(0.18, 5);
-              playTone(220, 0.14, "sawtooth", 0.11);
-              playTone(440, 0.2, "triangle", 0.13, 0.06);
-              showToast("Shield saved you! Tail trimmed", 1.5);
-              updateHud();
-            } else {
-              endGame();
-            }
+            handlePlayerHit("Shield saved you from your tail");
             break;
           }
         }
@@ -1398,6 +1768,11 @@
           foods.splice(i, 1);
           handleFoodPickup(food);
         }
+      }
+
+      syncHazards();
+      while (foods.length < getFoodTarget()) {
+        spawnFood();
       }
 
       updateParticles(dt);
@@ -1629,6 +2004,96 @@
       }
     }
 
+    function drawRift() {
+      if (!rift) return;
+
+      const pulse = 1 + Math.sin(globalTime * 0.009) * 0.08;
+      const lifeAlpha = clamp(rift.life / RIFT_LIFE_SECONDS, 0.25, 1);
+      const radius = rift.size * pulse;
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+
+      const glow = ctx.createRadialGradient(rift.x, rift.y, 0, rift.x, rift.y, radius * 2.6);
+      glow.addColorStop(0, `rgba(205, 135, 255, ${0.58 * lifeAlpha})`);
+      glow.addColorStop(0.38, `rgba(95, 210, 255, ${0.24 * lifeAlpha})`);
+      glow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(rift.x, rift.y, radius * 2.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (let ring = 0; ring < 3; ring++) {
+        ctx.strokeStyle = ring === 0
+          ? `rgba(206, 145, 255, ${0.82 * lifeAlpha})`
+          : `rgba(110, 230, 255, ${0.42 * lifeAlpha})`;
+        ctx.lineWidth = 2.2 - ring * 0.45;
+        ctx.beginPath();
+        ctx.ellipse(
+          rift.x,
+          rift.y,
+          radius + ring * 9,
+          radius * (0.48 + ring * 0.08),
+          globalTime * 0.0025 + ring * 1.1,
+          0,
+          Math.PI * 2
+        );
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.78 * lifeAlpha})`;
+      ctx.beginPath();
+      ctx.arc(rift.x, rift.y, 4.4 + Math.sin(globalTime * 0.012) * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawHazards() {
+      ctx.save();
+
+      for (const hazard of hazards) {
+        const pulse = 1 + Math.sin(globalTime * 0.008 + hazard.phase) * 0.12;
+        const radius = hazard.size * pulse;
+        const glow = ctx.createRadialGradient(hazard.x, hazard.y, 0, hazard.x, hazard.y, radius * 2.7);
+
+        glow.addColorStop(0, "rgba(255, 115, 160, 0.58)");
+        glow.addColorStop(0.45, "rgba(255, 70, 110, 0.22)");
+        glow.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(hazard.x, hazard.y, radius * 2.7, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(hazard.x, hazard.y);
+        ctx.rotate(globalTime * 0.002 + hazard.phase);
+        ctx.strokeStyle = "rgba(255, 190, 210, 0.62)";
+        ctx.lineWidth = 1.5;
+
+        for (let spike = 0; spike < 6; spike++) {
+          const angle = (Math.PI * 2 * spike) / 6;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(angle) * radius * 0.58, Math.sin(angle) * radius * 0.58);
+          ctx.lineTo(Math.cos(angle) * radius * 1.22, Math.sin(angle) * radius * 1.22);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = "#ff4f7c";
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(30, 0, 18, 0.62)";
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.46, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
     function drawParticles() {
       for (const p of particles) {
         const alpha = 1 - p.age / p.life;
@@ -1737,6 +2202,17 @@
         ctx.lineWidth = shieldTime > 0 ? 3.2 : 2;
         ctx.beginPath();
         ctx.arc(player.x, player.y, player.size + 12, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (dashTime > 0) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(160, 235, 255, 0.76)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(player.x - dashVector.x * 48, player.y - dashVector.y * 48);
+        ctx.lineTo(player.x - dashVector.x * 10, player.y - dashVector.y * 10);
         ctx.stroke();
         ctx.restore();
       }
@@ -1873,7 +2349,9 @@
       ctx.translate(shakeX, shakeY);
 
       drawRipples();
+      drawRift();
       drawFoods();
+      drawHazards();
       drawParticles();
 
       if (gameStarted) {
@@ -1940,6 +2418,11 @@
 
       keys[key] = true;
 
+      if (key === " " || key === "shift") {
+        if (event.repeat) return;
+        startDash();
+      }
+
       if (key === "m") {
         if (event.repeat) return;
         toggleAudio();
@@ -1984,6 +2467,12 @@
       activePointerId = event.pointerId;
       canvas.setPointerCapture(activePointerId);
       setPointerTarget(event);
+
+      const now = performance.now();
+      if (now - lastTapTime < 320) {
+        startDash();
+      }
+      lastTapTime = now;
     });
 
     canvas.addEventListener("pointermove", (event) => {
