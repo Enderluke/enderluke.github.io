@@ -18,7 +18,7 @@
       --danger-hover: #ff7888;
       --good: #73ffb3;
       --shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
-      --radius: 18px;
+      --radius: 8px;
     }
 
     * {
@@ -48,6 +48,7 @@
       display: block;
       width: 100vw;
       height: 100vh;
+      touch-action: none;
     }
 
     #menu,
@@ -63,6 +64,7 @@
       align-items: center;
       justify-content: center;
       padding: 24px;
+      overflow-y: auto;
       background:
         radial-gradient(circle at 20% 15%, rgba(80, 170, 255, 0.18), transparent 25%),
         radial-gradient(circle at 80% 20%, rgba(160, 60, 255, 0.18), transparent 22%),
@@ -72,8 +74,10 @@
 
     .menu-card {
       width: min(560px, 94vw);
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
       padding: 28px 24px 22px;
-      border-radius: 24px;
+      border-radius: var(--radius);
       background: var(--panel);
       border: 1px solid var(--panel-border);
       box-shadow: var(--shadow);
@@ -82,8 +86,8 @@
 
     .menu-card h1 {
       margin: 0 0 10px;
-      font-size: clamp(36px, 5vw, 54px);
-      letter-spacing: 0.02em;
+      font-size: 48px;
+      letter-spacing: 0;
       text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     }
 
@@ -107,7 +111,7 @@
       padding: 14px 16px;
       font-size: 17px;
       border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 14px;
+      border-radius: var(--radius);
       background: rgba(255, 255, 255, 0.08);
       color: white;
       outline: none;
@@ -127,7 +131,7 @@
 
     button {
       border: none;
-      border-radius: 14px;
+      border-radius: var(--radius);
       cursor: pointer;
       font-weight: 800;
       transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background 0.16s ease;
@@ -158,11 +162,19 @@
       line-height: 1.5;
     }
 
+    .name-error {
+      min-height: 18px;
+      margin: -5px 0 10px;
+      color: #ffb2bd;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
     #leaderboard {
       text-align: left;
       margin-top: 10px;
       padding: 16px;
-      border-radius: 18px;
+      border-radius: var(--radius);
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.09);
     }
@@ -187,7 +199,7 @@
       justify-content: space-between;
       gap: 10px;
       padding: 9px 12px;
-      border-radius: 12px;
+      border-radius: var(--radius);
       background: rgba(255, 255, 255, 0.045);
       border: 1px solid rgba(255, 255, 255, 0.06);
       font-size: 14px;
@@ -217,7 +229,7 @@
       right: 16px;
       min-width: 248px;
       padding: 14px 14px 12px;
-      border-radius: 18px;
+      border-radius: var(--radius);
       background: rgba(10, 15, 28, 0.68);
       border: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: var(--shadow);
@@ -228,7 +240,7 @@
       margin: 0 0 10px;
       font-size: 14px;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: 0;
       color: rgba(255, 255, 255, 0.75);
     }
 
@@ -278,6 +290,10 @@
     }
 
     @media (max-width: 640px) {
+      .menu-card h1 {
+        font-size: 38px;
+      }
+
       .form-row {
         grid-template-columns: 1fr;
       }
@@ -325,8 +341,10 @@
       </div>
 
       <div class="hints">
-        WASD / Arrow Keys to move · P or Esc to pause · Enter returns to menu after game over
+        WASD / Arrow Keys to move · Drag on touch screens to steer · P or Esc to pause · Enter returns to menu after game over
       </div>
+
+      <div id="nameError" class="name-error" aria-live="polite"></div>
 
       <div id="leaderboard">
         <h2>🏆 Leaderboard</h2>
@@ -355,6 +373,7 @@
     const playBtn = document.getElementById("playBtn");
     const backBtn = document.getElementById("backBtn");
     const usernameInput = document.getElementById("username");
+    const nameError = document.getElementById("nameError");
     const scoresList = document.getElementById("scores");
 
     const hud = document.getElementById("hud");
@@ -376,18 +395,23 @@
     const FOOD_GROWTH = 7;
     const GOLD_FOOD_GROWTH = 13;
     const MAGNET_FOOD_GROWTH = 9;
+    const SHIELD_FOOD_GROWTH = 6;
     const MAX_NAME_LENGTH = 18;
     const GRID_SIZE = 44;
     const GOLD_FOOD_CHANCE = 0.12;
     const MAGNET_FOOD_CHANCE = 0.08;
+    const SHIELD_FOOD_CHANCE = 0.07;
     const MAGNET_DURATION = 7;
+    const SHIELD_DURATION = 10;
     const MAGNET_RADIUS = 175;
     const COMBO_WINDOW_MS = 2200;
+    const START_GRACE_SECONDS = 1.2;
+    const SHIELD_GRACE_SECONDS = 1.8;
+    const SHIELD_TAIL_TRIM = 10;
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const lerp = (a, b, t) => a + (b - a) * t;
     const rand = (min, max) => Math.random() * (max - min) + min;
-    const randInt = (min, max) => Math.floor(rand(min, max + 1));
     const distanceXY = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
     const distance = (a, b) => distanceXY(a.x, a.y, b.x, b.y);
 
@@ -417,6 +441,8 @@
     let particles = [];
 
     let magnetTime = 0;
+    let shieldTime = 0;
+    let graceTime = 0;
     let comboCount = 0;
     let lastFoodCollectTime = -Infinity;
     let toastText = "";
@@ -424,6 +450,8 @@
     let objective = null;
     let objectiveRotation = 0;
     let objectivesCompleted = 0;
+    let pointerTarget = null;
+    let activePointerId = null;
 
     const keys = Object.create(null);
 
@@ -443,14 +471,45 @@
         .slice(0, MAX_NAME_LENGTH);
     }
 
-    let playerId = localStorage.getItem(STORAGE_KEYS.playerId);
+    const storage = (() => {
+      try {
+        const testKey = "__glowTailStorageTest__";
+        localStorage.setItem(testKey, "1");
+        localStorage.removeItem(testKey);
+        return localStorage;
+      } catch {
+        return null;
+      }
+    })();
+
+    function getStorageItem(key) {
+      if (!storage) return null;
+
+      try {
+        return storage.getItem(key);
+      } catch {
+        return null;
+      }
+    }
+
+    function setStorageItem(key, value) {
+      if (!storage) return;
+
+      try {
+        storage.setItem(key, value);
+      } catch {
+        showToast("Storage is full, but your run still counts here", 1.8);
+      }
+    }
+
+    let playerId = getStorageItem(STORAGE_KEYS.playerId);
     if (!playerId) {
       playerId =
         (globalThis.crypto && typeof crypto.randomUUID === "function")
           ? crypto.randomUUID()
           : "player-" + Math.random().toString(36).slice(2, 11);
 
-      localStorage.setItem(STORAGE_KEYS.playerId, playerId);
+      setStorageItem(STORAGE_KEYS.playerId, playerId);
     }
 
     function resizeCanvas() {
@@ -482,7 +541,7 @@
     }
 
     function getScores() {
-      const raw = safeJsonParse(localStorage.getItem(STORAGE_KEYS.scores), []);
+      const raw = safeJsonParse(getStorageItem(STORAGE_KEYS.scores), []);
       if (!Array.isArray(raw)) return [];
 
       return raw
@@ -532,45 +591,42 @@
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
 
-      localStorage.setItem(STORAGE_KEYS.scores, JSON.stringify(finalScores));
+      setStorageItem(STORAGE_KEYS.scores, JSON.stringify(finalScores));
     }
 
     function renderLeaderboard() {
       const scores = getScores();
-      scoresList.innerHTML = "";
+      scoresList.replaceChildren();
 
       if (scores.length === 0) {
         const li = document.createElement("li");
-        li.innerHTML = `
-          <span class="score-name">No scores yet</span>
-          <span class="score-value">0</span>
-        `;
+        li.append(
+          createScoreSpan("score-name", "No scores yet"),
+          createScoreSpan("score-value", "0")
+        );
         scoresList.appendChild(li);
         return;
       }
 
       scores.forEach((entry, index) => {
         const li = document.createElement("li");
-        const medal =
-          index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+        const rank = index < 3 ? ["1st", "2nd", "3rd"][index] : `#${index + 1}`;
 
-        li.innerHTML = `
-          <span class="score-rank">${medal}</span>
-          <span class="score-name">${escapeHtml(entry.name)}</span>
-          <span class="score-value">${entry.score}</span>
-        `;
+        li.append(
+          createScoreSpan("score-rank", rank),
+          createScoreSpan("score-name", entry.name),
+          createScoreSpan("score-value", entry.score)
+        );
 
         scoresList.appendChild(li);
       });
     }
 
-    function escapeHtml(str) {
-      return str
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
+    function createScoreSpan(className, value) {
+      const span = document.createElement("span");
+      span.className = className;
+      span.textContent = String(value);
+      return span;
     }
 
     function getPowerText() {
@@ -580,11 +636,15 @@
         parts.push(`Magnet ${magnetTime.toFixed(1)}s`);
       }
 
+      if (shieldTime > 0) {
+        parts.push(`Shield ${shieldTime.toFixed(1)}s`);
+      }
+
       if (comboCount >= 2 && globalTime - lastFoodCollectTime <= COMBO_WINDOW_MS) {
         parts.push(`Combo x${comboCount}`);
       }
 
-      return parts.length ? parts.join(" · ") : "None";
+      return parts.length ? parts.join(" | ") : "None";
     }
 
     function getObjectiveText() {
@@ -686,12 +746,16 @@
       tail = [];
 
       magnetTime = 0;
+      shieldTime = 0;
+      graceTime = START_GRACE_SECONDS;
       comboCount = 0;
       lastFoodCollectTime = -Infinity;
       toastText = "";
       toastTime = 0;
       objectiveRotation = 0;
       objectivesCompleted = 0;
+      pointerTarget = null;
+      activePointerId = null;
       setNewObjective();
 
       const spacing = player.size * 0.72;
@@ -732,14 +796,16 @@
 
           if (roll < MAGNET_FOOD_CHANCE) {
             type = "magnet";
-          } else if (roll < MAGNET_FOOD_CHANCE + GOLD_FOOD_CHANCE) {
+          } else if (roll < MAGNET_FOOD_CHANCE + SHIELD_FOOD_CHANCE) {
+            type = "shield";
+          } else if (roll < MAGNET_FOOD_CHANCE + SHIELD_FOOD_CHANCE + GOLD_FOOD_CHANCE) {
             type = "gold";
           }
 
           foods.push({
             x,
             y,
-            size: type === "magnet" ? 10.2 : type === "gold" ? 10.8 : 9.5,
+            size: type === "magnet" ? 10.2 : type === "shield" ? 10.6 : type === "gold" ? 10.8 : 9.5,
             seed: Math.random() * Math.PI * 2,
             type
           });
@@ -771,19 +837,24 @@
       }
     }
 
+    function setNameError(message) {
+      nameError.textContent = message;
+    }
+
     function startGame() {
       const cleanName = sanitizeName(usernameInput.value);
 
       if (!cleanName) {
-        alert("Enter a username!");
+        setNameError("Enter a username before starting.");
         usernameInput.focus();
         usernameInput.select();
         return;
       }
 
+      setNameError("");
       currentUser = cleanName;
       usernameInput.value = cleanName;
-      localStorage.setItem(STORAGE_KEYS.lastUsername, cleanName);
+      setStorageItem(STORAGE_KEYS.lastUsername, cleanName);
 
       gameStarted = true;
       gameOver = false;
@@ -819,6 +890,8 @@
       Object.keys(keys).forEach((key) => {
         keys[key] = false;
       });
+      pointerTarget = null;
+      activePointerId = null;
 
       resetGame();
       renderLeaderboard();
@@ -841,6 +914,12 @@
         magnetTime = Math.max(magnetTime, MAGNET_DURATION);
         spawnEatParticles(food.x, food.y, 180, 235, 18);
         showToast("Magnet activated", 1.2);
+      } else if (food.type === "shield") {
+        growth = SHIELD_FOOD_GROWTH;
+        shieldTime = Math.max(shieldTime, SHIELD_DURATION);
+        graceTime = Math.max(graceTime, 0.5);
+        spawnEatParticles(food.x, food.y, 105, 150, 18);
+        showToast("Shield charged", 1.2);
       } else {
         spawnEatParticles(food.x, food.y, 42, 62, 12);
       }
@@ -879,9 +958,9 @@
       updateHud();
     }
 
-    function update(dt) {
+    function update(dt, deltaSeconds) {
       if (toastTime > 0) {
-        toastTime = Math.max(0, toastTime - dt);
+        toastTime = Math.max(0, toastTime - deltaSeconds);
       }
 
       if (!gameStarted || gameOver || paused) {
@@ -891,7 +970,15 @@
       }
 
       if (magnetTime > 0) {
-        magnetTime = Math.max(0, magnetTime - dt);
+        magnetTime = Math.max(0, magnetTime - deltaSeconds);
+      }
+
+      if (shieldTime > 0) {
+        shieldTime = Math.max(0, shieldTime - deltaSeconds);
+      }
+
+      if (graceTime > 0) {
+        graceTime = Math.max(0, graceTime - deltaSeconds);
       }
 
       if (comboCount > 0 && globalTime - lastFoodCollectTime > COMBO_WINDOW_MS) {
@@ -902,7 +989,7 @@
       }
 
       if (objective && objective.type === "survive") {
-        objective.progress += dt;
+        objective.progress += deltaSeconds;
         if (objective.progress >= objective.target) {
           completeObjective();
         }
@@ -915,6 +1002,17 @@
 
       let moveX = right - left;
       let moveY = down - up;
+
+      if (moveX === 0 && moveY === 0 && pointerTarget) {
+        const dx = pointerTarget.x - player.x;
+        const dy = pointerTarget.y - player.y;
+        const pointerDistance = Math.hypot(dx, dy);
+
+        if (pointerDistance > player.size * 0.75) {
+          moveX = dx / pointerDistance;
+          moveY = dy / pointerDistance;
+        }
+      }
 
       if (moveX !== 0 || moveY !== 0) {
         const mag = Math.hypot(moveX, moveY) || 1;
@@ -976,7 +1074,7 @@
           const dist = Math.hypot(dx, dy) || 0.0001;
 
           if (dist < MAGNET_RADIUS) {
-            const pull = (1 - dist / MAGNET_RADIUS) * 1.7 * dt * 60;
+            const pull = (1 - dist / MAGNET_RADIUS) * 3.2 * dt;
             food.x += (dx / dist) * pull;
             food.y += (dy / dist) * pull;
             food.x = clamp(food.x, food.size, viewWidth - food.size);
@@ -985,10 +1083,23 @@
         }
       }
 
-      for (let i = 14; i < tail.length; i += 2) {
-        if (distance(player, tail[i]) < player.size * 0.84) {
-          endGame();
-          break;
+      if (graceTime <= 0) {
+        for (let i = 14; i < tail.length; i += 2) {
+          if (distance(player, tail[i]) < player.size * 0.84) {
+            if (shieldTime > 0) {
+              shieldTime = 0;
+              graceTime = SHIELD_GRACE_SECONDS;
+              maxTailLength = Math.max(START_TAIL_LENGTH, maxTailLength - SHIELD_TAIL_TRIM);
+              tail.length = Math.min(tail.length, maxTailLength);
+              comboCount = 0;
+              spawnEatParticles(player.x, player.y, 105, 150, 26);
+              showToast("Shield saved you! Tail trimmed", 1.5);
+              updateHud();
+            } else {
+              endGame();
+            }
+            break;
+          }
         }
       }
 
@@ -1091,6 +1202,12 @@
           midGlow = "rgba(111, 211, 255, 0.42)";
           outerGlow = "rgba(90, 210, 255, 0)";
           crossColor = "rgba(160, 240, 255, 0.45)";
+        } else if (food.type === "shield") {
+          coreColor = "#7cff9f";
+          innerGlow = "rgba(170, 255, 190, 0.96)";
+          midGlow = "rgba(90, 245, 140, 0.42)";
+          outerGlow = "rgba(90, 245, 140, 0)";
+          crossColor = "rgba(185, 255, 205, 0.5)";
         }
 
         const glow = ctx.createRadialGradient(food.x, food.y, 0, food.x, food.y, outer);
@@ -1114,6 +1231,18 @@
             globalTime * 0.004 + food.seed,
             globalTime * 0.004 + food.seed + Math.PI * 1.35
           );
+          ctx.stroke();
+        } else if (food.type === "shield") {
+          ctx.strokeStyle = "rgba(185, 255, 205, 0.62)";
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(food.x, food.y - food.size * 1.8);
+          ctx.lineTo(food.x + food.size * 1.35, food.y - food.size * 0.35);
+          ctx.lineTo(food.x + food.size * 0.9, food.y + food.size * 1.35);
+          ctx.lineTo(food.x, food.y + food.size * 1.9);
+          ctx.lineTo(food.x - food.size * 0.9, food.y + food.size * 1.35);
+          ctx.lineTo(food.x - food.size * 1.35, food.y - food.size * 0.35);
+          ctx.closePath();
           ctx.stroke();
         } else {
           ctx.strokeStyle = crossColor;
@@ -1216,6 +1345,17 @@
         ctx.restore();
       }
 
+      if (shieldTime > 0 || graceTime > 0) {
+        ctx.save();
+        const shieldAlpha = shieldTime > 0 ? 0.68 : 0.38 + Math.sin(globalTime * 0.018) * 0.14;
+        ctx.strokeStyle = `rgba(125, 255, 160, ${shieldAlpha})`;
+        ctx.lineWidth = shieldTime > 0 ? 3.2 : 2;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.size + 12, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       const glow = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, outerRadius);
       glow.addColorStop(0, "rgba(130, 205, 255, 0.98)");
       glow.addColorStop(0.38, "rgba(71, 171, 255, 0.28)");
@@ -1249,12 +1389,12 @@
       const y = 22;
 
       ctx.fillStyle = "rgba(10, 16, 30, 0.78)";
-      roundRect(ctx, x, y, width, height, 16);
+      roundRect(ctx, x, y, width, height, 8);
       ctx.fill();
 
       ctx.strokeStyle = "rgba(255,255,255,0.12)";
       ctx.lineWidth = 1.1;
-      roundRect(ctx, x, y, width, height, 16);
+      roundRect(ctx, x, y, width, height, 8);
       ctx.stroke();
 
       ctx.fillStyle = "rgba(255,255,255,0.96)";
@@ -1277,12 +1417,12 @@
       const y = (viewHeight - panelHeight) / 2;
 
       ctx.fillStyle = "rgba(10, 16, 30, 0.82)";
-      roundRect(ctx, x, y, panelWidth, panelHeight, 22);
+      roundRect(ctx, x, y, panelWidth, panelHeight, 8);
       ctx.fill();
 
       ctx.strokeStyle = "rgba(255,255,255,0.12)";
       ctx.lineWidth = 1.2;
-      roundRect(ctx, x, y, panelWidth, panelHeight, 22);
+      roundRect(ctx, x, y, panelWidth, panelHeight, 8);
       ctx.stroke();
 
       ctx.textAlign = "center";
@@ -1340,7 +1480,8 @@
       globalTime = timestamp;
 
       const dt = deltaMs / 16.6667;
-      update(dt);
+      const deltaSeconds = deltaMs / 1000;
+      update(dt, deltaSeconds);
       draw();
 
       requestAnimationFrame(gameLoop);
@@ -1348,6 +1489,10 @@
 
     playBtn.addEventListener("click", startGame);
     backBtn.addEventListener("click", goBack);
+
+    usernameInput.addEventListener("input", () => {
+      if (nameError.textContent) setNameError("");
+    });
 
     usernameInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -1357,6 +1502,11 @@
 
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
+      const isTyping = event.target === usernameInput;
+
+      if (isTyping) {
+        return;
+      }
 
       if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) {
         event.preventDefault();
@@ -1365,11 +1515,13 @@
       keys[key] = true;
 
       if (gameStarted && !gameOver && (key === "p" || key === "escape")) {
+        if (event.repeat) return;
         paused = !paused;
         updateHud();
       }
 
       if (gameOver && key === "enter") {
+        if (event.repeat) return;
         goBack();
       }
     });
@@ -1382,6 +1534,46 @@
       Object.keys(keys).forEach((key) => {
         keys[key] = false;
       });
+      pointerTarget = null;
+      activePointerId = null;
+    });
+
+    function setPointerTarget(event) {
+      const rect = canvas.getBoundingClientRect();
+      pointerTarget = {
+        x: clamp(event.clientX - rect.left, 0, viewWidth),
+        y: clamp(event.clientY - rect.top, 0, viewHeight)
+      };
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      if (!gameStarted || gameOver) return;
+
+      event.preventDefault();
+      activePointerId = event.pointerId;
+      canvas.setPointerCapture(activePointerId);
+      setPointerTarget(event);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (event.pointerId !== activePointerId || !gameStarted || gameOver) return;
+
+      event.preventDefault();
+      setPointerTarget(event);
+    });
+
+    function clearPointerTarget(event) {
+      if (event.pointerId !== activePointerId) return;
+
+      pointerTarget = null;
+      activePointerId = null;
+    }
+
+    canvas.addEventListener("pointerup", clearPointerTarget);
+    canvas.addEventListener("pointercancel", clearPointerTarget);
+    canvas.addEventListener("lostpointercapture", () => {
+      pointerTarget = null;
+      activePointerId = null;
     });
 
     window.addEventListener("beforeunload", () => {
@@ -1392,7 +1584,7 @@
 
     window.addEventListener("resize", resizeCanvas);
 
-    const savedUsername = sanitizeName(localStorage.getItem(STORAGE_KEYS.lastUsername) || "");
+    const savedUsername = sanitizeName(getStorageItem(STORAGE_KEYS.lastUsername) || "");
     if (savedUsername) {
       usernameInput.value = savedUsername;
     }
