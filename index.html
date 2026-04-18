@@ -215,7 +215,7 @@
     #hud {
       top: 16px;
       right: 16px;
-      min-width: 220px;
+      min-width: 248px;
       padding: 14px 14px 12px;
       border-radius: 18px;
       background: rgba(10, 15, 28, 0.68);
@@ -234,7 +234,7 @@
 
     .hud-row {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 14px;
       padding: 6px 0;
@@ -248,6 +248,15 @@
     .hud-row strong {
       color: white;
       font-size: 15px;
+      text-align: right;
+    }
+
+    #hudPower,
+    #hudObjective {
+      max-width: 148px;
+      line-height: 1.2;
+      font-size: 13px;
+      white-space: normal;
     }
 
     #backBtn {
@@ -300,7 +309,7 @@
       <h1>best game oat</h1>
       <p class="subtitle">
         Collect glowing orbs, grow longer, and avoid crashing into your own tail.
-        Smooth controls, cleaner visuals, stronger collision handling, and a better leaderboard are all built in now.
+        Rare gold and magnet orbs, combo bonuses, and mini objectives now keep each run a little fresher.
       </p>
 
       <div class="form-row">
@@ -334,6 +343,8 @@
     <div class="hud-row"><span>Length</span><strong id="hudLength">0</strong></div>
     <div class="hud-row"><span>Best</span><strong id="hudBest">0</strong></div>
     <div class="hud-row"><span>Status</span><strong id="hudStatus">Idle</strong></div>
+    <div class="hud-row"><span>Power</span><strong id="hudPower">None</strong></div>
+    <div class="hud-row"><span>Objective</span><strong id="hudObjective">—</strong></div>
   </div>
 
   <script>
@@ -351,6 +362,8 @@
     const hudLength = document.getElementById("hudLength");
     const hudBest = document.getElementById("hudBest");
     const hudStatus = document.getElementById("hudStatus");
+    const hudPower = document.getElementById("hudPower");
+    const hudObjective = document.getElementById("hudObjective");
 
     const STORAGE_KEYS = {
       playerId: "glowTailPlayerId",
@@ -361,12 +374,20 @@
     const START_TAIL_LENGTH = 24;
     const FOOD_COUNT = 14;
     const FOOD_GROWTH = 7;
+    const GOLD_FOOD_GROWTH = 13;
+    const MAGNET_FOOD_GROWTH = 9;
     const MAX_NAME_LENGTH = 18;
     const GRID_SIZE = 44;
+    const GOLD_FOOD_CHANCE = 0.12;
+    const MAGNET_FOOD_CHANCE = 0.08;
+    const MAGNET_DURATION = 7;
+    const MAGNET_RADIUS = 175;
+    const COMBO_WINDOW_MS = 2200;
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const lerp = (a, b, t) => a + (b - a) * t;
     const rand = (min, max) => Math.random() * (max - min) + min;
+    const randInt = (min, max) => Math.floor(rand(min, max + 1));
     const distanceXY = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
     const distance = (a, b) => distanceXY(a.x, a.y, b.x, b.y);
 
@@ -394,6 +415,15 @@
     let maxTailLength = START_TAIL_LENGTH;
     let foods = [];
     let particles = [];
+
+    let magnetTime = 0;
+    let comboCount = 0;
+    let lastFoodCollectTime = -Infinity;
+    let toastText = "";
+    let toastTime = 0;
+    let objective = null;
+    let objectiveRotation = 0;
+    let objectivesCompleted = 0;
 
     const keys = Object.create(null);
 
@@ -543,10 +573,44 @@
         .replaceAll("'", "&#39;");
     }
 
+    function getPowerText() {
+      const parts = [];
+
+      if (magnetTime > 0) {
+        parts.push(`Magnet ${magnetTime.toFixed(1)}s`);
+      }
+
+      if (comboCount >= 2 && globalTime - lastFoodCollectTime <= COMBO_WINDOW_MS) {
+        parts.push(`Combo x${comboCount}`);
+      }
+
+      return parts.length ? parts.join(" · ") : "None";
+    }
+
+    function getObjectiveText() {
+      if (!objective) return "—";
+
+      if (objective.type === "eat") {
+        return `Eat ${objective.target} (${objective.progress}/${objective.target})`;
+      }
+
+      if (objective.type === "survive") {
+        return `Survive ${objective.target}s (${Math.min(objective.target, Math.floor(objective.progress))}/${objective.target})`;
+      }
+
+      if (objective.type === "combo") {
+        return `Reach combo x${objective.target} (${Math.min(comboCount, objective.target)}/${objective.target})`;
+      }
+
+      return "—";
+    }
+
     function updateHud() {
       hudName.textContent = currentUser || "—";
       hudLength.textContent = maxTailLength;
       hudBest.textContent = Math.max(getPersonalBest(), maxTailLength);
+      hudPower.textContent = getPowerText();
+      hudObjective.textContent = getObjectiveText();
 
       if (!gameStarted) {
         hudStatus.textContent = "Idle";
@@ -559,6 +623,57 @@
       }
     }
 
+    function showToast(text, duration = 1.3) {
+      toastText = text;
+      toastTime = duration;
+    }
+
+    function setNewObjective() {
+      const cycleType = ["eat", "survive", "combo"][objectiveRotation % 3];
+      objectiveRotation++;
+
+      if (cycleType === "eat") {
+        const target = clamp(4 + Math.floor(objectivesCompleted / 2), 4, 8);
+        objective = {
+          type: "eat",
+          target,
+          progress: 0,
+          reward: 8 + Math.min(8, objectivesCompleted)
+        };
+        return;
+      }
+
+      if (cycleType === "survive") {
+        const target = clamp(16 + objectivesCompleted * 2, 16, 30);
+        objective = {
+          type: "survive",
+          target,
+          progress: 0,
+          reward: 10 + Math.min(8, objectivesCompleted)
+        };
+        return;
+      }
+
+      objective = {
+        type: "combo",
+        target: clamp(4 + Math.floor(objectivesCompleted / 2), 4, 7),
+        progress: 0,
+        reward: 9 + Math.min(8, objectivesCompleted)
+      };
+    }
+
+    function completeObjective() {
+      if (!objective) return;
+
+      const reward = objective.reward;
+      maxTailLength += reward;
+      objectivesCompleted += 1;
+      spawnEatParticles(player.x, player.y, 170, 250, 20);
+      showToast(`Objective complete! +${reward} tail`, 1.5);
+      setNewObjective();
+      updateHud();
+    }
+
     function resetGame() {
       player.x = viewWidth / 2;
       player.y = viewHeight / 2;
@@ -569,6 +684,15 @@
       foods = [];
       particles = [];
       tail = [];
+
+      magnetTime = 0;
+      comboCount = 0;
+      lastFoodCollectTime = -Infinity;
+      toastText = "";
+      toastTime = 0;
+      objectiveRotation = 0;
+      objectivesCompleted = 0;
+      setNewObjective();
 
       const spacing = player.size * 0.72;
       for (let i = 0; i < maxTailLength; i++) {
@@ -603,11 +727,21 @@
         });
 
         if (!tooCloseToPlayer && !tooCloseToFood && !tooCloseToTail) {
+          let type = "normal";
+          const roll = Math.random();
+
+          if (roll < MAGNET_FOOD_CHANCE) {
+            type = "magnet";
+          } else if (roll < MAGNET_FOOD_CHANCE + GOLD_FOOD_CHANCE) {
+            type = "gold";
+          }
+
           foods.push({
             x,
             y,
-            size: 9.5,
-            seed: Math.random() * Math.PI * 2
+            size: type === "magnet" ? 10.2 : type === "gold" ? 10.8 : 9.5,
+            seed: Math.random() * Math.PI * 2,
+            type
           });
           return;
         }
@@ -617,12 +751,12 @@
         x: rand(margin, Math.max(margin + 1, viewWidth - margin)),
         y: rand(margin, Math.max(margin + 1, viewHeight - margin)),
         size: 9.5,
-        seed: Math.random() * Math.PI * 2
+        seed: Math.random() * Math.PI * 2,
+        type: "normal"
       });
     }
 
-    function spawnEatParticles(x, y) {
-      const count = 12;
+    function spawnEatParticles(x, y, hueMin = 42, hueMax = 62, count = 12) {
       for (let i = 0; i < count; i++) {
         particles.push({
           x,
@@ -632,7 +766,7 @@
           size: rand(2.2, 4.8),
           age: 0,
           life: rand(18, 30),
-          hue: rand(42, 62)
+          hue: rand(hueMin, hueMax)
         });
       }
     }
@@ -695,10 +829,83 @@
       hud.hidden = true;
     }
 
+    function handleFoodPickup(food) {
+      let growth = FOOD_GROWTH;
+
+      if (food.type === "gold") {
+        growth = GOLD_FOOD_GROWTH;
+        spawnEatParticles(food.x, food.y, 34, 56, 18);
+        showToast("Golden orb! Big boost", 1.2);
+      } else if (food.type === "magnet") {
+        growth = MAGNET_FOOD_GROWTH;
+        magnetTime = Math.max(magnetTime, MAGNET_DURATION);
+        spawnEatParticles(food.x, food.y, 180, 235, 18);
+        showToast("Magnet activated", 1.2);
+      } else {
+        spawnEatParticles(food.x, food.y, 42, 62, 12);
+      }
+
+      maxTailLength += growth;
+
+      if (globalTime - lastFoodCollectTime <= COMBO_WINDOW_MS) {
+        comboCount += 1;
+      } else {
+        comboCount = 1;
+      }
+
+      lastFoodCollectTime = globalTime;
+
+      if (comboCount > 0 && comboCount % 5 === 0) {
+        maxTailLength += 4;
+        spawnEatParticles(player.x, player.y, 190, 260, 16);
+        showToast(`Combo x${comboCount}! +4 bonus tail`, 1.2);
+      }
+
+      if (objective) {
+        if (objective.type === "eat") {
+          objective.progress += 1;
+          if (objective.progress >= objective.target) {
+            completeObjective();
+          }
+        } else if (objective.type === "combo") {
+          objective.progress = comboCount;
+          if (comboCount >= objective.target) {
+            completeObjective();
+          }
+        }
+      }
+
+      spawnFood();
+      updateHud();
+    }
+
     function update(dt) {
+      if (toastTime > 0) {
+        toastTime = Math.max(0, toastTime - dt);
+      }
+
       if (!gameStarted || gameOver || paused) {
         updateParticles(dt);
+        updateHud();
         return;
+      }
+
+      if (magnetTime > 0) {
+        magnetTime = Math.max(0, magnetTime - dt);
+      }
+
+      if (comboCount > 0 && globalTime - lastFoodCollectTime > COMBO_WINDOW_MS) {
+        comboCount = 0;
+        if (objective && objective.type === "combo") {
+          objective.progress = 0;
+        }
+      }
+
+      if (objective && objective.type === "survive") {
+        objective.progress += dt;
+        if (objective.progress >= objective.target) {
+          completeObjective();
+        }
       }
 
       const left = keys["a"] || keys["arrowleft"] ? 1 : 0;
@@ -762,6 +969,22 @@
         prevY = seg.y;
       }
 
+      if (magnetTime > 0) {
+        for (const food of foods) {
+          const dx = player.x - food.x;
+          const dy = player.y - food.y;
+          const dist = Math.hypot(dx, dy) || 0.0001;
+
+          if (dist < MAGNET_RADIUS) {
+            const pull = (1 - dist / MAGNET_RADIUS) * 1.7 * dt * 60;
+            food.x += (dx / dist) * pull;
+            food.y += (dy / dist) * pull;
+            food.x = clamp(food.x, food.size, viewWidth - food.size);
+            food.y = clamp(food.y, food.size, viewHeight - food.size);
+          }
+        }
+      }
+
       for (let i = 14; i < tail.length; i += 2) {
         if (distance(player, tail[i]) < player.size * 0.84) {
           endGame();
@@ -773,14 +996,12 @@
         const food = foods[i];
         if (distance(player, food) < player.size + food.size * 0.55) {
           foods.splice(i, 1);
-          maxTailLength += FOOD_GROWTH;
-          spawnEatParticles(food.x, food.y);
-          spawnFood();
-          updateHud();
+          handleFoodPickup(food);
         }
       }
 
       updateParticles(dt);
+      updateHud();
     }
 
     function updateParticles(dt) {
@@ -852,26 +1073,60 @@
         const pulse = 1 + Math.sin(globalTime * 0.006 + food.seed) * 0.13;
         const outer = food.size * 2.5 * pulse;
 
+        let coreColor = "#ffeb3b";
+        let innerGlow = "rgba(255, 250, 170, 0.95)";
+        let midGlow = "rgba(255, 235, 59, 0.45)";
+        let outerGlow = "rgba(255, 235, 59, 0)";
+        let crossColor = "rgba(255, 247, 170, 0.35)";
+
+        if (food.type === "gold") {
+          coreColor = "#ffd54f";
+          innerGlow = "rgba(255, 224, 130, 0.98)";
+          midGlow = "rgba(255, 193, 7, 0.52)";
+          outerGlow = "rgba(255, 160, 0, 0)";
+          crossColor = "rgba(255, 224, 130, 0.5)";
+        } else if (food.type === "magnet") {
+          coreColor = "#77e6ff";
+          innerGlow = "rgba(130, 245, 255, 0.96)";
+          midGlow = "rgba(111, 211, 255, 0.42)";
+          outerGlow = "rgba(90, 210, 255, 0)";
+          crossColor = "rgba(160, 240, 255, 0.45)";
+        }
+
         const glow = ctx.createRadialGradient(food.x, food.y, 0, food.x, food.y, outer);
-        glow.addColorStop(0, "rgba(255, 250, 170, 0.95)");
-        glow.addColorStop(0.35, "rgba(255, 235, 59, 0.45)");
-        glow.addColorStop(1, "rgba(255, 235, 59, 0)");
+        glow.addColorStop(0, innerGlow);
+        glow.addColorStop(0.35, midGlow);
+        glow.addColorStop(1, outerGlow);
 
         ctx.fillStyle = glow;
         ctx.beginPath();
         ctx.arc(food.x, food.y, outer, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.strokeStyle = "rgba(255, 247, 170, 0.35)";
-        ctx.lineWidth = 1.4;
-        ctx.beginPath();
-        ctx.moveTo(food.x - food.size * 1.5, food.y);
-        ctx.lineTo(food.x + food.size * 1.5, food.y);
-        ctx.moveTo(food.x, food.y - food.size * 1.5);
-        ctx.lineTo(food.x, food.y + food.size * 1.5);
-        ctx.stroke();
+        if (food.type === "magnet") {
+          ctx.strokeStyle = "rgba(135, 235, 255, 0.65)";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(
+            food.x,
+            food.y,
+            food.size * 1.55,
+            globalTime * 0.004 + food.seed,
+            globalTime * 0.004 + food.seed + Math.PI * 1.35
+          );
+          ctx.stroke();
+        } else {
+          ctx.strokeStyle = crossColor;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(food.x - food.size * 1.5, food.y);
+          ctx.lineTo(food.x + food.size * 1.5, food.y);
+          ctx.moveTo(food.x, food.y - food.size * 1.5);
+          ctx.lineTo(food.x, food.y + food.size * 1.5);
+          ctx.stroke();
+        }
 
-        ctx.fillStyle = "#ffeb3b";
+        ctx.fillStyle = coreColor;
         ctx.beginPath();
         ctx.arc(food.x, food.y, food.size * pulse, 0, Math.PI * 2);
         ctx.fill();
@@ -945,6 +1200,22 @@
       const speedGlow = Math.min(1, Math.hypot(player.vx, player.vy) / 5.5);
       const outerRadius = player.size * (2.25 + speedGlow * 0.18);
 
+      if (magnetTime > 0) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(125, 235, 255, 0.6)";
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.arc(
+          player.x,
+          player.y,
+          player.size + 7 + Math.sin(globalTime * 0.01) * 1.5,
+          globalTime * 0.004,
+          globalTime * 0.004 + Math.PI * 1.45
+        );
+        ctx.stroke();
+        ctx.restore();
+      }
+
       const glow = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, outerRadius);
       glow.addColorStop(0, "rgba(130, 205, 255, 0.98)");
       glow.addColorStop(0.38, "rgba(71, 171, 255, 0.28)");
@@ -964,6 +1235,34 @@
       ctx.beginPath();
       ctx.arc(player.x - player.size * 0.26, player.y - player.size * 0.28, player.size * 0.32, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    function drawToast() {
+      if (toastTime <= 0 || !toastText || !gameStarted) return;
+
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, toastTime * 1.7);
+
+      const width = Math.min(420, viewWidth - 40);
+      const height = 44;
+      const x = (viewWidth - width) / 2;
+      const y = 22;
+
+      ctx.fillStyle = "rgba(10, 16, 30, 0.78)";
+      roundRect(ctx, x, y, width, height, 16);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.lineWidth = 1.1;
+      roundRect(ctx, x, y, width, height, 16);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(255,255,255,0.96)";
+      ctx.font = "bold 18px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(toastText, viewWidth / 2, y + 28);
+
+      ctx.restore();
     }
 
     function drawOverlayCard(title, subtitle, line2) {
@@ -1022,6 +1321,7 @@
       if (gameStarted) {
         drawTail();
         drawPlayer();
+        drawToast();
 
         if (paused && !gameOver) {
           drawOverlayCard("PAUSED", `Length: ${maxTailLength}`, "Press P or Esc to continue");
