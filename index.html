@@ -17,7 +17,8 @@
       --accent-2: #6fd3ff;
       --good: #73ffb3;
       --danger: #ff5b6e;
-      --shadow: 0 18px 45px rgba(0, 0, 0, 0.34);
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      --hairline: rgba(255, 255, 255, 0.18);
       --radius: 8px;
     }
 
@@ -56,7 +57,8 @@
       border-radius: var(--radius);
       cursor: pointer;
       font-weight: 800;
-      transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+      letter-spacing: 0;
+      transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
     }
 
     button:hover {
@@ -99,9 +101,12 @@
       padding: 24px;
       overflow-y: auto;
       background:
-        radial-gradient(circle at 20% 15%, rgba(80, 170, 255, 0.18), transparent 25%),
-        radial-gradient(circle at 80% 20%, rgba(115, 255, 179, 0.12), transparent 22%),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        radial-gradient(ellipse at 20% 15%, rgba(80, 170, 255, 0.18), transparent 30%),
+        radial-gradient(ellipse at 80% 20%, rgba(115, 255, 179, 0.12), transparent 28%),
         linear-gradient(135deg, rgba(11, 23, 48, 0.86), rgba(9, 36, 40, 0.78));
+      background-size: 42px 42px, 42px 42px, auto, auto, auto;
       backdrop-filter: blur(10px);
     }
 
@@ -111,7 +116,9 @@
       overflow-y: auto;
       padding: 28px 24px 22px;
       border-radius: var(--radius);
-      background: var(--panel);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 34%),
+        var(--panel);
       border: 1px solid var(--panel-border);
       box-shadow: var(--shadow);
       text-align: center;
@@ -129,7 +136,7 @@
       margin: 0 0 10px;
       font-size: 48px;
       letter-spacing: 0;
-      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 18px rgba(111, 211, 255, 0.2);
     }
 
     .subtitle {
@@ -221,6 +228,7 @@
       color: rgba(255, 255, 255, 0.84);
       font-size: 14px;
       line-height: 1.35;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
 
     .menu-actions,
@@ -263,6 +271,7 @@
       border: 1px solid rgba(255, 255, 255, 0.09);
       background: rgba(255, 255, 255, 0.05);
       text-align: left;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
 
     .menu-field span,
@@ -387,6 +396,7 @@
       text-align: left;
       font-size: 12px;
       line-height: 1.25;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
 
     .profile-btn:hover {
@@ -468,13 +478,15 @@
       border-radius: var(--radius);
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 20px rgba(0, 0, 0, 0.14);
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
     }
 
     .player-card:hover {
       background: rgba(255, 255, 255, 0.075);
       border-color: rgba(111, 211, 255, 0.2);
       transform: translateY(-1px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 24px rgba(0, 0, 0, 0.18);
     }
 
     .player-avatar {
@@ -527,7 +539,10 @@
       width: min(390px, calc(100vw - 32px));
       padding: 14px 14px 12px;
       border-radius: var(--radius);
-      background: var(--panel);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 38%),
+        linear-gradient(120deg, rgba(111, 211, 255, 0.08), transparent 42%),
+        var(--panel);
       border: 1px solid var(--panel-border);
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
@@ -540,6 +555,7 @@
       text-transform: uppercase;
       letter-spacing: 0;
       color: rgba(255, 255, 255, 0.76);
+      text-shadow: 0 0 14px rgba(111, 211, 255, 0.18);
     }
 
     .hud-grid {
@@ -555,6 +571,7 @@
       gap: 10px;
       padding: 5px 0;
       font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.045);
     }
 
     .hud-row span {
@@ -578,8 +595,44 @@
       min-width: 0;
       padding: 7px 8px;
       border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
       background: rgba(255, 255, 255, 0.055);
       border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+    }
+
+    .resource-pill::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: var(--pill-color, var(--accent-2));
+      box-shadow: 0 0 16px var(--pill-color, var(--accent-2));
+    }
+
+    .resource-pill:nth-child(1) {
+      --pill-color: #ffe34d;
+    }
+
+    .resource-pill:nth-child(2) {
+      --pill-color: #ffb35c;
+    }
+
+    .resource-pill:nth-child(3) {
+      --pill-color: #73ffb3;
+    }
+
+    .resource-pill:nth-child(4) {
+      --pill-color: #6fd3ff;
+    }
+
+    .resource-pill:nth-child(5) {
+      --pill-color: #c89bff;
+    }
+
+    .resource-pill:nth-child(6) {
+      --pill-color: #ff91ad;
     }
 
     .resource-pill span {
@@ -615,6 +668,7 @@
       width: 0%;
       border-radius: inherit;
       background: linear-gradient(90deg, var(--accent-2), var(--good));
+      box-shadow: 0 0 16px rgba(111, 211, 255, 0.35);
       transition: width 0.18s ease;
     }
 
@@ -626,6 +680,8 @@
       font-size: 13px;
       line-height: 1.35;
       min-height: 36px;
+      background: linear-gradient(90deg, rgba(111, 211, 255, 0.045), transparent);
+      border-radius: 0 0 var(--radius) var(--radius);
     }
 
     #inspector,
@@ -656,6 +712,8 @@
       justify-content: space-between;
       gap: 10px;
       min-width: 0;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     }
 
     .mini-list span:first-child {
@@ -672,7 +730,10 @@
       overflow-y: auto;
       padding: 14px;
       border-radius: var(--radius);
-      background: var(--panel-strong);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 42%),
+        linear-gradient(140deg, rgba(115, 255, 179, 0.06), transparent 46%),
+        var(--panel-strong);
       border: 1px solid var(--panel-border);
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
@@ -702,6 +763,16 @@
       text-align: left;
       font-size: 12px;
       line-height: 1.25;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+    }
+
+    .command-btn:hover,
+    .build-btn:hover,
+    .upgrade-btn:hover,
+    .directive-btn:hover,
+    .action-btn:hover {
+      border-color: rgba(111, 211, 255, 0.32);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.065), 0 8px 18px rgba(0, 0, 0, 0.16);
     }
 
     .command-btn.active,
@@ -709,13 +780,14 @@
       color: #071114;
       background: linear-gradient(180deg, #95e7ff, var(--accent-2));
       border-color: rgba(111, 211, 255, 0.72);
+      box-shadow: 0 0 18px rgba(111, 211, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.42);
     }
 
     .build-btn.ready,
     .upgrade-btn.ready,
     .action-btn.ready {
       border-color: rgba(115, 255, 179, 0.44);
-      box-shadow: inset 0 0 0 1px rgba(115, 255, 179, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(115, 255, 179, 0.08), 0 0 14px rgba(115, 255, 179, 0.08);
     }
 
     .build-btn.locked,
@@ -746,6 +818,7 @@
       font-size: 12px;
       line-height: 1.4;
       backdrop-filter: blur(8px);
+      box-shadow: var(--shadow);
       pointer-events: none;
     }
 
@@ -1776,13 +1849,23 @@
       context.arc(0, 0, size * 0.78, 0, Math.PI * 2);
       context.fill();
       context.stroke();
+      context.strokeStyle = hexToRgba(shell.color, 0.42);
+      context.lineWidth = Math.max(1, size * 0.035);
+      context.beginPath();
+      context.arc(0, 0, size * 0.94, -0.2, Math.PI * 1.08);
+      context.stroke();
 
       const visorGradient = context.createLinearGradient(-size * 0.5, -size * 0.32, size * 0.46, size * 0.12);
       visorGradient.addColorStop(0, "rgba(7,18,32,0.98)");
+      visorGradient.addColorStop(0.52, "rgba(25,72,104,0.94)");
       visorGradient.addColorStop(1, visor.color);
       context.fillStyle = visorGradient;
       context.beginPath();
       context.ellipse(size * 0.1, -size * 0.04, size * 0.38, size * 0.25, 0.12, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = "rgba(255,255,255,0.54)";
+      context.beginPath();
+      context.ellipse(-size * 0.04, -size * 0.13, size * 0.08, size * 0.025, -0.2, 0, Math.PI * 2);
       context.fill();
 
       context.save();
@@ -1800,6 +1883,12 @@
       context.stroke();
 
       if (showLabel && label) {
+        const labelWidth = Math.min(size * 4.6, Math.max(size * 2.1, label.length * size * 0.34));
+        context.fillStyle = "rgba(5, 10, 18, 0.72)";
+        roundRect(context, -labelWidth / 2, size * 1.42, labelWidth, size * 0.5, 6);
+        context.fill();
+        context.strokeStyle = hexToRgba(shell.color, 0.22);
+        context.stroke();
         context.fillStyle = "rgba(255,255,255,0.86)";
         context.font = `bold ${Math.max(10, size * 0.48)}px Arial`;
         context.textAlign = "center";
@@ -2489,15 +2578,19 @@
 
     function spawnParticles(x, y, hueMin = 42, hueMax = 62, count = 12) {
       for (let i = 0; i < count; i++) {
+        const speed = rand(1.3, 3.2);
+        const angle = rand(0, Math.PI * 2);
         addParticle({
           x,
           y,
-          vx: rand(-2.6, 2.6),
-          vy: rand(-2.6, 2.6),
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
           size: rand(2.2, 4.8),
           age: 0,
           life: rand(18, 34),
-          hue: rand(hueMin, hueMax)
+          hue: rand(hueMin, hueMax),
+          streak: Math.random() < 0.42,
+          glow: Math.random() < 0.72
         });
       }
     }
@@ -4577,7 +4670,9 @@
         size: rand(1.5, 3.2),
         age: 0,
         life: rand(16, 28),
-        hue: rand(42, 190)
+        hue: rand(42, 190),
+        streak: true,
+        glow: true
       });
     }
 
@@ -4777,6 +4872,7 @@
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, viewWidth, viewHeight);
       drawNebula();
+      drawStarLanes();
       drawDust();
       drawStars();
 
@@ -4813,27 +4909,60 @@
       }
     }
 
+    function drawStarLanes() {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (let i = 0; i < 7; i++) {
+        const y = (i / 7) * viewHeight + Math.sin(globalTime * 0.00018 + i) * 28;
+        const x = ((globalTime * 0.003 + i * 180) % (viewWidth + 260)) - 130;
+        const gradient = ctx.createLinearGradient(x - 120, y, x + 160, y + 28);
+        gradient.addColorStop(0, "rgba(255,255,255,0)");
+        gradient.addColorStop(0.5, "rgba(155, 230, 255, 0.13)");
+        gradient.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x - 120, y);
+        ctx.lineTo(x + 160, y + 28);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     function drawGrid() {
       ctx.save();
-      ctx.strokeStyle = "rgba(255,255,255,0.042)";
       ctx.lineWidth = 1 / camera.zoom;
       const grid = 120;
       const minX = -WORLD.width / 2;
       const maxX = WORLD.width / 2;
       const minY = -WORLD.height / 2;
       const maxY = WORLD.height / 2;
+      let index = 0;
       for (let x = minX; x <= maxX; x += grid) {
+        ctx.strokeStyle = index % 4 === 0 ? "rgba(111, 211, 255, 0.075)" : "rgba(255,255,255,0.034)";
         ctx.beginPath();
         ctx.moveTo(x, minY);
         ctx.lineTo(x, maxY);
         ctx.stroke();
+        index += 1;
       }
+      index = 0;
       for (let y = minY; y <= maxY; y += grid) {
+        ctx.strokeStyle = index % 4 === 0 ? "rgba(115, 255, 179, 0.055)" : "rgba(255,255,255,0.034)";
         ctx.beginPath();
         ctx.moveTo(minX, y);
         ctx.lineTo(maxX, y);
         ctx.stroke();
+        index += 1;
       }
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.lineWidth = 2 / camera.zoom;
+      ctx.beginPath();
+      ctx.moveTo(minX, 0);
+      ctx.lineTo(maxX, 0);
+      ctx.moveTo(0, minY);
+      ctx.lineTo(0, maxY);
+      ctx.stroke();
       ctx.strokeStyle = "rgba(111, 211, 255, 0.16)";
       ctx.lineWidth = 2 / camera.zoom;
       roundRect(ctx, minX, minY, WORLD.width, WORLD.height, 8);
@@ -4885,23 +5014,54 @@
         ctx.beginPath();
         ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.strokeStyle = `hsla(${ripple.hue + 24}, 100%, 86%, ${alpha * 0.34})`;
+        ctx.lineWidth = Math.max(0.7 / camera.zoom, (2.2 * (1 - t)) / camera.zoom);
+        ctx.beginPath();
+        ctx.arc(ripple.x, ripple.y, ripple.radius * 0.62, 0, Math.PI * 2);
+        ctx.stroke();
       }
       ctx.restore();
     }
 
     function drawConnections() {
       ctx.save();
-      ctx.strokeStyle = "rgba(111, 211, 255, 0.18)";
-      ctx.lineWidth = 1.2 / camera.zoom;
       for (let i = 1; i < game.buildings.length; i++) {
         const building = game.buildings[i];
         const hub = nearestHubTo(building.x, building.y);
+        const dx = building.x - hub.x;
+        const dy = building.y - hub.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const nx = -dy / dist;
+        const ny = dx / dist;
+        const midX = (hub.x + building.x) / 2 + nx * Math.min(70, dist * 0.08);
+        const midY = (hub.y + building.y) / 2 + ny * Math.min(70, dist * 0.08);
+        ctx.strokeStyle = "rgba(5, 12, 20, 0.44)";
+        ctx.lineWidth = 5 / camera.zoom;
         ctx.beginPath();
         ctx.moveTo(hub.x, hub.y);
-        ctx.lineTo(building.x, building.y);
+        ctx.quadraticCurveTo(midX, midY, building.x, building.y);
         ctx.stroke();
+        ctx.strokeStyle = hexToRgba(building.color, 0.2);
+        ctx.lineWidth = 1.3 / camera.zoom;
+        ctx.beginPath();
+        ctx.moveTo(hub.x, hub.y);
+        ctx.quadraticCurveTo(midX, midY, building.x, building.y);
+        ctx.stroke();
+        const flow = (globalTime * 0.00022 + i * 0.23) % 1;
+        const p1 = quadraticPoint(hub.x, hub.y, midX, midY, building.x, building.y, flow);
+        const p2 = quadraticPoint(hub.x, hub.y, midX, midY, building.x, building.y, (flow + 0.48) % 1);
+        drawSoftGlow(p1.x, p1.y, 14 / camera.zoom, hexToRgba(building.color, 0.42));
+        drawSoftGlow(p2.x, p2.y, 9 / camera.zoom, "rgba(255,255,255,0.18)");
       }
       ctx.restore();
+    }
+
+    function quadraticPoint(ax, ay, bx, by, cx, cy, t) {
+      const mt = 1 - t;
+      return {
+        x: mt * mt * ax + 2 * mt * t * bx + t * t * cx,
+        y: mt * mt * ay + 2 * mt * t * by + t * t * cy
+      };
     }
 
     function drawTerritoryFields() {
@@ -4912,6 +5072,13 @@
         if (!objectVisible(building.x, building.y, 520)) continue;
         const base = building.kind === "hub" ? 280 : building.kind === "outpost" ? 390 : building.kind === "gate" ? 520 : building.kind === "spire" ? 620 : 430;
         const pulse = Math.sin(globalTime * 0.0012 + building.phase) * 18;
+        const field = ctx.createRadialGradient(building.x, building.y, base * 0.12, building.x, building.y, base + pulse);
+        field.addColorStop(0, hexToRgba(building.color, 0.035));
+        field.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = field;
+        ctx.beginPath();
+        ctx.arc(building.x, building.y, base + pulse, 0, Math.PI * 2);
+        ctx.fill();
         ctx.strokeStyle = hexToRgba(building.color, building.kind === "outpost" ? 0.18 : 0.24);
         ctx.lineWidth = 1.5 / camera.zoom;
         ctx.setLineDash([10 / camera.zoom, 14 / camera.zoom]);
@@ -4919,6 +5086,10 @@
         ctx.arc(building.x, building.y, base + pulse, 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
+        ctx.strokeStyle = hexToRgba(building.color, 0.14);
+        ctx.beginPath();
+        ctx.arc(building.x, building.y, base * 0.62 + pulse * 0.4, globalTime * 0.0005, Math.PI * 1.2 + globalTime * 0.0005);
+        ctx.stroke();
       }
       ctx.restore();
     }
@@ -4957,19 +5128,65 @@
       ctx.restore();
     }
 
+    function drawBuildingBase(x, y, size, building) {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.strokeStyle = hexToRgba(building.color, 0.2);
+      ctx.lineWidth = 1.3 / camera.zoom;
+      ctx.beginPath();
+      ctx.ellipse(x, y + size * 0.52, size * 1.12, size * 0.28, building.rotation || 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.1)";
+      for (let i = 0; i < 6; i++) {
+        const angle = i / 6 * Math.PI * 2 + (building.rotation || 0);
+        const inner = size * 0.72;
+        const outer = size * 1.04;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(angle) * inner, y + Math.sin(angle) * inner * 0.5);
+        ctx.lineTo(x + Math.cos(angle) * outer, y + Math.sin(angle) * outer * 0.5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawBuildingLights(x, y, size, building) {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const count = building.kind === "spire" || building.kind === "gate" ? 8 : 5;
+      for (let i = 0; i < count; i++) {
+        const angle = i / count * Math.PI * 2 + globalTime * 0.00035 + building.phase;
+        const twinkle = 0.38 + Math.sin(globalTime * 0.004 + i + building.phase) * 0.22;
+        ctx.fillStyle = hexToRgba(building.color, clamp(twinkle, 0.12, 0.72));
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(angle) * size * 0.88, y + Math.sin(angle) * size * 0.62, Math.max(1.3, size * 0.035), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
     function drawModuleShell(building, size) {
       ctx.save();
       ctx.rotate(building.rotation || 0);
       const bodyGradient = ctx.createLinearGradient(-size, -size, size, size);
-      bodyGradient.addColorStop(0, "rgba(255,255,255,0.2)");
-      bodyGradient.addColorStop(0.42, "rgba(13,22,39,0.94)");
-      bodyGradient.addColorStop(1, "rgba(3,8,16,0.98)");
+      bodyGradient.addColorStop(0, "rgba(255,255,255,0.28)");
+      bodyGradient.addColorStop(0.28, "rgba(35,48,68,0.96)");
+      bodyGradient.addColorStop(0.68, "rgba(11,20,36,0.97)");
+      bodyGradient.addColorStop(1, "rgba(3,8,16,0.99)");
       ctx.fillStyle = bodyGradient;
       drawPolygon(0, 0, size, 8, Math.PI / 8);
       ctx.fill();
       ctx.strokeStyle = hexToRgba(building.color, 0.92);
       ctx.lineWidth = 2.2 / camera.zoom;
       ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.16)";
+      ctx.lineWidth = 1 / camera.zoom;
+      for (let i = 0; i < 4; i++) {
+        const angle = Math.PI / 4 + i * Math.PI / 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(angle) * size * 0.34, Math.sin(angle) * size * 0.34);
+        ctx.lineTo(Math.cos(angle) * size * 0.82, Math.sin(angle) * size * 0.82);
+        ctx.stroke();
+      }
       ctx.strokeStyle = "rgba(255,255,255,0.18)";
       ctx.lineWidth = 1 / camera.zoom;
       drawPolygon(0, 0, size * 0.72, 8, Math.PI / 8);
@@ -4985,6 +5202,7 @@
         const size = building.size * pulse;
         drawSoftGlow(building.x, building.y, size * 3.4, hexToRgba(building.color, 0.38));
         ctx.translate(building.x, building.y);
+        drawBuildingBase(0, 0, size, building);
         drawModuleShell(building, size);
         if (building.kind === "hub") drawCommandHub(0, 0, size, building.color);
         if (building.kind === "solar") drawSolarPanels(0, 0, size, building.color);
@@ -5003,6 +5221,7 @@
         if (building.kind === "gate") drawWormholeGate(0, 0, size, building.color);
         if (building.kind === "spire") drawCelestialSpire(0, 0, size, building.color);
         if (building.kind === "outpost") drawOutpost(0, 0, size, building.color);
+        drawBuildingLights(0, 0, size, building);
         ctx.restore();
       }
     }
@@ -5029,10 +5248,14 @@
       ctx.save();
       ctx.strokeStyle = color;
       ctx.lineWidth = 1.4 / camera.zoom;
-      ctx.fillStyle = "rgba(30, 75, 105, 0.78)";
       for (const side of [-1, 1]) {
         const panelX = x + side * size * 0.76;
         const width = side * size * 0.74;
+        const panelGradient = ctx.createLinearGradient(panelX, y - size * 0.42, panelX + width, y + size * 0.42);
+        panelGradient.addColorStop(0, "rgba(30, 75, 105, 0.62)");
+        panelGradient.addColorStop(0.5, "rgba(111, 211, 255, 0.28)");
+        panelGradient.addColorStop(1, "rgba(8, 22, 38, 0.82)");
+        ctx.fillStyle = panelGradient;
         ctx.fillRect(panelX, y - size * 0.42, width, size * 0.84);
         ctx.strokeRect(panelX, y - size * 0.42, width, size * 0.84);
         for (let i = 1; i < 3; i++) {
@@ -5074,6 +5297,14 @@
       ctx.beginPath();
       ctx.arc(x, y, size * 0.7, Math.PI, 0);
       ctx.stroke();
+      ctx.strokeStyle = hexToRgba(color, 0.5);
+      for (let i = 0; i < 4; i++) {
+        const angle = -0.9 + i * 0.6;
+        ctx.beginPath();
+        ctx.moveTo(x, y + size * 0.18);
+        ctx.quadraticCurveTo(x + Math.cos(angle) * size * 0.35, y + Math.sin(angle) * size * 0.25, x + Math.cos(angle) * size * 0.58, y + Math.sin(angle) * size * 0.52);
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -5092,6 +5323,12 @@
       ctx.arc(x, y - size * 1.22, 3, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
+      ctx.strokeStyle = hexToRgba(color, 0.28);
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.arc(x, y - size * 0.82, size * (0.44 + i * 0.18), -0.45, Math.PI + 0.45);
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -5126,6 +5363,14 @@
       ctx.moveTo(x - size * 0.78, y + size * 0.45);
       ctx.lineTo(x + size * 0.78, y + size * 0.45);
       ctx.stroke();
+      ctx.globalCompositeOperation = "screen";
+      for (let i = 0; i < 5; i++) {
+        const phase = (globalTime * 0.0008 + i / 5) % 1;
+        ctx.fillStyle = hexToRgba(color, 0.42 * (1 - Math.abs(phase - 0.5)));
+        ctx.beginPath();
+        ctx.arc(x - size * 0.62 + phase * size * 1.24, y + size * 0.45, size * 0.045, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.restore();
     }
 
@@ -5161,6 +5406,11 @@
       ctx.fillStyle = hexToRgba(color, 0.28);
       roundRect(ctx, x - size * 0.9, y - size * 0.14, size * 1.8, size * 0.28, 4);
       ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      for (let i = -2; i <= 2; i++) {
+        roundRect(ctx, x + i * size * 0.28 - size * 0.045, y - size * 0.55, size * 0.09, size * 0.24, 3);
+        ctx.fill();
+      }
       ctx.restore();
     }
 
@@ -5177,6 +5427,7 @@
       ctx.beginPath();
       ctx.arc(x, y, size * 0.22, 0, Math.PI * 2);
       ctx.fill();
+      drawSoftGlow(x, y, size * 0.72, hexToRgba(color, 0.22));
       ctx.restore();
     }
 
@@ -5304,6 +5555,10 @@
       ctx.lineTo(x, y - size * 1.15);
       ctx.lineTo(x + size * 0.55, y + size * 0.6);
       ctx.stroke();
+      ctx.fillStyle = hexToRgba(color, 0.42);
+      ctx.beginPath();
+      ctx.arc(x, y - size * 0.1, size * 0.12, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
 
@@ -5312,16 +5567,35 @@
         if (!objectVisible(site.x, site.y, 80)) continue;
         const progress = clamp(site.progress / site.needed, 0, 1);
         ctx.save();
+        drawSoftGlow(site.x, site.y, 78, hexToRgba(site.color, 0.16));
+        ctx.fillStyle = "rgba(7, 13, 24, 0.48)";
+        ctx.beginPath();
+        ctx.ellipse(site.x, site.y + 26, 48, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
         ctx.strokeStyle = "rgba(255,255,255,0.34)";
         ctx.lineWidth = 1.2 / camera.zoom;
         ctx.setLineDash([6, 6]);
         roundRect(ctx, site.x - 34, site.y - 34, 68, 68, 8);
         ctx.stroke();
         ctx.setLineDash([]);
+        ctx.strokeStyle = hexToRgba(site.color, 0.28);
+        ctx.lineWidth = 1 / camera.zoom;
+        for (let i = 0; i < 4; i++) {
+          const angle = i * Math.PI / 2 + Math.PI / 4;
+          ctx.beginPath();
+          ctx.moveTo(site.x + Math.cos(angle) * 18, site.y + Math.sin(angle) * 18);
+          ctx.lineTo(site.x + Math.cos(angle) * 42, site.y + Math.sin(angle) * 42);
+          ctx.stroke();
+        }
         ctx.strokeStyle = site.color;
         ctx.lineWidth = 4 / camera.zoom;
         ctx.beginPath();
         ctx.arc(site.x, site.y, 44, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,0.32)";
+        ctx.lineWidth = 1.2 / camera.zoom;
+        ctx.beginPath();
+        ctx.arc(site.x, site.y, 30, globalTime * 0.0012, globalTime * 0.0012 + Math.PI * 1.2);
         ctx.stroke();
         ctx.fillStyle = "rgba(255,255,255,0.82)";
         ctx.font = `bold ${12 / camera.zoom}px Arial`;
@@ -5361,6 +5635,22 @@
         ctx.fill();
         ctx.stroke();
 
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.strokeStyle = hexToRgba(meta.color, 0.3);
+        ctx.lineWidth = 1 / camera.zoom;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius * 1.36, globalTime * 0.0007 + node.phase, globalTime * 0.0007 + node.phase + Math.PI * 1.15);
+        ctx.stroke();
+        for (let i = 0; i < 4; i++) {
+          const angle = node.phase + i * Math.PI * 0.5 + globalTime * 0.00025;
+          ctx.fillStyle = hexToRgba(meta.color, 0.24);
+          ctx.beginPath();
+          ctx.arc(node.x + Math.cos(angle) * radius * 0.62, node.y + Math.sin(angle) * radius * 0.46, Math.max(1.1, radius * 0.045), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+
         if (node.type === "food") {
           ctx.strokeStyle = "rgba(255,255,255,0.24)";
           ctx.beginPath();
@@ -5393,6 +5683,13 @@
         ctx.beginPath();
         ctx.ellipse(beacon.x, beacon.y, radius * 0.62, radius * 1.08, -globalTime * 0.002, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.strokeStyle = "rgba(255, 245, 255, 0.2)";
+        for (let i = 0; i < 3; i++) {
+          const angle = globalTime * 0.0015 + i * Math.PI * 2 / 3 + beacon.phase;
+          ctx.beginPath();
+          ctx.arc(beacon.x + Math.cos(angle) * radius * 0.74, beacon.y + Math.sin(angle) * radius * 0.5, radius * 0.08, 0, Math.PI * 2);
+          ctx.stroke();
+        }
         ctx.strokeStyle = "rgba(255,255,255,0.38)";
         ctx.beginPath();
         ctx.moveTo(beacon.x - radius * 0.5, beacon.y);
@@ -5413,13 +5710,15 @@
         if (!objectVisible(worker.x, worker.y, 90)) continue;
         if (!AUTONOMY_STATES.has(worker.state)) {
           ctx.save();
-          ctx.strokeStyle = worker.manual ? "rgba(111, 211, 255, 0.24)" : "rgba(115, 255, 179, 0.13)";
-          ctx.lineWidth = 1.2 / camera.zoom;
+          ctx.strokeStyle = worker.manual ? "rgba(111, 211, 255, 0.34)" : "rgba(115, 255, 179, 0.17)";
+          ctx.lineWidth = 1.3 / camera.zoom;
           ctx.setLineDash(worker.manual ? [] : [8, 10]);
           ctx.beginPath();
           ctx.moveTo(worker.x, worker.y);
           ctx.lineTo(worker.tx, worker.ty);
           ctx.stroke();
+          ctx.setLineDash([]);
+          drawSoftGlow(worker.tx, worker.ty, 12 / camera.zoom, worker.manual ? "rgba(111,211,255,0.24)" : "rgba(115,255,179,0.16)");
           ctx.restore();
         }
 
@@ -5427,51 +5726,83 @@
         const movementAngle = Math.atan2(worker.ty - worker.y, worker.tx - worker.x);
         if (Number.isFinite(movementAngle)) worker.facing = lerpAngle(worker.facing || movementAngle, movementAngle, 0.16);
         const bob = Math.sin(worker.bob || 0) * 1.6;
+        const stride = Math.sin((worker.bob || 0) * 1.35);
+        const moving = distanceXY(worker.x, worker.y, worker.tx, worker.ty) > 8;
         ctx.translate(worker.x, worker.y);
         ctx.rotate(worker.facing || 0);
 
-        drawSoftGlow(0, 0, 22, hexToRgba(worker.color, 0.28));
+        drawSoftGlow(0, 0, 26, hexToRgba(worker.color, 0.3));
 
         ctx.fillStyle = "rgba(3, 8, 14, 0.7)";
         ctx.beginPath();
-        ctx.ellipse(-1, 11, 13, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(-1, 13, 14, 4.5, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = worker.color;
+        const backpack = ctx.createLinearGradient(-12, -2, -6, 16);
+        backpack.addColorStop(0, "rgba(220, 245, 255, 0.34)");
+        backpack.addColorStop(1, "rgba(7, 13, 24, 0.92)");
+        ctx.fillStyle = backpack;
+        roundRect(ctx, -12, 1 + bob * 0.15, 5, 14, 3);
+        ctx.fill();
+
+        const suit = ctx.createLinearGradient(-8, -4, 8, 17);
+        suit.addColorStop(0, "rgba(255,255,255,0.58)");
+        suit.addColorStop(0.24, hexToRgba(worker.color, 0.96));
+        suit.addColorStop(1, "rgba(10, 22, 34, 0.92)");
+        ctx.fillStyle = suit;
         roundRect(ctx, -7, -2 + bob * 0.2, 14, 18, 6);
         ctx.fill();
         ctx.strokeStyle = "rgba(255,255,255,0.48)";
         ctx.lineWidth = 1.1 / camera.zoom;
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(0,0,0,0.22)";
+        ctx.beginPath();
+        ctx.moveTo(0, 0 + bob * 0.2);
+        ctx.lineTo(0, 15 + bob * 0.2);
         ctx.stroke();
 
         ctx.fillStyle = "rgba(233, 252, 255, 0.95)";
         ctx.beginPath();
         ctx.arc(0, -8 + bob, 7, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = hexToRgba(worker.color, 0.55);
+        ctx.lineWidth = 1.2 / camera.zoom;
+        ctx.stroke();
         const visor = ctx.createLinearGradient(-4, -12 + bob, 6, -5 + bob);
         visor.addColorStop(0, "rgba(16, 40, 60, 0.95)");
+        visor.addColorStop(0.45, "rgba(35, 94, 132, 0.96)");
         visor.addColorStop(1, "rgba(111, 211, 255, 0.85)");
         ctx.fillStyle = visor;
         ctx.beginPath();
         ctx.ellipse(2, -8 + bob, 4.8, 3.2, 0.16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.66)";
+        ctx.beginPath();
+        ctx.ellipse(0, -10 + bob, 1.4, 0.8, -0.35, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.strokeStyle = hexToRgba(worker.color, 0.72);
         ctx.lineWidth = 2 / camera.zoom;
         ctx.beginPath();
         ctx.moveTo(-8, 4);
-        ctx.lineTo(-14, 8 + Math.sin(worker.bob) * 2);
+        ctx.lineTo(-14, 8 + stride * 2);
         ctx.moveTo(8, 4);
-        ctx.lineTo(14, 8 - Math.sin(worker.bob) * 2);
+        ctx.lineTo(14, 8 - stride * 2);
         ctx.stroke();
 
-        ctx.fillStyle = "rgba(255,255,255,0.72)";
+        ctx.strokeStyle = "rgba(235,252,255,0.78)";
+        ctx.lineWidth = 2.2 / camera.zoom;
         ctx.beginPath();
-        ctx.moveTo(-9, 15);
-        ctx.lineTo(-5, 21 + Math.max(0, bob));
-        ctx.moveTo(7, 15);
-        ctx.lineTo(11, 21 - Math.min(0, bob));
+        ctx.moveTo(-6, 15);
+        ctx.lineTo(-10, 22 + Math.max(0, stride) * 2);
+        ctx.moveTo(6, 15);
+        ctx.lineTo(10, 22 - Math.min(0, stride) * 2);
         ctx.stroke();
+        ctx.fillStyle = "rgba(8, 14, 24, 0.9)";
+        roundRect(ctx, -13, 21 + Math.max(0, stride) * 2, 7, 3, 2);
+        ctx.fill();
+        roundRect(ctx, 7, 21 - Math.min(0, stride) * 2, 7, 3, 2);
+        ctx.fill();
 
         if (!AUTONOMY_STATES.has(worker.state)) {
           ctx.fillStyle = hexToRgba(worker.color, 0.72);
@@ -5483,11 +5814,32 @@
           ctx.fill();
         }
 
+        if (moving) {
+          ctx.save();
+          ctx.globalCompositeOperation = "screen";
+          const flame = ctx.createLinearGradient(-15, 4, -26, 4);
+          flame.addColorStop(0, hexToRgba(worker.color, 0.46));
+          flame.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = flame;
+          ctx.beginPath();
+          ctx.moveTo(-12, 5);
+          ctx.lineTo(-25 - Math.max(0, stride) * 3, 1);
+          ctx.lineTo(-25 - Math.max(0, -stride) * 3, 9);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+
         if (worker.carry) {
-          ctx.fillStyle = RESOURCE_META[worker.carry.type].color;
+          const cargoColor = RESOURCE_META[worker.carry.type].color;
+          drawSoftGlow(-18, -7, 14, hexToRgba(cargoColor, 0.28));
+          ctx.fillStyle = cargoColor;
           ctx.beginPath();
           ctx.arc(-18, -7, 5, 0, Math.PI * 2);
           ctx.fill();
+          ctx.strokeStyle = "rgba(255,255,255,0.48)";
+          ctx.lineWidth = 0.8 / camera.zoom;
+          ctx.stroke();
         }
         ctx.restore();
 
@@ -5500,6 +5852,7 @@
       const screenAlpha = worker.state === "idle" ? 0.35 : 0.66;
       ctx.save();
       ctx.globalAlpha = screenAlpha;
+      drawSoftGlow(worker.x + 18, worker.y - 22 - Math.sin(worker.bob || 0) * 2, 18 / camera.zoom, hexToRgba(worker.color, 0.12));
       ctx.fillStyle = "rgba(255,255,255,0.88)";
       ctx.strokeStyle = hexToRgba(worker.color, 0.75);
       ctx.lineWidth = 1 / camera.zoom;
@@ -5527,6 +5880,11 @@
         ctx.arc(x, y, 3, 0, Math.PI * 2);
         ctx.fill();
       }
+      ctx.fillStyle = "rgba(255,255,255,0.62)";
+      ctx.beginPath();
+      ctx.arc(worker.x + 7, worker.y - 11, 2.2 / camera.zoom, 0, Math.PI * 2);
+      ctx.arc(worker.x + 12, worker.y - 16, 1.4 / camera.zoom, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
 
@@ -5573,23 +5931,41 @@
     }
 
     function drawParticles() {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
       for (const p of particles) {
         const alpha = 1 - p.age / p.life;
+        if (p.glow) drawSoftGlow(p.x, p.y, p.size * 4.6 * alpha, `hsla(${p.hue}, 100%, 70%, ${alpha * 0.18})`);
+        if (p.streak) {
+          ctx.strokeStyle = `hsla(${p.hue}, 100%, 76%, ${alpha * 0.65})`;
+          ctx.lineWidth = Math.max(0.7 / camera.zoom, p.size * 0.34 * alpha);
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x - p.vx * 4.8, p.y - p.vy * 4.8);
+          ctx.stroke();
+        }
         ctx.fillStyle = `hsla(${p.hue}, 100%, 70%, ${alpha})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
         ctx.fill();
       }
+      ctx.restore();
     }
 
     function drawSelection() {
       if (!selectedObject) return;
       ctx.save();
+      const pulse = Math.sin(globalTime * 0.006) * 3;
       ctx.strokeStyle = "rgba(255,255,255,0.82)";
       ctx.lineWidth = 1.5 / camera.zoom;
       ctx.setLineDash([5 / camera.zoom, 5 / camera.zoom]);
       ctx.beginPath();
-      ctx.arc(selectedObject.x, selectedObject.y, (selectedObject.size || 24) + 18, 0, Math.PI * 2);
+      ctx.arc(selectedObject.x, selectedObject.y, (selectedObject.size || 24) + 18 + pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.strokeStyle = "rgba(111,211,255,0.34)";
+      ctx.beginPath();
+      ctx.arc(selectedObject.x, selectedObject.y, (selectedObject.size || 24) + 8, globalTime * 0.002, globalTime * 0.002 + Math.PI * 1.2);
       ctx.stroke();
       ctx.restore();
     }
