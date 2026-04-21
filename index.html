@@ -1432,6 +1432,11 @@
     const AUTONOMY_STATES = new Set(["idle", "roam", "socialize", "maintain", "rest"]);
     const WORKER_COLORS = ["#6fd3ff", "#73ffb3", "#ffe34d", "#c89bff", "#ff91ad", "#a2ffed", "#ffc66b"];
     const WORKER_NAMES = ["Nova", "Pip", "Sol", "Vega", "Mira", "Kip", "Rook", "Juno", "Lyra", "Orbit", "Patch", "Io"];
+    const MULTIPLAYER_SNAPSHOT_INTERVAL = 0.12;
+    const MULTIPLAYER_PRESENCE_INTERVAL = 0.12;
+    const MULTIPLAYER_CHUNK_SIZE = 6000;
+    const CLIENT_HUD_INTERVAL = 0.12;
+    const CLIENT_SMOOTHING = 0.34;
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const lerp = (a, b, t) => a + (b - a) * t;
@@ -1467,6 +1472,7 @@
     let selectedObject = null;
     let screenShake = 0;
     let flashTime = 0;
+    let hudRefreshClock = 0;
 
     const camera = {
       x: 0,
@@ -1573,6 +1579,7 @@
       selfId: "",
       players: [],
       presences: {},
+      incomingChunks: new Map(),
       profile: null,
       snapshotClock: 0,
       presenceClock: 0,
@@ -2109,6 +2116,13 @@
       updateCommandLinkPanel();
       logLine.textContent = game.log;
       updateButtons();
+    }
+
+    function updateHudThrottled(deltaSeconds, force = false) {
+      hudRefreshClock += deltaSeconds;
+      if (!force && hudRefreshClock < CLIENT_HUD_INTERVAL) return;
+      hudRefreshClock = 0;
+      updateHud();
     }
 
     function resourceCapacity() {
@@ -2724,6 +2738,63 @@
       };
     }
 
+    function cloneSnapshotItem(item) {
+      return { ...item, carry: item?.carry ? { ...item.carry } : item?.carry };
+    }
+
+    function mergeSnapshotCollection(currentItems, incomingItems, options = {}) {
+      const existingById = new Map((currentItems || []).map((item) => [item.id, item]));
+      const nextItems = [];
+
+      for (const incoming of incomingItems || []) {
+        const existing = existingById.get(incoming.id);
+        const next = cloneSnapshotItem(incoming);
+
+        if (!existing) {
+          if (options.smoothPosition) {
+            next.serverX = Number(next.x) || 0;
+            next.serverY = Number(next.y) || 0;
+            next.renderLag = 0;
+          }
+          nextItems.push(next);
+          continue;
+        }
+
+        const displayX = Number(existing.x);
+        const displayY = Number(existing.y);
+        Object.assign(existing, next);
+
+        if (options.smoothPosition) {
+          const serverX = Number(next.x) || 0;
+          const serverY = Number(next.y) || 0;
+          const lastServerX = Number(existing.serverX);
+          const lastServerY = Number(existing.serverY);
+          const displayedX = Number.isFinite(displayX) ? displayX : serverX;
+          const displayedY = Number.isFinite(displayY) ? displayY : serverY;
+          const serverMoved = Number.isFinite(lastServerX) && Number.isFinite(lastServerY)
+            ? distanceXY(serverX, serverY, lastServerX, lastServerY)
+            : 0;
+          const displayGap = distanceXY(displayedX, displayedY, serverX, serverY);
+
+          existing.serverX = serverX;
+          existing.serverY = serverY;
+          existing.renderLag = 0;
+
+          if (displayGap > 720 || serverMoved > 520) {
+            existing.x = serverX;
+            existing.y = serverY;
+          } else {
+            existing.x = displayedX;
+            existing.y = displayedY;
+          }
+        }
+
+        nextItems.push(existing);
+      }
+
+      return nextItems;
+    }
+
     function applyGameSnapshot(snapshot) {
       if (!snapshot) return;
       game.running = Boolean(snapshot.running);
@@ -2748,11 +2819,11 @@
       game.completedMilestones = new Set(snapshot.completedMilestones || []);
       game.stats = { beaconsScouted: 0, actionsUsed: 0, ...(snapshot.stats || {}) };
       game.buildPermitsUsed = { ...(snapshot.buildPermitsUsed || {}) };
-      game.buildings = (snapshot.buildings || []).map((item) => ({ ...item }));
-      game.sites = (snapshot.sites || []).map((item) => ({ ...item }));
-      game.workers = (snapshot.workers || []).map((item) => ({ ...item, carry: item.carry ? { ...item.carry } : null }));
-      game.nodes = (snapshot.nodes || []).map((item) => ({ ...item }));
-      game.beacons = (snapshot.beacons || []).map((item) => ({ ...item }));
+      game.buildings = mergeSnapshotCollection(game.buildings, snapshot.buildings);
+      game.sites = mergeSnapshotCollection(game.sites, snapshot.sites);
+      game.workers = mergeSnapshotCollection(game.workers, snapshot.workers, { smoothPosition: isMultiplayerClient() });
+      game.nodes = mergeSnapshotCollection(game.nodes, snapshot.nodes);
+      game.beacons = mergeSnapshotCollection(game.beacons, snapshot.beacons);
       game.upgrades = new Set(snapshot.upgrades || []);
       game.log = snapshot.log || game.log;
       syncSelection();
@@ -2772,13 +2843,42 @@
 
     function sendConnection(connection, type, payload = {}) {
       if (!connection || !connection.open) return;
-      connection.send({ type, ...payload });
+      const packet = { type, ...payload };
+      if (type !== "state-chunk") {
+        const serialized = JSON.stringify(packet);
+        if (serialized.length > MULTIPLAYER_CHUNK_SIZE) {
+          sendChunkedPacket(connection, type, serialized);
+          return;
+        }
+      }
+      connection.send(packet);
+    }
+
+    function sendChunkedPacket(connection, originalType, serialized) {
+      const chunkId = cryptoRandomId();
+      const total = Math.ceil(serialized.length / MULTIPLAYER_CHUNK_SIZE);
+      for (let index = 0; index < total; index++) {
+        connection.send({
+          type: "state-chunk",
+          originalType,
+          chunkId,
+          index,
+          total,
+          data: serialized.slice(index * MULTIPLAYER_CHUNK_SIZE, (index + 1) * MULTIPLAYER_CHUNK_SIZE)
+        });
+      }
     }
 
     function broadcastToClients(type, payload = {}) {
       multiplayer.connections.forEach((connection) => {
         sendConnection(connection, type, payload);
       });
+    }
+
+    function broadcastSnapshotNow() {
+      if (!isMultiplayerHost() || !multiplayer.started) return;
+      multiplayer.snapshotClock = 0;
+      broadcastToClients("snapshot", snapshotPacket());
     }
 
     function removePlayer(playerId) {
@@ -2818,6 +2918,7 @@
       multiplayer.selfId = "";
       multiplayer.players = [];
       multiplayer.presences = {};
+      multiplayer.incomingChunks.clear();
       multiplayer.snapshotClock = 0;
       multiplayer.presenceClock = 0;
       multiplayer.latestSnapshotAt = 0;
@@ -3030,7 +3131,7 @@
         multiplayer.players = [];
         multiplayer.presences = {};
 
-        const connection = peer.connect(roomCode, { reliable: false, serialization: "json" });
+        const connection = peer.connect(roomCode, { reliable: true, serialization: "json" });
         registerConnection(connection, false);
         multiplayer.hostConnection = connection;
         setMenuView(MENU_VIEW.lobby);
@@ -3162,7 +3263,53 @@
       return true;
     }
 
+    function pruneIncomingChunks() {
+      const now = Date.now();
+      multiplayer.incomingChunks.forEach((entry, key) => {
+        if (now - entry.createdAt > 12000) multiplayer.incomingChunks.delete(key);
+      });
+    }
+
+    function handleStateChunk(message, connection) {
+      const total = clamp(Number(message.total) || 0, 1, 80);
+      const index = Number(message.index);
+      const chunkId = String(message.chunkId || "");
+      if (!chunkId || !Number.isInteger(index) || index < 0 || index >= total || typeof message.data !== "string") return;
+
+      pruneIncomingChunks();
+      let entry = multiplayer.incomingChunks.get(chunkId);
+      if (!entry) {
+        entry = {
+          total,
+          chunks: Array(total).fill(""),
+          received: 0,
+          createdAt: Date.now()
+        };
+        multiplayer.incomingChunks.set(chunkId, entry);
+      }
+
+      if (!entry.chunks[index]) {
+        entry.chunks[index] = message.data;
+        entry.received += 1;
+      }
+
+      if (entry.received < entry.total) return;
+      multiplayer.incomingChunks.delete(chunkId);
+
+      try {
+        const packet = JSON.parse(entry.chunks.join(""));
+        if (packet && packet.type && packet.type !== "state-chunk") handleNetworkMessage(packet, connection);
+      } catch {
+        setLog("Command link dropped a damaged state packet.");
+      }
+    }
+
     function handleNetworkMessage(message, connection) {
+      if (message.type === "state-chunk") {
+        handleStateChunk(message, connection);
+        return;
+      }
+
       if (message.type === "join-request") {
         handleJoinRequest(connection, message);
         return;
@@ -3198,6 +3345,7 @@
       if (message.type === "action" && multiplayer.isHost) {
         if (!multiplayer.players.some((player) => player.id === connection.peer)) return;
         applyNetworkAction(connection.peer, message.action);
+        broadcastSnapshotNow();
         return;
       }
 
@@ -3248,12 +3396,12 @@
         multiplayer.presences[multiplayer.selfId] = buildPresence();
         if (multiplayer.started) {
           multiplayer.snapshotClock += deltaSeconds;
-          if (multiplayer.snapshotClock >= 0.18) {
+          if (multiplayer.snapshotClock >= MULTIPLAYER_SNAPSHOT_INTERVAL) {
             multiplayer.snapshotClock = 0;
             broadcastToClients("snapshot", snapshotPacket());
           }
         }
-      } else if (game.running && multiplayer.hostConnection && multiplayer.presenceClock >= 0.14) {
+      } else if (game.running && multiplayer.hostConnection && multiplayer.presenceClock >= MULTIPLAYER_PRESENCE_INTERVAL) {
         multiplayer.presenceClock = 0;
         multiplayer.presences[multiplayer.selfId] = buildPresence();
         sendConnection(multiplayer.hostConnection, "presence", { playerId: multiplayer.selfId, presence: multiplayer.presences[multiplayer.selfId] });
@@ -4299,18 +4447,47 @@
       }
     }
 
+    function updateClientSmoothing(deltaSeconds) {
+      if (!isMultiplayerClient()) return;
+      const dt = clamp(deltaSeconds * 60, 0.2, 2.5);
+      const factor = 1 - Math.pow(1 - CLIENT_SMOOTHING, dt);
+
+      for (const worker of game.workers) {
+        if (!Number.isFinite(worker.serverX) || !Number.isFinite(worker.serverY)) continue;
+        const dx = worker.serverX - worker.x;
+        const dy = worker.serverY - worker.y;
+        const gap = Math.hypot(dx, dy);
+
+        if (gap > 680) {
+          worker.x = worker.serverX;
+          worker.y = worker.serverY;
+        } else if (gap > 0.05) {
+          worker.x += dx * factor;
+          worker.y += dy * factor;
+        }
+
+        worker.renderLag = (worker.renderLag || 0) + deltaSeconds;
+        worker.bob = (worker.bob || 0) + deltaSeconds * (5.2 + (worker.personality || 1));
+        const facingAngle = gap > 0.35
+          ? Math.atan2(dy, dx)
+          : Math.atan2((worker.ty || worker.y) - worker.y, (worker.tx || worker.x) - worker.x);
+        if (Number.isFinite(facingAngle)) worker.facing = lerpAngle(worker.facing || facingAngle, facingAngle, 0.12 * dt);
+      }
+    }
+
     function update(deltaSeconds) {
       const dt = deltaSeconds * 60;
       updateVisualEffects(dt, deltaSeconds);
       updateMultiplayer(deltaSeconds);
+      updateClientSmoothing(deltaSeconds);
 
       if (!game.running || game.paused) {
-        updateHud();
+        updateHudThrottled(deltaSeconds);
         return;
       }
 
       if (isMultiplayerClient()) {
-        updateHud();
+        updateHudThrottled(deltaSeconds);
         return;
       }
 
@@ -4321,7 +4498,7 @@
       game.nodes = game.nodes.filter((node) => node.amount > 0);
       syncSelection();
       checkMilestones();
-      updateHud();
+      updateHudThrottled(deltaSeconds);
     }
 
     function checkMilestones() {
