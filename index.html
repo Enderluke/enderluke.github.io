@@ -208,6 +208,273 @@
       line-height: 1.35;
     }
 
+    .menu-actions,
+    .menu-section {
+      margin-top: 14px;
+    }
+
+    .menu-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .menu-inline-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .menu-field,
+    .menu-toggle-card {
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(255, 255, 255, 0.05);
+      text-align: left;
+    }
+
+    .menu-field span,
+    .menu-toggle-card strong,
+    .menu-section-title {
+      display: block;
+      margin-bottom: 8px;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .menu-input,
+    .menu-select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .menu-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .menu-input:focus,
+    .menu-select:focus {
+      border-color: rgba(111, 211, 255, 0.8);
+      box-shadow: 0 0 0 4px rgba(111, 211, 255, 0.16);
+    }
+
+    .menu-toggle-card label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .menu-toggle-card input {
+      width: 18px;
+      height: 18px;
+      accent-color: #73ffb3;
+    }
+
+    .menu-subtle {
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.64);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .menu-nav {
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px 12px;
+      color: rgba(255, 255, 255, 0.86);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .menu-nav:hover {
+      filter: brightness(1.03);
+    }
+
+    .profile-builder {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .profile-builder-grid {
+      display: grid;
+      grid-template-columns: 104px 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .profile-preview-wrap {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+    }
+
+    #profilePreview {
+      width: 96px;
+      height: 96px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background:
+        radial-gradient(circle at 50% 20%, rgba(111, 211, 255, 0.16), transparent 46%),
+        linear-gradient(180deg, rgba(10, 20, 36, 0.95), rgba(7, 12, 24, 0.98));
+    }
+
+    .profile-tag {
+      color: rgba(255, 255, 255, 0.64);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .profile-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .profile-btn {
+      min-height: 48px;
+      padding: 10px 12px;
+      color: var(--text);
+      background: rgba(111, 211, 255, 0.11);
+      border: 1px solid rgba(111, 211, 255, 0.22);
+      text-align: left;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .lobby-banner,
+    .lobby-players {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.055);
+      text-align: left;
+    }
+
+    .lobby-code-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .lobby-code {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 124px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      background: rgba(255, 227, 77, 0.12);
+      border: 1px solid rgba(255, 227, 77, 0.28);
+      color: #fff3ad;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .copy-btn,
+    .start-btn,
+    .leave-btn {
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+
+    .copy-btn {
+      color: var(--text);
+      background: rgba(111, 211, 255, 0.14);
+      border: 1px solid rgba(111, 211, 255, 0.26);
+    }
+
+    .start-btn {
+      color: #09130e;
+      background: linear-gradient(180deg, #a8ffc4, var(--good));
+      box-shadow: 0 12px 24px rgba(115, 255, 179, 0.18);
+    }
+
+    .leave-btn {
+      color: white;
+      background: rgba(255, 91, 110, 0.18);
+      border: 1px solid rgba(255, 91, 110, 0.28);
+    }
+
+    .lobby-player-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .player-card {
+      display: grid;
+      grid-template-columns: 58px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .player-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(9, 14, 28, 0.82);
+    }
+
+    .player-avatar img {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .player-meta {
+      min-width: 0;
+    }
+
+    .player-meta strong,
+    .player-meta span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .player-meta span {
+      margin-top: 4px;
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 12px;
+    }
+
+    .player-pill {
+      padding: 6px 9px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(115, 255, 179, 0.2);
+      background: rgba(115, 255, 179, 0.1);
+      color: #bfffd9;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
     #hud {
       top: 16px;
       right: 16px;
@@ -316,7 +583,8 @@
     }
 
     #inspector,
-    #milestones {
+    #milestones,
+    #commandLink {
       margin-top: 10px;
       padding-top: 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -326,7 +594,8 @@
     }
 
     #inspector strong,
-    #milestones strong {
+    #milestones strong,
+    #commandLink strong {
       color: white;
     }
 
@@ -451,6 +720,12 @@
         width: 100%;
       }
 
+      .menu-inline-grid,
+      .profile-controls,
+      .profile-builder-grid {
+        grid-template-columns: 1fr;
+      }
+
       #hud {
         top: 10px;
         right: 10px;
@@ -491,7 +766,7 @@
   <div id="menu">
     <div class="menu-card">
       <h1>Starstead Colony</h1>
-      <p class="subtitle">
+      <p id="menuSubtitle" class="subtitle">
         Build a glowing frontier city in deep space. Dispatch little spacehands, gather resources,
         scout beacons, construct districts, and keep the colony alive as the sector expands.
       </p>
@@ -505,18 +780,103 @@
           placeholder="Commander name"
           aria-label="Commander name"
         />
-        <button id="playBtn" type="button">Begin</button>
+        <button id="playBtn" type="button">Begin Solo</button>
       </div>
 
+      <div id="mainMenuActions" class="menu-actions menu-stack">
+        <button id="multiplayerBtn" class="secondary-btn" type="button">Multiplayer</button>
+      </div>
+
+      <div id="multiplayerModePanel" class="menu-section menu-stack" hidden>
+        <button id="openCreateLobbyBtn" class="secondary-btn" type="button">Create Lobby</button>
+        <button id="openJoinLobbyBtn" class="secondary-btn" type="button">Join Lobby</button>
+      </div>
+
+      <div id="multiplayerSetupPanel" class="menu-section" hidden>
+        <div id="joinCodeRow" class="menu-field" hidden>
+          <span>Lobby Code</span>
+          <input
+            id="joinLobbyCode"
+            class="menu-input"
+            type="text"
+            maxlength="10"
+            placeholder="Enter room code"
+            aria-label="Lobby code"
+          />
+        </div>
+
+        <div id="hostSettingsPanel" class="menu-inline-grid" hidden>
+          <label class="menu-field">
+            <span>Max Players</span>
+            <select id="maxPlayersSelect" class="menu-select" aria-label="Max players">
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4" selected>4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+            </select>
+          </label>
+          <div class="menu-toggle-card">
+            <strong>Late Join</strong>
+            <label>
+              <span>Allow players to connect after launch</span>
+              <input id="lateJoinToggle" type="checkbox" />
+            </label>
+          </div>
+        </div>
+
+        <div id="profileBuilder" class="profile-builder">
+          <div class="menu-section-title">Commander Profile</div>
+          <div class="profile-builder-grid">
+            <div class="profile-preview-wrap">
+              <canvas id="profilePreview" width="96" height="96" aria-label="Commander profile preview"></canvas>
+              <div class="profile-tag" id="profileTag">Signal profile ready</div>
+            </div>
+            <div class="profile-controls">
+              <button class="profile-btn" type="button" data-profile-field="shell">Shell</button>
+              <button class="profile-btn" type="button" data-profile-field="visor">Visor</button>
+              <button class="profile-btn" type="button" data-profile-field="badge">Badge</button>
+              <button class="profile-btn" type="button" data-profile-field="antenna">Antenna</button>
+            </div>
+          </div>
+          <div class="menu-subtle">Each commander gets a custom head marker in the lobby and during play.</div>
+        </div>
+
+        <button id="multiplayerConfirmBtn" class="secondary-btn" type="button">Create Lobby</button>
+      </div>
+
+      <div id="lobbyPanel" class="menu-section" hidden>
+        <div class="lobby-banner">
+          <div class="menu-section-title">Room Link</div>
+          <div class="lobby-code-row">
+            <div id="lobbyCodeValue" class="lobby-code">------</div>
+            <button id="copyLobbyCodeBtn" class="copy-btn" type="button">Copy Code</button>
+          </div>
+          <div id="lobbySettingsSummary" class="menu-subtle">Stand by while the command link comes online.</div>
+        </div>
+
+        <div class="lobby-players">
+          <div class="menu-section-title">Connected Commanders</div>
+          <div id="lobbyPlayersList" class="lobby-player-list"></div>
+          <div id="lobbyStatus" class="menu-subtle">Waiting for players.</div>
+        </div>
+
+        <div class="menu-inline-grid">
+          <button id="startLobbyBtn" class="start-btn" type="button">Start Expedition</button>
+          <button id="leaveLobbyBtn" class="leave-btn" type="button">Leave Lobby</button>
+        </div>
+      </div>
+
+      <button id="menuNavBtn" class="menu-nav" type="button" hidden>Back</button>
       <button id="soundBtn" class="secondary-btn" type="button" aria-pressed="false">Sound: Off</button>
       <div id="nameError" class="name-error" aria-live="polite"></div>
 
-      <div class="hints">
+      <div id="menuHints" class="hints">
         Drag the sector to move the camera, scroll to zoom, and click resources or beacons to give orders.
         Press M for sound, P or Esc to pause, and Space to focus the colony.
       </div>
 
-      <div class="feature-list">
+      <div id="featureList" class="feature-list">
         <div>Spacehands work, wander, socialize, maintain stations, and take jobs on their own.</div>
         <div>Build solar arrays, habitats, gardens, labs, docks, and outposts across a wider sector.</div>
         <div>Scout strange beacons, expand the map, and zoom into the colony's daily life.</div>
@@ -552,6 +912,7 @@
     <div class="meter"><span id="discoveryMeter"></span></div>
     <div id="inspector"><strong>Selected</strong><br /><span id="inspectorLine">Click a worker, building, resource, or beacon.</span></div>
     <div id="milestones"><strong>Milestones</strong><div class="mini-list" id="milestoneList"></div></div>
+    <div id="commandLink" hidden><strong>Command Link</strong><div class="mini-list" id="commandLinkList"></div></div>
     <div id="logLine">Ready.</div>
   </div>
 
@@ -577,12 +938,41 @@
     <div class="button-grid" id="upgradeGrid"></div>
   </div>
 
+  <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
     const menu = document.getElementById("menu");
+    const menuSubtitle = document.getElementById("menuSubtitle");
     const playBtn = document.getElementById("playBtn");
+    const multiplayerBtn = document.getElementById("multiplayerBtn");
+    const menuNavBtn = document.getElementById("menuNavBtn");
+    const mainMenuActions = document.getElementById("mainMenuActions");
+    const multiplayerModePanel = document.getElementById("multiplayerModePanel");
+    const multiplayerSetupPanel = document.getElementById("multiplayerSetupPanel");
+    const openCreateLobbyBtn = document.getElementById("openCreateLobbyBtn");
+    const openJoinLobbyBtn = document.getElementById("openJoinLobbyBtn");
+    const joinCodeRow = document.getElementById("joinCodeRow");
+    const joinLobbyCode = document.getElementById("joinLobbyCode");
+    const hostSettingsPanel = document.getElementById("hostSettingsPanel");
+    const maxPlayersSelect = document.getElementById("maxPlayersSelect");
+    const lateJoinToggle = document.getElementById("lateJoinToggle");
+    const profileBuilder = document.getElementById("profileBuilder");
+    const profilePreview = document.getElementById("profilePreview");
+    const profilePreviewCtx = profilePreview.getContext("2d");
+    const profileTag = document.getElementById("profileTag");
+    const multiplayerConfirmBtn = document.getElementById("multiplayerConfirmBtn");
+    const lobbyPanel = document.getElementById("lobbyPanel");
+    const lobbyCodeValue = document.getElementById("lobbyCodeValue");
+    const copyLobbyCodeBtn = document.getElementById("copyLobbyCodeBtn");
+    const lobbySettingsSummary = document.getElementById("lobbySettingsSummary");
+    const lobbyPlayersList = document.getElementById("lobbyPlayersList");
+    const lobbyStatus = document.getElementById("lobbyStatus");
+    const startLobbyBtn = document.getElementById("startLobbyBtn");
+    const leaveLobbyBtn = document.getElementById("leaveLobbyBtn");
+    const menuHints = document.getElementById("menuHints");
+    const featureList = document.getElementById("featureList");
     const backBtn = document.getElementById("backBtn");
     const soundBtn = document.getElementById("soundBtn");
     const commanderInput = document.getElementById("commanderName");
@@ -615,11 +1005,53 @@
     const hudMorale = document.getElementById("hudMorale");
     const inspectorLine = document.getElementById("inspectorLine");
     const milestoneList = document.getElementById("milestoneList");
+    const commandLink = document.getElementById("commandLink");
+    const commandLinkList = document.getElementById("commandLinkList");
     const logLine = document.getElementById("logLine");
 
     const STORAGE_KEYS = {
       commander: "starsteadCommander",
-      soundEnabled: "starsteadSoundEnabled"
+      soundEnabled: "starsteadSoundEnabled",
+      commanderProfile: "starsteadCommanderProfile"
+    };
+
+    const MENU_VIEW = {
+      main: "main",
+      multiplayer: "multiplayer",
+      create: "create",
+      join: "join",
+      lobby: "lobby"
+    };
+
+    const AVATAR_OPTIONS = {
+      shell: [
+        { name: "Azure", color: "#6fd3ff" },
+        { name: "Mint", color: "#73ffb3" },
+        { name: "Solar", color: "#ffe34d" },
+        { name: "Orchid", color: "#c89bff" },
+        { name: "Rose", color: "#ff91ad" },
+        { name: "Frost", color: "#a2ffed" }
+      ],
+      visor: [
+        { name: "Cyan", color: "#9ae8ff" },
+        { name: "Gold", color: "#ffd76b" },
+        { name: "Lilac", color: "#d7b7ff" },
+        { name: "Lime", color: "#b9ff6b" },
+        { name: "Pearl", color: "#ffffff" }
+      ],
+      badge: [
+        { name: "Star", shape: "star", color: "#ffe34d" },
+        { name: "Bolt", shape: "bolt", color: "#6fd3ff" },
+        { name: "Leaf", shape: "leaf", color: "#73ffb3" },
+        { name: "Shard", shape: "shard", color: "#ff91ad" },
+        { name: "Ring", shape: "ring", color: "#c89bff" }
+      ],
+      antenna: [
+        { name: "Orb", type: "orb" },
+        { name: "Dish", type: "dish" },
+        { name: "Twin", type: "twin" },
+        { name: "Fin", type: "fin" }
+      ]
     };
 
     const BUILDINGS = {
@@ -1002,6 +1434,8 @@
       startY: 0,
       lastX: 0,
       lastY: 0,
+      hoverX: window.innerWidth / 2,
+      hoverY: window.innerHeight / 2,
       moved: false
     };
 
@@ -1074,8 +1508,374 @@
       }
     }
 
+    let menuView = MENU_VIEW.main;
+    let multiplayerSetupMode = MENU_VIEW.create;
+
+    const multiplayer = {
+      supported: typeof window.Peer === "function",
+      peer: null,
+      hostConnection: null,
+      connections: new Map(),
+      isHost: false,
+      started: false,
+      roomCode: "",
+      room: {
+        maxPlayers: 4,
+        allowLateJoin: false
+      },
+      selfId: "",
+      players: [],
+      presences: {},
+      profile: null,
+      snapshotClock: 0,
+      presenceClock: 0,
+      latestSnapshotAt: 0
+    };
+
+    function defaultProfile() {
+      return { shell: 0, visor: 0, badge: 0, antenna: 0 };
+    }
+
+    function cloneProfile(profile = defaultProfile()) {
+      return {
+        shell: Number(profile.shell) || 0,
+        visor: Number(profile.visor) || 0,
+        badge: Number(profile.badge) || 0,
+        antenna: Number(profile.antenna) || 0
+      };
+    }
+
+    function normalizeProfile(profile) {
+      const safe = cloneProfile(profile);
+      safe.shell = ((safe.shell % AVATAR_OPTIONS.shell.length) + AVATAR_OPTIONS.shell.length) % AVATAR_OPTIONS.shell.length;
+      safe.visor = ((safe.visor % AVATAR_OPTIONS.visor.length) + AVATAR_OPTIONS.visor.length) % AVATAR_OPTIONS.visor.length;
+      safe.badge = ((safe.badge % AVATAR_OPTIONS.badge.length) + AVATAR_OPTIONS.badge.length) % AVATAR_OPTIONS.badge.length;
+      safe.antenna = ((safe.antenna % AVATAR_OPTIONS.antenna.length) + AVATAR_OPTIONS.antenna.length) % AVATAR_OPTIONS.antenna.length;
+      return safe;
+    }
+
+    function saveProfile(profile = multiplayer.profile) {
+      multiplayer.profile = normalizeProfile(profile || defaultProfile());
+      setStorageItem(STORAGE_KEYS.commanderProfile, JSON.stringify(multiplayer.profile));
+    }
+
+    function getCommanderName() {
+      return sanitizeName(commanderInput.value);
+    }
+
+    function sanitizeRoomCode(code) {
+      return String(code || "")
+        .replace(/[^a-zA-Z0-9_-]/g, "")
+        .toUpperCase()
+        .slice(0, 10);
+    }
+
+    function setMenuError(text) {
+      nameError.textContent = text || "";
+    }
+
+    function clearMenuError() {
+      setMenuError("");
+    }
+
+    function avatarOption(field, profile = multiplayer.profile) {
+      const normalized = normalizeProfile(profile || defaultProfile());
+      return AVATAR_OPTIONS[field][normalized[field]];
+    }
+
+    function drawBadgeShape(context, badge, size) {
+      context.save();
+      context.fillStyle = badge.color;
+      context.strokeStyle = "rgba(255,255,255,0.45)";
+      context.lineWidth = Math.max(1, size * 0.06);
+      if (badge.shape === "star") {
+        context.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const outer = -Math.PI / 2 + i * Math.PI * 0.4;
+          const inner = outer + Math.PI * 0.2;
+          const outerRadius = size * 0.3;
+          const innerRadius = size * 0.14;
+          const ox = Math.cos(outer) * outerRadius;
+          const oy = Math.sin(outer) * outerRadius;
+          const ix = Math.cos(inner) * innerRadius;
+          const iy = Math.sin(inner) * innerRadius;
+          if (i === 0) context.moveTo(ox, oy);
+          else context.lineTo(ox, oy);
+          context.lineTo(ix, iy);
+        }
+        context.closePath();
+        context.fill();
+        context.stroke();
+      } else if (badge.shape === "bolt") {
+        context.beginPath();
+        context.moveTo(-size * 0.08, -size * 0.26);
+        context.lineTo(size * 0.08, -size * 0.02);
+        context.lineTo(-size * 0.02, -size * 0.02);
+        context.lineTo(size * 0.1, size * 0.26);
+        context.lineTo(-size * 0.12, size * 0.02);
+        context.lineTo(size * 0.02, size * 0.02);
+        context.closePath();
+        context.fill();
+      } else if (badge.shape === "leaf") {
+        context.beginPath();
+        context.ellipse(0, 0, size * 0.16, size * 0.28, -0.45, 0, Math.PI * 2);
+        context.fill();
+      } else if (badge.shape === "shard") {
+        context.beginPath();
+        context.moveTo(0, -size * 0.28);
+        context.lineTo(size * 0.18, -size * 0.02);
+        context.lineTo(size * 0.06, size * 0.28);
+        context.lineTo(-size * 0.18, size * 0.12);
+        context.lineTo(-size * 0.12, -size * 0.1);
+        context.closePath();
+        context.fill();
+        context.stroke();
+      } else {
+        context.beginPath();
+        context.arc(0, 0, size * 0.22, 0, Math.PI * 2);
+        context.stroke();
+      }
+      context.restore();
+    }
+
+    function drawAntennaProfile(context, antenna, size, shellColor) {
+      context.save();
+      context.strokeStyle = shellColor;
+      context.fillStyle = shellColor;
+      context.lineWidth = Math.max(1.2, size * 0.07);
+      if (antenna.type === "dish") {
+        context.beginPath();
+        context.moveTo(0, -size * 0.94);
+        context.lineTo(0, -size * 0.56);
+        context.stroke();
+        context.beginPath();
+        context.arc(0, -size * 1.02, size * 0.18, Math.PI * 0.08, Math.PI * 0.92);
+        context.stroke();
+      } else if (antenna.type === "twin") {
+        for (const side of [-1, 1]) {
+          context.beginPath();
+          context.moveTo(side * size * 0.12, -size * 0.64);
+          context.lineTo(side * size * 0.26, -size * 1.02);
+          context.stroke();
+          context.beginPath();
+          context.arc(side * size * 0.3, -size * 1.06, size * 0.08, 0, Math.PI * 2);
+          context.fill();
+        }
+      } else if (antenna.type === "fin") {
+        context.beginPath();
+        context.moveTo(0, -size * 1.06);
+        context.lineTo(size * 0.2, -size * 0.58);
+        context.lineTo(-size * 0.2, -size * 0.58);
+        context.closePath();
+        context.fill();
+      } else {
+        context.beginPath();
+        context.moveTo(0, -size * 0.92);
+        context.lineTo(0, -size * 0.58);
+        context.stroke();
+        context.beginPath();
+        context.arc(0, -size * 1.02, size * 0.11, 0, Math.PI * 2);
+        context.fill();
+      }
+      context.restore();
+    }
+
+    function drawAvatarHead(context, x, y, size, profile = multiplayer.profile, label = "", showLabel = false) {
+      const normalized = normalizeProfile(profile || defaultProfile());
+      const shell = AVATAR_OPTIONS.shell[normalized.shell];
+      const visor = AVATAR_OPTIONS.visor[normalized.visor];
+      const badge = AVATAR_OPTIONS.badge[normalized.badge];
+      const antenna = AVATAR_OPTIONS.antenna[normalized.antenna];
+      context.save();
+      context.translate(x, y);
+
+      const glow = context.createRadialGradient(0, 0, 0, 0, 0, size * 1.8);
+      glow.addColorStop(0, hexToRgba(shell.color, 0.34));
+      glow.addColorStop(1, "rgba(0,0,0,0)");
+      context.fillStyle = glow;
+      context.beginPath();
+      context.arc(0, 0, size * 1.8, 0, Math.PI * 2);
+      context.fill();
+
+      drawAntennaProfile(context, antenna, size, shell.color);
+
+      context.fillStyle = "rgba(5, 10, 18, 0.78)";
+      context.beginPath();
+      context.ellipse(0, size * 1.04, size * 0.78, size * 0.24, 0, 0, Math.PI * 2);
+      context.fill();
+
+      const helmet = context.createRadialGradient(-size * 0.28, -size * 0.3, 0, 0, 0, size);
+      helmet.addColorStop(0, "rgba(255,255,255,0.34)");
+      helmet.addColorStop(0.35, shell.color);
+      helmet.addColorStop(1, "rgba(7, 12, 26, 0.98)");
+      context.fillStyle = helmet;
+      context.strokeStyle = "rgba(255,255,255,0.36)";
+      context.lineWidth = Math.max(1, size * 0.08);
+      context.beginPath();
+      context.arc(0, 0, size * 0.78, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+
+      const visorGradient = context.createLinearGradient(-size * 0.5, -size * 0.32, size * 0.46, size * 0.12);
+      visorGradient.addColorStop(0, "rgba(7,18,32,0.98)");
+      visorGradient.addColorStop(1, visor.color);
+      context.fillStyle = visorGradient;
+      context.beginPath();
+      context.ellipse(size * 0.1, -size * 0.04, size * 0.38, size * 0.25, 0.12, 0, Math.PI * 2);
+      context.fill();
+
+      context.save();
+      context.translate(-size * 0.44, size * 0.32);
+      drawBadgeShape(context, badge, size);
+      context.restore();
+
+      context.strokeStyle = hexToRgba(shell.color, 0.86);
+      context.lineWidth = Math.max(1, size * 0.07);
+      context.beginPath();
+      context.moveTo(-size * 0.82, size * 0.3);
+      context.lineTo(-size * 1.2, size * 0.6);
+      context.moveTo(size * 0.82, size * 0.3);
+      context.lineTo(size * 1.2, size * 0.6);
+      context.stroke();
+
+      if (showLabel && label) {
+        context.fillStyle = "rgba(255,255,255,0.86)";
+        context.font = `bold ${Math.max(10, size * 0.48)}px Arial`;
+        context.textAlign = "center";
+        context.fillText(label, 0, size * 1.78);
+      }
+      context.restore();
+    }
+
+    function avatarDataUrl(profile, size = 56) {
+      const offscreen = document.createElement("canvas");
+      offscreen.width = size;
+      offscreen.height = size;
+      const offscreenCtx = offscreen.getContext("2d");
+      drawAvatarHead(offscreenCtx, size / 2, size / 2 + 2, size * 0.36, profile);
+      return offscreen.toDataURL();
+    }
+
+    function updateProfileControls() {
+      document.querySelectorAll(".profile-btn").forEach((button) => {
+        const field = button.dataset.profileField;
+        const option = avatarOption(field);
+        button.innerHTML = `${field[0].toUpperCase()}${field.slice(1)}<br />${option.name}`;
+      });
+      const shell = avatarOption("shell");
+      const badge = avatarOption("badge");
+      profileTag.textContent = `${shell.name} shell / ${badge.name} crest`;
+    }
+
+    function renderProfilePreview() {
+      profilePreviewCtx.clearRect(0, 0, profilePreview.width, profilePreview.height);
+      drawAvatarHead(profilePreviewCtx, 48, 48, 28, multiplayer.profile);
+      updateProfileControls();
+    }
+
+    function cycleProfileField(field, step = 1) {
+      if (!AVATAR_OPTIONS[field]) return;
+      multiplayer.profile = normalizeProfile(multiplayer.profile || defaultProfile());
+      multiplayer.profile[field] = multiplayer.profile[field] + step;
+      saveProfile(multiplayer.profile);
+      renderProfilePreview();
+      renderLobbyPlayers();
+    }
+
+    function showGameplayUi() {
+      menu.hidden = true;
+      hud.hidden = false;
+      controls.hidden = false;
+      backBtn.hidden = false;
+      cameraHint.hidden = false;
+    }
+
+    function showMenuUi() {
+      menu.hidden = false;
+      hud.hidden = true;
+      controls.hidden = true;
+      backBtn.hidden = true;
+      cameraHint.hidden = true;
+    }
+
+    function setMenuView(view) {
+      menuView = view;
+      mainMenuActions.hidden = view !== MENU_VIEW.main;
+      multiplayerModePanel.hidden = view !== MENU_VIEW.multiplayer;
+      multiplayerSetupPanel.hidden = view === MENU_VIEW.main || view === MENU_VIEW.multiplayer;
+      lobbyPanel.hidden = view !== MENU_VIEW.lobby;
+      menuNavBtn.hidden = view === MENU_VIEW.main || view === MENU_VIEW.lobby;
+      joinCodeRow.hidden = view !== MENU_VIEW.join;
+      hostSettingsPanel.hidden = view !== MENU_VIEW.create;
+      profileBuilder.hidden = view === MENU_VIEW.main || view === MENU_VIEW.multiplayer;
+      multiplayerConfirmBtn.hidden = view === MENU_VIEW.lobby;
+      multiplayerConfirmBtn.textContent = view === MENU_VIEW.join ? "Join Lobby" : "Create Lobby";
+
+      if (view === MENU_VIEW.main) {
+        menuSubtitle.textContent = "Build a glowing frontier city in deep space. Dispatch little spacehands, gather resources, scout beacons, construct districts, and keep the colony alive as the sector expands.";
+        menuNavBtn.textContent = "Back";
+      } else if (view === MENU_VIEW.multiplayer) {
+        menuSubtitle.textContent = "Open a shared command link, hand out a room code, and launch a cooperative colony together.";
+        menuNavBtn.textContent = "Back to Main Menu";
+      } else if (view === MENU_VIEW.create) {
+        menuSubtitle.textContent = "Set the room rules, tune your commander profile, and bring the bridge online.";
+        menuNavBtn.textContent = "Back to Multiplayer";
+      } else if (view === MENU_VIEW.join) {
+        menuSubtitle.textContent = "Choose a commander profile, enter the host code, and drop into the bridge crew.";
+        menuNavBtn.textContent = "Back to Multiplayer";
+      } else {
+        menuSubtitle.textContent = multiplayer.isHost
+          ? "Your room is live. Share the code, tweak the settings, and launch when everyone is aboard."
+          : "Connected to the room. Customize your profile and wait for the host to launch the expedition.";
+      }
+
+      menuHints.hidden = view === MENU_VIEW.lobby;
+      featureList.hidden = view !== MENU_VIEW.main;
+      if (view !== MENU_VIEW.join) joinLobbyCode.value = sanitizeRoomCode(joinLobbyCode.value);
+      renderProfilePreview();
+    }
+
+    function getLocalPlayer() {
+      return multiplayer.players.find((player) => player.id === multiplayer.selfId) || null;
+    }
+
+    function renderLobbyPlayers() {
+      if (!lobbyPlayersList) return;
+      const players = multiplayer.players.length
+        ? multiplayer.players
+        : multiplayer.selfId
+          ? [{ id: multiplayer.selfId, name: getCommanderName() || "Commander", profile: multiplayer.profile, isOwner: multiplayer.isHost }]
+          : [];
+
+      lobbyPlayersList.innerHTML = players.map((player) => `
+        <div class="player-card">
+          <div class="player-avatar"><img alt="${player.name}" src="${avatarDataUrl(player.profile || multiplayer.profile)}" /></div>
+          <div class="player-meta">
+            <strong>${player.name}</strong>
+            <span>${player.id === multiplayer.selfId ? "You" : "Linked"}${player.isOwner ? " - Host" : ""}</span>
+          </div>
+          <div class="player-pill">${player.isOwner ? "Host" : "Crew"}</div>
+        </div>
+      `).join("");
+    }
+
+    function updateLobbySummary(extra = "") {
+      const playerCount = Math.max(multiplayer.players.length, multiplayer.selfId ? 1 : 0);
+      maxPlayersSelect.value = String(multiplayer.room.maxPlayers);
+      lateJoinToggle.checked = multiplayer.room.allowLateJoin;
+      lobbyCodeValue.textContent = multiplayer.roomCode || "------";
+      lobbySettingsSummary.textContent = `${playerCount}/${multiplayer.room.maxPlayers} commanders linked. ${multiplayer.room.allowLateJoin ? "Late join open." : "Late join locked."}${extra ? " " + extra : ""}`;
+      startLobbyBtn.hidden = !multiplayer.isHost;
+      startLobbyBtn.disabled = !multiplayer.isHost || !multiplayer.selfId;
+      lobbyStatus.textContent = multiplayer.isHost
+        ? (multiplayer.started ? "Expedition active." : "You can launch whenever the crew is ready.")
+        : (multiplayer.started ? "Host launched the expedition." : "Waiting for the host to launch.");
+      renderLobbyPlayers();
+    }
+
     function sanitizeName(name) {
       return String(name || "")
+        .replace(/[<>"'`&]/g, "")
         .replace(/\s+/g, " ")
         .trim()
         .slice(0, 18);
@@ -1224,7 +2024,10 @@
     }
 
     function updateHud() {
-      hudName.textContent = game.commander || "-";
+      const localPlayer = getLocalPlayer();
+      hudName.textContent = isMultiplayerActive()
+        ? `${localPlayer?.name || game.commander || "-"}${multiplayer.isHost ? " / Host" : ""}`
+        : (game.commander || "-");
       hudCycle.textContent = formatCycle(game.cycle);
       hudLevel.textContent = game.level;
       hudCrew.textContent = `${game.workers.length}/${game.housing}`;
@@ -1244,6 +2047,7 @@
       hudMorale.textContent = `${Math.floor(game.morale)}%`;
       updateInspector();
       updateMilestonePanel();
+      updateCommandLinkPanel();
       logLine.textContent = game.log;
       updateButtons();
     }
@@ -1303,6 +2107,28 @@
       if (!rows.length) rows.push("<div><span>Sandbox</span><strong>Keep expanding</strong></div>");
       rows.unshift(`<div><span>Completed</span><strong>${completed}/${MILESTONES.length}</strong></div>`);
       milestoneList.innerHTML = rows.join("");
+    }
+
+    function updateCommandLinkPanel() {
+      if (!isMultiplayerActive()) {
+        commandLink.hidden = true;
+        commandLinkList.innerHTML = "";
+        return;
+      }
+
+      commandLink.hidden = false;
+      const rows = multiplayer.players.length
+        ? multiplayer.players.map((player) => {
+            const presence = multiplayer.presences[player.id];
+            const status = player.id === multiplayer.selfId
+              ? "You"
+              : presence
+                ? `Focus ${Math.round(presence.x)}, ${Math.round(presence.y)}`
+                : "Waiting";
+            return `<div><span>${player.name}${player.isOwner ? " (Host)" : ""}</span><strong>${status}</strong></div>`;
+          })
+        : ["<div><span>Room</span><strong>Linking...</strong></div>"];
+      commandLinkList.innerHTML = rows.join("");
     }
 
     function updateSoundButton() {
@@ -1592,10 +2418,10 @@
       screenShake = Math.max(screenShake, shake);
     }
 
-    function getColonyCenter() {
+    function getColonyCenter(focusX = playerViewX(), focusY = playerViewY()) {
       const hubs = game.buildings.filter((building) => building.kind === "hub" || building.kind === "outpost");
       const nearest = hubs.reduce((best, hub) => {
-        const dist = distanceXY(playerViewX(), playerViewY(), hub.x, hub.y);
+        const dist = distanceXY(focusX, focusY, hub.x, hub.y);
         return !best || dist < best.dist ? { hub, dist } : best;
       }, null);
       return nearest ? nearest.hub : game.buildings[0];
@@ -1686,6 +2512,683 @@
     function cryptoRandomId() {
       if (globalThis.crypto && typeof crypto.randomUUID === "function") return crypto.randomUUID();
       return "id-" + Math.random().toString(36).slice(2, 12);
+    }
+
+    function generateRoomCode() {
+      const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+      for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+      return code;
+    }
+
+    function isMultiplayerActive() {
+      return Boolean(multiplayer.peer);
+    }
+
+    function isMultiplayerClient() {
+      return isMultiplayerActive() && !multiplayer.isHost;
+    }
+
+    function isMultiplayerHost() {
+      return isMultiplayerActive() && multiplayer.isHost;
+    }
+
+    function serializeSelectedRef(object = selectedObject) {
+      if (!object) return null;
+      if (game.buildings.includes(object)) return { collection: "buildings", id: object.id };
+      if (game.sites.includes(object)) return { collection: "sites", id: object.id };
+      return null;
+    }
+
+    function resolveSelectedRef(ref) {
+      if (!ref?.id) return null;
+      if (ref.collection === "buildings") return findById(game.buildings, ref.id);
+      if (ref.collection === "sites") return findById(game.sites, ref.id);
+      return null;
+    }
+
+    function getFocusWorldPoint() {
+      const hoverX = Number.isFinite(pointerState.hoverX) ? pointerState.hoverX : viewWidth / 2;
+      const hoverY = Number.isFinite(pointerState.hoverY) ? pointerState.hoverY : viewHeight / 2;
+      return screenToWorld(hoverX, hoverY);
+    }
+
+    function buildActionContext(playerId = multiplayer.selfId) {
+      const focus = getFocusWorldPoint();
+      const player = multiplayer.players.find((entry) => entry.id === playerId);
+      return {
+        playerId,
+        actor: player?.name || getCommanderName() || game.commander || "Commander",
+        viewX: focus.x,
+        viewY: focus.y,
+        selectedRef: serializeSelectedRef()
+      };
+    }
+
+    function buildPresence() {
+      const focus = getFocusWorldPoint();
+      const local = getLocalPlayer();
+      return {
+        id: multiplayer.selfId,
+        name: local?.name || getCommanderName() || "Commander",
+        profile: normalizeProfile(local?.profile || multiplayer.profile),
+        x: focus.x,
+        y: focus.y,
+        cameraX: camera.x,
+        cameraY: camera.y,
+        zoom: camera.zoom,
+        updatedAt: Date.now()
+      };
+    }
+
+    function prunePresences() {
+      const now = Date.now();
+      Object.keys(multiplayer.presences).forEach((id) => {
+        if (id === multiplayer.selfId) return;
+        const presence = multiplayer.presences[id];
+        if (!presence || now - (presence.updatedAt || 0) > 9000) delete multiplayer.presences[id];
+      });
+    }
+
+    function syncLocalPlayerRecord() {
+      if (!multiplayer.selfId) return;
+      const existing = multiplayer.players.find((player) => player.id === multiplayer.selfId);
+      const next = {
+        id: multiplayer.selfId,
+        name: getCommanderName() || existing?.name || "Commander",
+        profile: normalizeProfile(multiplayer.profile),
+        isOwner: multiplayer.isHost
+      };
+      if (existing) Object.assign(existing, next);
+      else multiplayer.players.unshift(next);
+      multiplayer.presences[multiplayer.selfId] = buildPresence();
+    }
+
+    function serializePlayers() {
+      return multiplayer.players.map((player) => ({
+        id: player.id,
+        name: player.name,
+        profile: normalizeProfile(player.profile),
+        isOwner: Boolean(player.isOwner)
+      }));
+    }
+
+    function serializePresences() {
+      const next = {};
+      Object.entries(multiplayer.presences).forEach(([id, presence]) => {
+        next[id] = {
+          id,
+          name: presence.name,
+          profile: normalizeProfile(presence.profile),
+          x: Number(presence.x) || 0,
+          y: Number(presence.y) || 0,
+          cameraX: Number(presence.cameraX) || 0,
+          cameraY: Number(presence.cameraY) || 0,
+          zoom: Number(presence.zoom) || CAMERA.startZoom,
+          updatedAt: presence.updatedAt || Date.now()
+        };
+      });
+      return next;
+    }
+
+    function serializeGameState() {
+      return {
+        running: game.running,
+        paused: game.paused,
+        commander: game.commander,
+        cycle: game.cycle,
+        level: game.level,
+        discovery: game.discovery,
+        nextDiscovery: game.nextDiscovery,
+        directive: game.directive,
+        resources: { ...game.resources },
+        housing: game.housing,
+        storageBonus: game.storageBonus,
+        morale: game.morale,
+        workerSpeed: game.workerSpeed,
+        cargoBonus: game.cargoBonus,
+        scoutBonus: game.scoutBonus,
+        buildSpeedBonus: game.buildSpeedBonus,
+        autoWorkBonus: game.autoWorkBonus,
+        beaconBonus: game.beaconBonus,
+        actionCooldowns: { ...game.actionCooldowns },
+        completedMilestones: [...game.completedMilestones],
+        stats: { ...game.stats },
+        buildPermitsUsed: { ...game.buildPermitsUsed },
+        buildings: game.buildings.map((item) => ({ ...item })),
+        sites: game.sites.map((item) => ({ ...item })),
+        workers: game.workers.map((item) => ({ ...item, carry: item.carry ? { ...item.carry } : null })),
+        nodes: game.nodes.map((item) => ({ ...item })),
+        beacons: game.beacons.map((item) => ({ ...item })),
+        upgrades: [...game.upgrades],
+        log: game.log
+      };
+    }
+
+    function applyGameSnapshot(snapshot) {
+      if (!snapshot) return;
+      game.running = Boolean(snapshot.running);
+      game.paused = Boolean(snapshot.paused);
+      game.commander = snapshot.commander || game.commander;
+      game.cycle = Number(snapshot.cycle) || 0;
+      game.level = Number(snapshot.level) || 1;
+      game.discovery = Number(snapshot.discovery) || 0;
+      game.nextDiscovery = Number(snapshot.nextDiscovery) || 120;
+      game.directive = snapshot.directive || "balanced";
+      game.resources = { energy: 0, ore: 0, food: 0, crystal: 0, science: 0, ...(snapshot.resources || {}) };
+      game.housing = Number(snapshot.housing) || 0;
+      game.storageBonus = Number(snapshot.storageBonus) || 0;
+      game.morale = Number(snapshot.morale) || 0;
+      game.workerSpeed = Number(snapshot.workerSpeed) || 0;
+      game.cargoBonus = Number(snapshot.cargoBonus) || 0;
+      game.scoutBonus = Number(snapshot.scoutBonus) || 0;
+      game.buildSpeedBonus = Number(snapshot.buildSpeedBonus) || 0;
+      game.autoWorkBonus = Number(snapshot.autoWorkBonus) || 0;
+      game.beaconBonus = Number(snapshot.beaconBonus) || 0;
+      game.actionCooldowns = { ...(snapshot.actionCooldowns || {}) };
+      game.completedMilestones = new Set(snapshot.completedMilestones || []);
+      game.stats = { beaconsScouted: 0, actionsUsed: 0, ...(snapshot.stats || {}) };
+      game.buildPermitsUsed = { ...(snapshot.buildPermitsUsed || {}) };
+      game.buildings = (snapshot.buildings || []).map((item) => ({ ...item }));
+      game.sites = (snapshot.sites || []).map((item) => ({ ...item }));
+      game.workers = (snapshot.workers || []).map((item) => ({ ...item, carry: item.carry ? { ...item.carry } : null }));
+      game.nodes = (snapshot.nodes || []).map((item) => ({ ...item }));
+      game.beacons = (snapshot.beacons || []).map((item) => ({ ...item }));
+      game.upgrades = new Set(snapshot.upgrades || []);
+      game.log = snapshot.log || game.log;
+      syncSelection();
+    }
+
+    function snapshotPacket() {
+      syncLocalPlayerRecord();
+      return {
+        roomCode: multiplayer.roomCode,
+        room: { ...multiplayer.room },
+        started: multiplayer.started,
+        players: serializePlayers(),
+        presences: serializePresences(),
+        snapshot: serializeGameState()
+      };
+    }
+
+    function sendConnection(connection, type, payload = {}) {
+      if (!connection || !connection.open) return;
+      connection.send({ type, ...payload });
+    }
+
+    function broadcastToClients(type, payload = {}) {
+      multiplayer.connections.forEach((connection) => {
+        sendConnection(connection, type, payload);
+      });
+    }
+
+    function removePlayer(playerId) {
+      multiplayer.players = multiplayer.players.filter((player) => player.id !== playerId);
+      delete multiplayer.presences[playerId];
+      multiplayer.connections.delete(playerId);
+      updateLobbySummary();
+      updateHud();
+    }
+
+    function handleMultiplayerDisconnect(reason = "", showReason = true) {
+      if (isMultiplayerClient()) {
+        try {
+          sendConnection(multiplayer.hostConnection, "leave-room", { playerId: multiplayer.selfId });
+        } catch {}
+      } else if (isMultiplayerHost()) {
+        broadcastToClients("room-closed", { reason: reason || "Host closed the lobby." });
+      }
+
+      multiplayer.connections.forEach((connection) => {
+        try { connection.close(); } catch {}
+      });
+      multiplayer.connections.clear();
+
+      if (multiplayer.hostConnection) {
+        try { multiplayer.hostConnection.close(); } catch {}
+      }
+      multiplayer.hostConnection = null;
+
+      if (multiplayer.peer) {
+        try { multiplayer.peer.destroy(); } catch {}
+      }
+      multiplayer.peer = null;
+      multiplayer.isHost = false;
+      multiplayer.started = false;
+      multiplayer.roomCode = "";
+      multiplayer.selfId = "";
+      multiplayer.players = [];
+      multiplayer.presences = {};
+      multiplayer.snapshotClock = 0;
+      multiplayer.presenceClock = 0;
+      multiplayer.latestSnapshotAt = 0;
+      multiplayer.room = { maxPlayers: Number(maxPlayersSelect.value) || 4, allowLateJoin: Boolean(lateJoinToggle.checked) };
+      game.running = false;
+      game.paused = false;
+
+      commandLink.hidden = true;
+      if (showReason && reason) setMenuError(reason);
+      updateLobbySummary();
+    }
+
+    function installPeerListeners(peer, initialErrorHandler) {
+      peer.on("connection", (connection) => {
+        if (!multiplayer.isHost) {
+          try { connection.close(); } catch {}
+          return;
+        }
+        registerConnection(connection, true);
+      });
+
+      peer.on("disconnected", () => {
+        if (!multiplayer.isHost) setMenuError("Lost the signal relay. Reconnect and try again.");
+      });
+
+      peer.on("close", () => {
+        if (menu.hidden) setLog("Command link closed.");
+      });
+
+      peer.on("error", (error) => {
+        if (typeof initialErrorHandler === "function") initialErrorHandler(error, true);
+      });
+    }
+
+    function createPeer(peerId = undefined) {
+      return new Promise((resolve, reject) => {
+        if (!window.Peer) {
+          reject(new Error("PeerJS did not load."));
+          return;
+        }
+
+        let settled = false;
+        const peer = peerId ? new window.Peer(peerId) : new window.Peer();
+        const fail = (error, afterOpen = false) => {
+          if (!settled && !afterOpen) {
+            settled = true;
+            try { peer.destroy(); } catch {}
+            reject(error);
+            return;
+          }
+          setMenuError(error?.message || "Multiplayer link failed.");
+        };
+
+        peer.on("open", () => {
+          if (settled) return;
+          settled = true;
+          installPeerListeners(peer, fail);
+          resolve(peer);
+        });
+
+        peer.on("error", (error) => fail(error, false));
+      });
+    }
+
+    function registerConnection(connection, incoming = false) {
+      if (!connection) return;
+      connection.on("open", () => {
+        if (multiplayer.isHost) multiplayer.connections.set(connection.peer, connection);
+        else if (!incoming) multiplayer.hostConnection = connection;
+      });
+
+      connection.on("data", (message) => {
+        if (!message || typeof message !== "object") return;
+        handleNetworkMessage(message, connection);
+      });
+
+      connection.on("close", () => {
+        if (multiplayer.isHost) {
+          removePlayer(connection.peer);
+          broadcastLobbyState();
+        } else if (multiplayer.hostConnection === connection) {
+          handleMultiplayerDisconnect("The host ended the session.");
+          showMenuUi();
+          setMenuView(MENU_VIEW.main);
+        }
+      });
+
+      connection.on("error", (error) => {
+        if (!multiplayer.isHost && multiplayer.hostConnection === connection) {
+          handleMultiplayerDisconnect("", false);
+          showMenuUi();
+          setMenuView(MENU_VIEW.join);
+          setMenuError(error?.message || "The room connection ran into trouble.");
+        }
+      });
+    }
+
+    function broadcastLobbyState() {
+      syncLocalPlayerRecord();
+      const payload = {
+        roomCode: multiplayer.roomCode,
+        room: { ...multiplayer.room },
+        started: multiplayer.started,
+        players: serializePlayers()
+      };
+      broadcastToClients("lobby-state", payload);
+      updateLobbySummary();
+    }
+
+    function sendProfileUpdate() {
+      syncLocalPlayerRecord();
+      if (multiplayer.isHost) {
+        broadcastLobbyState();
+        return;
+      }
+      sendConnection(multiplayer.hostConnection, "update-profile", {
+        player: {
+          id: multiplayer.selfId,
+          name: getCommanderName() || "Commander",
+          profile: normalizeProfile(multiplayer.profile)
+        }
+      });
+    }
+
+    async function createLobby() {
+      const name = getCommanderName();
+      if (!name) {
+        setMenuError("Enter a commander name before opening a room.");
+        commanderInput.focus();
+        commanderInput.select();
+        return;
+      }
+      if (!multiplayer.supported) {
+        setMenuError("This browser cannot open the multiplayer relay.");
+        return;
+      }
+
+      handleMultiplayerDisconnect("", false);
+      multiplayer.room.maxPlayers = clamp(Number(maxPlayersSelect.value) || 4, 2, 6);
+      multiplayer.room.allowLateJoin = lateJoinToggle.checked;
+      setMenuError("Opening command link...");
+      try {
+        let peer = null;
+        let attempts = 0;
+        while (!peer && attempts < 5) {
+          attempts += 1;
+          const code = generateRoomCode();
+          try {
+            peer = await createPeer(code);
+            multiplayer.roomCode = code;
+          } catch (error) {
+            if (error?.type !== "unavailable-id") throw error;
+          }
+        }
+
+        if (!peer) {
+          setMenuError("Could not secure a room code. Try again.");
+          return;
+        }
+
+        multiplayer.peer = peer;
+        multiplayer.isHost = true;
+        multiplayer.selfId = peer.id;
+        multiplayer.started = false;
+        multiplayer.players = [];
+        multiplayer.presences = {};
+        syncLocalPlayerRecord();
+        clearMenuError();
+        setMenuView(MENU_VIEW.lobby);
+        updateLobbySummary("Share the code and wait for the crew.");
+      } catch (error) {
+        handleMultiplayerDisconnect("", false);
+        setMenuView(MENU_VIEW.create);
+        setMenuError(error?.message || "Could not create a room.");
+      }
+    }
+
+    async function joinLobby() {
+      const name = getCommanderName();
+      const roomCode = sanitizeRoomCode(joinLobbyCode.value);
+      joinLobbyCode.value = roomCode;
+      if (!name) {
+        setMenuError("Enter a commander name before joining a room.");
+        commanderInput.focus();
+        commanderInput.select();
+        return;
+      }
+      if (!roomCode) {
+        setMenuError("Enter a valid lobby code.");
+        joinLobbyCode.focus();
+        joinLobbyCode.select();
+        return;
+      }
+      if (!multiplayer.supported) {
+        setMenuError("This browser cannot open the multiplayer relay.");
+        return;
+      }
+
+      handleMultiplayerDisconnect("", false);
+      setMenuError("Connecting to room...");
+      multiplayer.roomCode = roomCode;
+
+      try {
+        const peer = await createPeer();
+        multiplayer.peer = peer;
+        multiplayer.selfId = peer.id;
+        multiplayer.isHost = false;
+        multiplayer.started = false;
+        multiplayer.players = [];
+        multiplayer.presences = {};
+
+        const connection = peer.connect(roomCode, { reliable: false, serialization: "json" });
+        registerConnection(connection, false);
+        multiplayer.hostConnection = connection;
+        setMenuView(MENU_VIEW.lobby);
+        updateLobbySummary("Linking to host...");
+
+        connection.on("open", () => {
+          sendConnection(connection, "join-request", {
+            player: {
+              id: multiplayer.selfId,
+              name: name || "Commander",
+              profile: normalizeProfile(multiplayer.profile)
+            }
+          });
+        });
+      } catch (error) {
+        handleMultiplayerDisconnect("", false);
+        setMenuView(MENU_VIEW.join);
+        setMenuError(error?.message || "Could not connect to that room.");
+      }
+    }
+
+    function applySnapshotPacket(packet) {
+      if (packet.room) multiplayer.room = { ...multiplayer.room, ...packet.room };
+      if (Array.isArray(packet.players)) multiplayer.players = packet.players.map((player) => ({ ...player, profile: normalizeProfile(player.profile) }));
+      if (packet.presences) multiplayer.presences = { ...packet.presences };
+      multiplayer.started = Boolean(packet.started);
+      multiplayer.latestSnapshotAt = Date.now();
+      applyGameSnapshot(packet.snapshot);
+      updateLobbySummary();
+      updateHud();
+    }
+
+    function launchLobbyGame() {
+      if (!multiplayer.isHost) return;
+      clearMenuError();
+      multiplayer.started = true;
+      game.commander = getCommanderName();
+      game.running = true;
+      game.paused = false;
+      resetGame();
+      showGameplayUi();
+      syncLocalPlayerRecord();
+      const packet = snapshotPacket();
+      broadcastToClients("start-game", packet);
+      updateLobbySummary();
+      setLog("Shared expedition online. Everyone is spending from the same colony stores.");
+    }
+
+    function handleJoinRequest(connection, message) {
+      if (!multiplayer.isHost) return;
+      const incomingPlayer = message.player || {};
+      const playerId = connection.peer;
+      const existing = multiplayer.players.find((player) => player.id === playerId);
+      const roomFull = !existing && multiplayer.players.length >= multiplayer.room.maxPlayers;
+      if (roomFull) {
+        sendConnection(connection, "join-denied", { reason: "This room is full." });
+        try { connection.close(); } catch {}
+        return;
+      }
+      if (multiplayer.started && !multiplayer.room.allowLateJoin && !existing) {
+        sendConnection(connection, "join-denied", { reason: "The host locked this room after launch." });
+        try { connection.close(); } catch {}
+        return;
+      }
+
+      const nextPlayer = {
+        id: playerId,
+        name: sanitizeName(incomingPlayer.name) || `Commander ${multiplayer.players.length + 1}`,
+        profile: normalizeProfile(incomingPlayer.profile),
+        isOwner: false
+      };
+      if (existing) Object.assign(existing, nextPlayer);
+      else multiplayer.players.push(nextPlayer);
+      multiplayer.connections.set(playerId, connection);
+      sendConnection(connection, "join-accepted", { roomCode: multiplayer.roomCode });
+      broadcastLobbyState();
+      if (multiplayer.started) sendConnection(connection, "start-game", snapshotPacket());
+    }
+
+    function applyNetworkAction(playerId, action) {
+      if (!action) return;
+      const context = {
+        playerId,
+        actor: multiplayer.players.find((player) => player.id === playerId)?.name || "Commander",
+        viewX: Number(action.viewX),
+        viewY: Number(action.viewY),
+        selectedRef: action.selectedRef || null
+      };
+
+      if (action.kind === "commandNearest") {
+        commandNearest(action.command);
+      } else if (action.kind === "targetNode") {
+        const node = findById(game.nodes, action.targetId);
+        const worker = findCommandWorker();
+        if (node && worker) assignWorkerToNode(worker, node);
+      } else if (action.kind === "targetBeacon") {
+        const beacon = findById(game.beacons, action.targetId);
+        const worker = findCommandWorker();
+        if (beacon && worker) assignWorkerToBeacon(worker, beacon);
+      } else if (action.kind === "targetSite") {
+        const site = findById(game.sites, action.targetId);
+        const worker = findCommandWorker();
+        if (site && worker) assignWorkerToSite(worker, site);
+      } else if (action.kind === "build") {
+        createSite(action.building, context);
+      } else if (action.kind === "upgrade") {
+        buyUpgrade(action.upgrade);
+      } else if (action.kind === "directive") {
+        setDirective(action.directive);
+      } else if (action.kind === "action") {
+        useAction(action.actionKey, context);
+      }
+    }
+
+    function sendPlayerAction(action) {
+      if (!isMultiplayerClient()) return false;
+      if (!multiplayer.hostConnection || !multiplayer.hostConnection.open) {
+        setLog("Command link still syncing.");
+        return true;
+      }
+      sendConnection(multiplayer.hostConnection, "action", { playerId: multiplayer.selfId, action });
+      return true;
+    }
+
+    function handleNetworkMessage(message, connection) {
+      if (message.type === "join-request") {
+        handleJoinRequest(connection, message);
+        return;
+      }
+
+      if (message.type === "update-profile" && multiplayer.isHost) {
+        const incoming = message.player || {};
+        const player = multiplayer.players.find((entry) => entry.id === connection.peer);
+        if (player) {
+          player.name = sanitizeName(incoming.name) || player.name;
+          player.profile = normalizeProfile(incoming.profile || player.profile);
+          broadcastLobbyState();
+        }
+        return;
+      }
+
+      if (message.type === "leave-room" && multiplayer.isHost) {
+        removePlayer(connection.peer);
+        broadcastLobbyState();
+        return;
+      }
+
+      if (message.type === "presence" && multiplayer.isHost) {
+        multiplayer.presences[connection.peer] = {
+          ...message.presence,
+          id: connection.peer,
+          updatedAt: Date.now()
+        };
+        return;
+      }
+
+      if (message.type === "action" && multiplayer.isHost) {
+        applyNetworkAction(connection.peer, message.action);
+        return;
+      }
+
+      if (message.type === "join-accepted") {
+        clearMenuError();
+        lobbyStatus.textContent = "Connected. Waiting for the host to launch.";
+        return;
+      }
+
+      if (message.type === "join-denied") {
+        handleMultiplayerDisconnect("", false);
+        setMenuView(MENU_VIEW.join);
+        setMenuError(message.reason || "The host rejected the join request.");
+        return;
+      }
+
+      if (message.type === "lobby-state") {
+        multiplayer.roomCode = message.roomCode || multiplayer.roomCode;
+        multiplayer.room = { ...multiplayer.room, ...(message.room || {}) };
+        multiplayer.started = Boolean(message.started);
+        multiplayer.players = (message.players || []).map((player) => ({ ...player, profile: normalizeProfile(player.profile) }));
+        updateLobbySummary();
+        updateHud();
+        return;
+      }
+
+      if (message.type === "start-game" || message.type === "snapshot") {
+        applySnapshotPacket(message);
+        showGameplayUi();
+        return;
+      }
+
+      if (message.type === "room-closed") {
+        handleMultiplayerDisconnect("", false);
+        showMenuUi();
+        setMenuView(MENU_VIEW.main);
+        setMenuError(message.reason || "The host closed the room.");
+      }
+    }
+
+    function updateMultiplayer(deltaSeconds) {
+      if (!isMultiplayerActive()) return;
+      syncLocalPlayerRecord();
+      prunePresences();
+
+      multiplayer.presenceClock += deltaSeconds;
+      if (multiplayer.isHost) {
+        multiplayer.presences[multiplayer.selfId] = buildPresence();
+        if (multiplayer.started) {
+          multiplayer.snapshotClock += deltaSeconds;
+          if (multiplayer.snapshotClock >= 0.18) {
+            multiplayer.snapshotClock = 0;
+            broadcastToClients("snapshot", snapshotPacket());
+          }
+        }
+      } else if (game.running && multiplayer.hostConnection && multiplayer.presenceClock >= 0.14) {
+        multiplayer.presenceClock = 0;
+        multiplayer.presences[multiplayer.selfId] = buildPresence();
+        sendConnection(multiplayer.hostConnection, "presence", { playerId: multiplayer.selfId, presence: multiplayer.presences[multiplayer.selfId] });
+      }
     }
 
     function resetGame() {
@@ -1952,16 +3455,23 @@
       ];
     }
 
-    function chooseBuildAnchor(kind) {
-      if (selectedObject && selectedObject.kind) return selectedObject;
+    function chooseBuildAnchor(kind, context = {}) {
+      const selectedAnchor = resolveSelectedRef(context.selectedRef) || (selectedObject && selectedObject.kind ? selectedObject : null);
+      if (selectedAnchor?.kind) return selectedAnchor;
       const outposts = game.buildings.filter((building) => building.kind === "outpost");
       if (kind !== "outpost" && outposts.length && Math.random() < 0.58) {
+        if (Number.isFinite(context.viewX) && Number.isFinite(context.viewY)) {
+          return outposts.reduce((best, outpost) => {
+            const dist = distanceXY(context.viewX, context.viewY, outpost.x, outpost.y);
+            return !best || dist < best.dist ? { outpost, dist } : best;
+          }, null)?.outpost || outposts[Math.floor(rand(0, outposts.length))];
+        }
         return outposts[Math.floor(rand(0, outposts.length))];
       }
-      return getColonyCenter();
+      return getColonyCenter(context.viewX, context.viewY);
     }
 
-    function createSite(kind) {
+    function createSite(kind, context = {}) {
       const def = BUILDINGS[kind];
       const blocked = buildBlockedReason(kind);
       if (blocked) {
@@ -1973,7 +3483,7 @@
         return;
       }
 
-      const anchor = chooseBuildAnchor(kind);
+      const anchor = chooseBuildAnchor(kind, context);
       const index = game.sites.length + game.buildings.length;
       const angle = index * 1.42 + rand(-0.18, 0.18);
       const radius = kind === "outpost" ? rand(1360, 1860) : rand(def.sprawl * 0.86, def.sprawl * 1.45);
@@ -2046,7 +3556,7 @@
       updateHud();
     }
 
-    function useAction(key) {
+    function useAction(key, context = {}) {
       const action = ACTIONS[key];
       if (!action) return;
       if ((game.actionCooldowns[key] || 0) > 0) {
@@ -2059,15 +3569,17 @@
       }
       game.actionCooldowns[key] = action.cooldown;
       game.stats.actionsUsed += 1;
-      if (key === "survey") runSurveyPulse();
+      if (key === "survey") runSurveyPulse(context);
       if (key === "rally") runRallyCrew();
       if (key === "cleanup") runCleanup();
-      if (key === "prospect") runProspectorBurst();
+      if (key === "prospect") runProspectorBurst(context);
       updateHud();
     }
 
-    function runSurveyPulse() {
-      const center = screenToWorld(viewWidth * 0.56, viewHeight * 0.46);
+    function runSurveyPulse(context = {}) {
+      const center = Number.isFinite(context.viewX) && Number.isFinite(context.viewY)
+        ? { x: context.viewX, y: context.viewY }
+        : screenToWorld(viewWidth * 0.56, viewHeight * 0.46);
       if (Math.random() < 0.52 || game.beacons.length < 2) {
         spawnBeacon(center.x + rand(-520, 520), center.y + rand(-420, 420));
         addDiscovery(18);
@@ -2115,8 +3627,10 @@
       setLog(`Cleanup cleared ${trimmedNodes} distant scraps and calmed the sector view.`);
     }
 
-    function runProspectorBurst() {
-      const center = screenToWorld(viewWidth * 0.52, viewHeight * 0.48);
+    function runProspectorBurst(context = {}) {
+      const center = Number.isFinite(context.viewX) && Number.isFinite(context.viewY)
+        ? { x: context.viewX, y: context.viewY }
+        : screenToWorld(viewWidth * 0.52, viewHeight * 0.48);
       const types = ["ore", "food", "crystal", "ore"];
       for (let i = 0; i < 4; i++) {
         const point = findOpenPoint(center.x, center.y, 320, 980, 260, 48);
@@ -2141,18 +3655,30 @@
       if (target.type === "node") {
         selectedCommand = target.object.type;
         commandGrid.querySelector(`[data-command="${selectedCommand}"]`)?.classList.add("active");
-        const worker = findCommandWorker();
-        if (worker) assignWorkerToNode(worker, target.object);
-        else setLog("No idle spacehands available.");
+        if (sendPlayerAction({ kind: "targetNode", targetId: target.object.id, ...buildActionContext() })) {
+          setLog("Resource order sent to the host.");
+        } else {
+          const worker = findCommandWorker();
+          if (worker) assignWorkerToNode(worker, target.object);
+          else setLog("No idle spacehands available.");
+        }
       } else if (target.type === "beacon") {
         selectedCommand = "scout";
-        const worker = findCommandWorker();
-        if (worker) assignWorkerToBeacon(worker, target.object);
-        else setLog("No idle spacehands available.");
+        if (sendPlayerAction({ kind: "targetBeacon", targetId: target.object.id, ...buildActionContext() })) {
+          setLog("Scout order sent to the host.");
+        } else {
+          const worker = findCommandWorker();
+          if (worker) assignWorkerToBeacon(worker, target.object);
+          else setLog("No idle spacehands available.");
+        }
       } else if (target.type === "site") {
-        const worker = findCommandWorker();
-        if (worker) assignWorkerToSite(worker, target.object);
-        else setLog("No idle builder available.");
+        if (sendPlayerAction({ kind: "targetSite", targetId: target.object.id, ...buildActionContext() })) {
+          setLog("Build order sent to the host.");
+        } else {
+          const worker = findCommandWorker();
+          if (worker) assignWorkerToSite(worker, target.object);
+          else setLog("No idle builder available.");
+        }
       } else if (target.type === "worker") {
         setLog(`${target.object.name}: ${workerStatus(target.object)}.`);
       } else if (target.type === "building") {
@@ -2689,13 +4215,19 @@
     function update(deltaSeconds) {
       const dt = deltaSeconds * 60;
       updateVisualEffects(dt, deltaSeconds);
-      updateActionCooldowns(deltaSeconds);
+      updateMultiplayer(deltaSeconds);
 
       if (!game.running || game.paused) {
         updateHud();
         return;
       }
 
+      if (isMultiplayerClient()) {
+        updateHud();
+        return;
+      }
+
+      updateActionCooldowns(deltaSeconds);
       updateWorkers(deltaSeconds);
       updateSites();
       updateEconomy(deltaSeconds);
@@ -3481,6 +5013,43 @@
       ctx.restore();
     }
 
+    function drawPlayerPresences() {
+      if (!isMultiplayerActive()) return;
+      Object.entries(multiplayer.presences).forEach(([playerId, presence]) => {
+        if (!presence || !Number.isFinite(presence.x) || !Number.isFinite(presence.y)) return;
+        if (!objectVisible(presence.x, presence.y, 140)) return;
+        const isSelf = playerId === multiplayer.selfId;
+        const shell = avatarOption("shell", presence.profile);
+        const markerSize = 18 / camera.zoom;
+
+        ctx.save();
+        ctx.strokeStyle = hexToRgba(shell.color, isSelf ? 0.95 : 0.76);
+        ctx.lineWidth = (isSelf ? 2.4 : 1.8) / camera.zoom;
+        ctx.setLineDash(isSelf ? [] : [8 / camera.zoom, 6 / camera.zoom]);
+        ctx.beginPath();
+        ctx.arc(presence.x, presence.y, markerSize * 1.36, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(presence.x - markerSize * 0.48, presence.y);
+        ctx.lineTo(presence.x + markerSize * 0.48, presence.y);
+        ctx.moveTo(presence.x, presence.y - markerSize * 0.48);
+        ctx.lineTo(presence.x, presence.y + markerSize * 0.48);
+        ctx.stroke();
+        ctx.restore();
+
+        drawAvatarHead(
+          ctx,
+          presence.x,
+          presence.y - markerSize * 1.92,
+          markerSize * 0.72,
+          presence.profile,
+          presence.name,
+          camera.zoom > 0.5
+        );
+      });
+    }
+
     function lerpAngle(a, b, t) {
       const diff = Math.atan2(Math.sin(b - a), Math.cos(b - a));
       return a + diff * t;
@@ -3588,6 +5157,7 @@
         drawSites();
         drawBuildings();
         drawWorkers();
+        drawPlayerPresences();
         drawParticles();
         drawSelection();
         drawLabels();
@@ -3611,98 +5181,193 @@
     }
 
     function startGame() {
-      const cleanName = sanitizeName(commanderInput.value);
+      const cleanName = getCommanderName();
       if (!cleanName) {
-        nameError.textContent = "Enter a commander name before launching.";
+        setMenuError("Enter a commander name before launching.");
         commanderInput.focus();
         commanderInput.select();
         return;
       }
 
-      nameError.textContent = "";
+      handleMultiplayerDisconnect("", false);
+      clearMenuError();
       game.commander = cleanName;
       setStorageItem(STORAGE_KEYS.commander, cleanName);
       game.running = true;
       game.paused = false;
-      menu.hidden = true;
-      hud.hidden = false;
-      controls.hidden = false;
-      backBtn.hidden = false;
-      cameraHint.hidden = false;
+      showGameplayUi();
       ensureAudio();
       resetGame();
       setLog("Colony online. Dispatch a worker.");
     }
 
     function goBack() {
+      if (isMultiplayerActive()) handleMultiplayerDisconnect("", false);
       game.running = false;
       game.paused = false;
-      menu.hidden = false;
-      hud.hidden = true;
-      controls.hidden = true;
-      backBtn.hidden = true;
-      cameraHint.hidden = true;
+      multiplayer.started = false;
+      showMenuUi();
+      setMenuView(MENU_VIEW.main);
       selectedObject = null;
       updateHud();
     }
 
     playBtn.addEventListener("click", startGame);
+    multiplayerBtn.addEventListener("click", () => {
+      clearMenuError();
+      setMenuView(MENU_VIEW.multiplayer);
+    });
+    menuNavBtn.addEventListener("click", () => {
+      clearMenuError();
+      if (menuView === MENU_VIEW.create || menuView === MENU_VIEW.join) setMenuView(MENU_VIEW.multiplayer);
+      else setMenuView(MENU_VIEW.main);
+    });
+    openCreateLobbyBtn.addEventListener("click", () => {
+      multiplayerSetupMode = MENU_VIEW.create;
+      clearMenuError();
+      setMenuView(MENU_VIEW.create);
+    });
+    openJoinLobbyBtn.addEventListener("click", () => {
+      multiplayerSetupMode = MENU_VIEW.join;
+      clearMenuError();
+      setMenuView(MENU_VIEW.join);
+      joinLobbyCode.focus();
+      joinLobbyCode.select();
+    });
+    multiplayerConfirmBtn.addEventListener("click", () => {
+      if (menuView === MENU_VIEW.join) joinLobby();
+      else createLobby();
+    });
+    startLobbyBtn.addEventListener("click", launchLobbyGame);
+    leaveLobbyBtn.addEventListener("click", () => {
+      handleMultiplayerDisconnect("", false);
+      showMenuUi();
+      setMenuView(MENU_VIEW.main);
+      clearMenuError();
+    });
+    copyLobbyCodeBtn.addEventListener("click", async () => {
+      if (!multiplayer.roomCode) return;
+      try {
+        await navigator.clipboard.writeText(multiplayer.roomCode);
+        lobbyStatus.textContent = "Room code copied.";
+      } catch {
+        setMenuError("Could not copy the code. You can still read it above.");
+      }
+    });
     backBtn.addEventListener("click", goBack);
     soundBtn.addEventListener("click", () => toggleAudio());
+    profileBuilder.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-profile-field]");
+      if (!button) return;
+      cycleProfileField(button.dataset.profileField, 1);
+      if (isMultiplayerActive()) sendProfileUpdate();
+    });
+    maxPlayersSelect.addEventListener("change", () => {
+      if (!multiplayer.isHost) return;
+      multiplayer.room.maxPlayers = clamp(Number(maxPlayersSelect.value) || 4, 2, 6);
+      broadcastLobbyState();
+    });
+    lateJoinToggle.addEventListener("change", () => {
+      if (!multiplayer.isHost) return;
+      multiplayer.room.allowLateJoin = lateJoinToggle.checked;
+      broadcastLobbyState();
+    });
 
     commanderInput.addEventListener("input", () => {
-      if (nameError.textContent) nameError.textContent = "";
+      if (nameError.textContent) clearMenuError();
+      setStorageItem(STORAGE_KEYS.commander, commanderInput.value);
+      if (isMultiplayerActive()) sendProfileUpdate();
     });
 
     commanderInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") startGame();
+      if (event.key !== "Enter") return;
+      if (menuView === MENU_VIEW.join) joinLobby();
+      else if (menuView === MENU_VIEW.create) createLobby();
+      else startGame();
+    });
+
+    joinLobbyCode.addEventListener("input", () => {
+      joinLobbyCode.value = sanitizeRoomCode(joinLobbyCode.value);
+      if (nameError.textContent) clearMenuError();
+    });
+
+    joinLobbyCode.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") joinLobby();
     });
 
     commandGrid.addEventListener("click", (event) => {
       const button = event.target.closest("[data-command]");
       if (!button) return;
       selectedCommand = button.dataset.command;
-      commandNearest(selectedCommand);
+      if (!sendPlayerAction({ kind: "commandNearest", command: selectedCommand, ...buildActionContext() })) {
+        commandNearest(selectedCommand);
+      } else {
+        setLog("Dispatch order sent to the host.");
+      }
       updateButtons();
     });
 
     directiveGrid.addEventListener("click", (event) => {
       const button = event.target.closest("[data-directive]");
       if (!button) return;
-      setDirective(button.dataset.directive);
+      if (!sendPlayerAction({ kind: "directive", directive: button.dataset.directive, ...buildActionContext() })) {
+        setDirective(button.dataset.directive);
+      } else {
+        setLog("Directive vote sent to the host.");
+      }
     });
 
     actionGrid.addEventListener("click", (event) => {
       const button = event.target.closest("[data-action]");
       if (!button || button.disabled) return;
-      useAction(button.dataset.action);
+      const actionContext = buildActionContext();
+      if (!sendPlayerAction({ kind: "action", actionKey: button.dataset.action, ...actionContext })) {
+        useAction(button.dataset.action, actionContext);
+      } else {
+        setLog("Sandbox action request sent to the host.");
+      }
     });
 
     buildGrid.addEventListener("click", (event) => {
       const button = event.target.closest("[data-build]");
       if (!button || button.disabled) return;
-      createSite(button.dataset.build);
+      const actionContext = buildActionContext();
+      if (!sendPlayerAction({ kind: "build", building: button.dataset.build, ...actionContext })) {
+        createSite(button.dataset.build, actionContext);
+      } else {
+        setLog("Construction request sent to the host.");
+      }
     });
 
     upgradeGrid.addEventListener("click", (event) => {
       const button = event.target.closest("[data-upgrade]");
       if (!button || button.disabled) return;
-      buyUpgrade(button.dataset.upgrade);
+      if (!sendPlayerAction({ kind: "upgrade", upgrade: button.dataset.upgrade, ...buildActionContext() })) {
+        buyUpgrade(button.dataset.upgrade);
+      } else {
+        setLog("Upgrade request sent to the host.");
+      }
     });
 
     canvas.addEventListener("pointerdown", (event) => {
       if (!game.running) return;
+      const rect = canvas.getBoundingClientRect();
       pointerState.active = true;
       pointerState.id = event.pointerId;
       pointerState.startX = event.clientX;
       pointerState.startY = event.clientY;
       pointerState.lastX = event.clientX;
       pointerState.lastY = event.clientY;
+      pointerState.hoverX = event.clientX - rect.left;
+      pointerState.hoverY = event.clientY - rect.top;
       pointerState.moved = false;
       canvas.setPointerCapture?.(event.pointerId);
     });
 
     canvas.addEventListener("pointermove", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      pointerState.hoverX = event.clientX - rect.left;
+      pointerState.hoverY = event.clientY - rect.top;
       if (!pointerState.active || pointerState.id !== event.pointerId) return;
       const dx = event.clientX - pointerState.lastX;
       const dy = event.clientY - pointerState.lastY;
@@ -3718,6 +5383,8 @@
     canvas.addEventListener("pointerup", (event) => {
       if (!pointerState.active || pointerState.id !== event.pointerId) return;
       const rect = canvas.getBoundingClientRect();
+      pointerState.hoverX = event.clientX - rect.left;
+      pointerState.hoverY = event.clientY - rect.top;
       if (!pointerState.moved) clickWorld(event.clientX - rect.left, event.clientY - rect.top);
       pointerState.active = false;
       pointerState.id = null;
@@ -3739,7 +5406,7 @@
 
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
-      if (event.target === commanderInput) return;
+      if (event.target === commanderInput || event.target === joinLobbyCode) return;
       if (["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "w", "a", "s", "d", "+", "-", "="].includes(key)) event.preventDefault();
 
       if (key === "m") {
@@ -3748,8 +5415,12 @@
 
       if ((key === "p" || key === "escape") && game.running) {
         if (!event.repeat) {
-          game.paused = !game.paused;
-          setLog(game.paused ? "Colony paused." : "Colony resumed.");
+          if (isMultiplayerClient()) {
+            setLog("Only the room host can pause the shared sim.");
+          } else {
+            game.paused = !game.paused;
+            setLog(game.paused ? "Colony paused." : "Colony resumed.");
+          }
         }
       }
 
@@ -3767,7 +5438,7 @@
         clampCamera();
       }
 
-      if (key === " ") {
+      if (key === " " && game.buildings[0]) {
         const hub = game.buildings[0];
         selectedObject = hub;
         camera.x = hub.x;
@@ -3784,9 +5455,17 @@
     updateSoundButton();
     const savedName = sanitizeName(getStorageItem(STORAGE_KEYS.commander) || "");
     if (savedName) commanderInput.value = savedName;
+    try {
+      multiplayer.profile = normalizeProfile(JSON.parse(getStorageItem(STORAGE_KEYS.commanderProfile) || "null") || defaultProfile());
+    } catch {
+      multiplayer.profile = defaultProfile();
+    }
 
     buildPanels();
     resizeCanvas();
+    renderProfilePreview();
+    updateLobbySummary();
+    setMenuView(MENU_VIEW.main);
     updateHud();
     requestAnimationFrame(gameLoop);
   </script>
