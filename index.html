@@ -874,7 +874,7 @@
       },
       cleanup: {
         name: "Clear Markers",
-        desc: "Remove drained fields and quiet the map.",
+        desc: "Trim distant scraps and quiet the map.",
         cost: {},
         cooldown: 12
       },
@@ -1569,7 +1569,7 @@
 
     function spawnParticles(x, y, hueMin = 42, hueMax = 62, count = 12) {
       for (let i = 0; i < count; i++) {
-        particles.push({
+        addParticle({
           x,
           y,
           vx: rand(-2.6, 2.6),
@@ -1580,7 +1580,11 @@
           hue: rand(hueMin, hueMax)
         });
       }
-      if (particles.length > 260) particles.splice(0, particles.length - 260);
+    }
+
+    function addParticle(particle) {
+      particles.push(particle);
+      if (particles.length > 420) particles.splice(0, particles.length - 420);
     }
 
     function flashScreen(duration = 0.16, shake = 3) {
@@ -1768,7 +1772,11 @@
     }
 
     function findIdleWorker() {
-      return game.workers.find(isWorkerAvailable)
+      return game.workers.find(isWorkerAvailable);
+    }
+
+    function findCommandWorker() {
+      return findIdleWorker()
         || game.workers.find((worker) => !worker.manual && !worker.carry && worker.state !== "build" && worker.job !== "scout");
     }
 
@@ -1856,7 +1864,7 @@
     }
 
     function commandNearest(type) {
-      const worker = findIdleWorker();
+      const worker = findCommandWorker();
       if (!worker) {
         setLog("No idle spacehands available.");
         return;
@@ -1901,7 +1909,10 @@
         const radius = rand(minRadius, maxRadius);
         const x = clampWorldX(cx + Math.cos(angle) * radius, 90);
         const y = clampWorldY(cy + Math.sin(angle) * radius, 90);
-        const nearest = occupied.reduce((gap, object) => Math.min(gap, distanceXY(x, y, object.x, object.y)), Infinity);
+        const nearest = occupied.reduce((gap, object) => {
+          const spacing = blockers ? (object.spacing || 0) : 0;
+          return Math.min(gap, distanceXY(x, y, object.x, object.y) - spacing);
+        }, Infinity);
         const edgeGap = Math.min(
           x + WORLD.width / 2,
           WORLD.width / 2 - x,
@@ -1918,8 +1929,26 @@
 
     function buildBlockers() {
       return [
-        ...game.buildings.map((object) => ({ ...object, spacing: object.size + 260 })),
-        ...game.sites.map((object) => ({ ...object, spacing: 260 }))
+        ...game.buildings.map((object) => ({
+          x: object.x,
+          y: object.y,
+          spacing: object.kind === "outpost" ? 220 : object.kind === "spire" ? 240 : 130 + (object.size || 32) * 1.2
+        })),
+        ...game.sites.map((object) => ({
+          x: object.x,
+          y: object.y,
+          spacing: object.kind === "outpost" ? 210 : 150
+        })),
+        ...game.nodes.map((object) => ({
+          x: object.x,
+          y: object.y,
+          spacing: 60 + (object.size || 24) * 1.1
+        })),
+        ...game.beacons.map((object) => ({
+          x: object.x,
+          y: object.y,
+          spacing: 110 + (object.size || 40)
+        }))
       ];
     }
 
@@ -1984,7 +2013,7 @@
 
       game.sites.push(site);
       if (kind !== "outpost") game.buildPermitsUsed[game.level] = usedBuildPermits() + 1;
-      const worker = findIdleWorker();
+      const worker = findCommandWorker();
       if (worker) assignWorkerToSite(worker, site);
       setLog(`${def.name} blueprint placed near ${anchor.name}.`);
       updateHud();
@@ -2071,9 +2100,19 @@
     }
 
     function runCleanup() {
-      const before = game.nodes.length;
-      game.nodes = game.nodes.filter((node) => node.amount > 0);
-      setLog(`Cleared ${before - game.nodes.length} drained markers.`);
+      const center = getColonyCenter();
+      const beforeNodes = game.nodes.length;
+      game.nodes = game.nodes.filter((node) => {
+        const tooSmall = node.amount < node.max * 0.18;
+        const distant = distanceXY(node.x, node.y, center.x, center.y) > 1900;
+        return !(tooSmall && distant);
+      });
+      const trimmedNodes = beforeNodes - game.nodes.length;
+      const trimmedParticles = Math.max(0, particles.length - 180);
+      if (trimmedParticles) particles.splice(0, trimmedParticles);
+      if (ripples.length > 10) ripples.splice(0, ripples.length - 10);
+      syncSelection();
+      setLog(`Cleanup cleared ${trimmedNodes} distant scraps and calmed the sector view.`);
     }
 
     function runProspectorBurst() {
@@ -2102,16 +2141,16 @@
       if (target.type === "node") {
         selectedCommand = target.object.type;
         commandGrid.querySelector(`[data-command="${selectedCommand}"]`)?.classList.add("active");
-        const worker = findIdleWorker();
+        const worker = findCommandWorker();
         if (worker) assignWorkerToNode(worker, target.object);
         else setLog("No idle spacehands available.");
       } else if (target.type === "beacon") {
         selectedCommand = "scout";
-        const worker = findIdleWorker();
+        const worker = findCommandWorker();
         if (worker) assignWorkerToBeacon(worker, target.object);
         else setLog("No idle spacehands available.");
       } else if (target.type === "site") {
-        const worker = findIdleWorker();
+        const worker = findCommandWorker();
         if (worker) assignWorkerToSite(worker, target.object);
         else setLog("No idle builder available.");
       } else if (target.type === "worker") {
@@ -2453,7 +2492,7 @@
       worker.y += (dy / dist) * step;
 
       if (Math.random() < 0.28) {
-        particles.push({
+        addParticle({
           x: worker.x - (dx / dist) * 7,
           y: worker.y - (dy / dist) * 7,
           vx: rand(-0.45, 0.45),
@@ -2521,7 +2560,7 @@
 
     function spawnConstructionSparks(x, y) {
       if (Math.random() > 0.18) return;
-      particles.push({
+      addParticle({
         x: x + rand(-16, 16),
         y: y + rand(-16, 16),
         vx: rand(-0.8, 0.8),
@@ -2547,6 +2586,19 @@
       for (const key of Object.keys(game.actionCooldowns)) {
         game.actionCooldowns[key] = Math.max(0, game.actionCooldowns[key] - deltaSeconds);
       }
+    }
+
+    function syncSelection() {
+      if (!selectedObject) return;
+      const collections = [
+        game.workers,
+        game.nodes,
+        game.beacons,
+        game.sites,
+        game.buildings
+      ];
+      const stillExists = collections.some((items) => items.includes(selectedObject));
+      if (!stillExists) selectedObject = null;
     }
 
     function updateEconomy(deltaSeconds) {
@@ -2648,6 +2700,7 @@
       updateSites();
       updateEconomy(deltaSeconds);
       game.nodes = game.nodes.filter((node) => node.amount > 0);
+      syncSelection();
       checkMilestones();
       updateHud();
     }
