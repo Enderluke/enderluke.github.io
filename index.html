@@ -1581,6 +1581,12 @@
       presences: {},
       incomingChunks: new Map(),
       profile: null,
+      joinAccepted: false,
+      joinTimer: null,
+      joinRetryTimer: null,
+      joinAttemptId: 0,
+      pendingJoin: null,
+      connectionStatus: "idle",
       snapshotClock: 0,
       presenceClock: 0,
       latestSnapshotAt: 0,
@@ -1898,11 +1904,21 @@
 
     function renderLobbyPlayers() {
       if (!lobbyPlayersList) return;
-      const players = multiplayer.players.length
-        ? multiplayer.players
-        : multiplayer.selfId
-          ? [{ id: multiplayer.selfId, name: getCommanderName() || "Commander", profile: multiplayer.profile, isOwner: multiplayer.isHost }]
-          : [];
+      const players = multiplayer.players.length ? multiplayer.players : [];
+
+      if (!players.length && !multiplayer.isHost) {
+        lobbyPlayersList.innerHTML = `
+          <div class="player-card">
+            <div class="player-avatar"><img alt="Linking" src="${avatarDataUrl(multiplayer.profile)}" /></div>
+            <div class="player-meta">
+              <strong>Linking to host</strong>
+              <span>Waiting for room ${multiplayer.roomCode || "------"} to answer</span>
+            </div>
+            <div class="player-pill">Sync</div>
+          </div>
+        `;
+        return;
+      }
 
       lobbyPlayersList.innerHTML = players.map((player) => `
         <div class="player-card">
@@ -1917,14 +1933,19 @@
     }
 
     function updateLobbySummary(extra = "") {
-      const playerCount = Math.max(multiplayer.players.length, multiplayer.selfId ? 1 : 0);
+      const playerCount = multiplayer.players.length || (multiplayer.isHost && multiplayer.selfId ? 1 : 0);
       maxPlayersSelect.value = String(multiplayer.room.maxPlayers);
       lateJoinToggle.checked = multiplayer.room.allowLateJoin;
       lobbyCodeValue.textContent = multiplayer.roomCode || "------";
-      lobbySettingsSummary.textContent = `${playerCount}/${multiplayer.room.maxPlayers} commanders linked. ${multiplayer.room.allowLateJoin ? "Late join open." : "Late join locked."}${extra ? " " + extra : ""}`;
+      const linkedText = !multiplayer.isHost && !multiplayer.joinAccepted
+        ? "Connecting to host..."
+        : `${playerCount}/${multiplayer.room.maxPlayers} commanders linked. ${multiplayer.room.allowLateJoin ? "Late join open." : "Late join locked."}`;
+      lobbySettingsSummary.textContent = `${linkedText}${extra ? " " + extra : ""}`;
       startLobbyBtn.hidden = !multiplayer.isHost;
       startLobbyBtn.disabled = !multiplayer.isHost || !multiplayer.selfId;
-      lobbyStatus.textContent = multiplayer.isHost
+      lobbyStatus.textContent = !multiplayer.isHost && !multiplayer.joinAccepted
+        ? "Do not start yet. Waiting for the host to accept this code."
+        : multiplayer.isHost
         ? (multiplayer.started ? "Expedition active." : "You can launch whenever the crew is ready.")
         : (multiplayer.started ? "Host launched the expedition." : "Waiting for the host to launch.");
       renderLobbyPlayers();
@@ -2566,6 +2587,7 @@
         state: "idle",
         job: null,
         targetId: null,
+        dropoffId: null,
         carry: null,
         work: 0,
         manual: false,
@@ -2869,9 +2891,13 @@
       }
     }
 
-    function broadcastToClients(type, payload = {}) {
-      multiplayer.connections.forEach((connection) => {
-        sendConnection(connection, type, payload);
+    function playerAccepted(playerId) {
+      return multiplayer.players.some((player) => player.id === playerId);
+    }
+
+    function broadcastToClients(type, payload = {}, includePending = false) {
+      multiplayer.connections.forEach((connection, playerId) => {
+        if (includePending || playerAccepted(playerId)) sendConnection(connection, type, payload);
       });
     }
 
@@ -2889,13 +2915,58 @@
       updateHud();
     }
 
+    function clearJoinTimers() {
+      if (multiplayer.joinTimer) {
+        clearTimeout(multiplayer.joinTimer);
+        multiplayer.joinTimer = null;
+      }
+      if (multiplayer.joinRetryTimer) {
+        clearInterval(multiplayer.joinRetryTimer);
+        multiplayer.joinRetryTimer = null;
+      }
+    }
+
+    function sendPendingJoinRequest(connection) {
+      const pending = multiplayer.pendingJoin;
+      if (!pending || multiplayer.isHost || multiplayer.joinAccepted) return false;
+      if (pending.attemptId !== multiplayer.joinAttemptId) return false;
+      if (!connection || connection !== multiplayer.hostConnection || !connection.open) return false;
+
+      multiplayer.connectionStatus = "awaiting-host";
+      updateLobbySummary("Host found. Waiting for approval...");
+      sendConnection(connection, "join-request", {
+        player: {
+          id: multiplayer.selfId,
+          name: pending.name || getCommanderName() || "Commander",
+          profile: normalizeProfile(multiplayer.profile)
+        }
+      });
+      return true;
+    }
+
+    function beginJoinRequestLoop(connection, attemptId) {
+      if (multiplayer.joinRetryTimer) clearInterval(multiplayer.joinRetryTimer);
+      const retry = () => {
+        if (attemptId !== multiplayer.joinAttemptId || multiplayer.joinAccepted || multiplayer.hostConnection !== connection) {
+          if (multiplayer.joinRetryTimer) {
+            clearInterval(multiplayer.joinRetryTimer);
+            multiplayer.joinRetryTimer = null;
+          }
+          return;
+        }
+        sendPendingJoinRequest(connection);
+      };
+      retry();
+      multiplayer.joinRetryTimer = setInterval(retry, 950);
+    }
+
     function handleMultiplayerDisconnect(reason = "", showReason = true) {
       if (isMultiplayerClient()) {
         try {
           sendConnection(multiplayer.hostConnection, "leave-room", { playerId: multiplayer.selfId });
         } catch {}
       } else if (isMultiplayerHost()) {
-        broadcastToClients("room-closed", { reason: reason || "Host closed the lobby." });
+        broadcastToClients("room-closed", { reason: reason || "Host closed the lobby." }, true);
       }
 
       multiplayer.connections.forEach((connection) => {
@@ -2908,6 +2979,7 @@
       }
       multiplayer.hostConnection = null;
 
+      clearJoinTimers();
       if (multiplayer.peer) {
         try { multiplayer.peer.destroy(); } catch {}
       }
@@ -2919,6 +2991,10 @@
       multiplayer.players = [];
       multiplayer.presences = {};
       multiplayer.incomingChunks.clear();
+      multiplayer.joinAccepted = false;
+      multiplayer.joinAttemptId += 1;
+      multiplayer.pendingJoin = null;
+      multiplayer.connectionStatus = "idle";
       multiplayer.snapshotClock = 0;
       multiplayer.presenceClock = 0;
       multiplayer.latestSnapshotAt = 0;
@@ -2987,8 +3063,12 @@
     function registerConnection(connection, incoming = false) {
       if (!connection) return;
       connection.on("open", () => {
+        multiplayer.connectionStatus = multiplayer.isHost ? "hosting" : "connected";
         if (multiplayer.isHost) multiplayer.connections.set(connection.peer, connection);
-        else if (!incoming) multiplayer.hostConnection = connection;
+        else if (!incoming) {
+          multiplayer.hostConnection = connection;
+          beginJoinRequestLoop(connection, multiplayer.joinAttemptId);
+        }
       });
 
       connection.on("data", (message) => {
@@ -3001,9 +3081,11 @@
           removePlayer(connection.peer);
           broadcastLobbyState();
         } else if (multiplayer.hostConnection === connection) {
-          handleMultiplayerDisconnect("The host ended the session.");
+          const wasAccepted = multiplayer.joinAccepted;
+          handleMultiplayerDisconnect("", false);
           showMenuUi();
-          setMenuView(MENU_VIEW.main);
+          setMenuView(wasAccepted ? MENU_VIEW.main : MENU_VIEW.join);
+          setMenuError(wasAccepted ? "The host ended the session." : "Could not finish joining that lobby. Check the code and try again.");
         }
       });
 
@@ -3030,8 +3112,8 @@
     }
 
     function sendProfileUpdate() {
-      syncLocalPlayerRecord();
       if (multiplayer.isHost) {
+        syncLocalPlayerRecord();
         broadcastLobbyState();
         return;
       }
@@ -3084,6 +3166,8 @@
         multiplayer.isHost = true;
         multiplayer.selfId = peer.id;
         multiplayer.started = false;
+        multiplayer.joinAccepted = true;
+        multiplayer.connectionStatus = "hosting";
         multiplayer.players = [];
         multiplayer.presences = {};
         syncLocalPlayerRecord();
@@ -3121,6 +3205,8 @@
       handleMultiplayerDisconnect("", false);
       setMenuError("Connecting to room...");
       multiplayer.roomCode = roomCode;
+      const attemptId = multiplayer.joinAttemptId + 1;
+      multiplayer.joinAttemptId = attemptId;
 
       try {
         const peer = await createPeer();
@@ -3128,6 +3214,9 @@
         multiplayer.selfId = peer.id;
         multiplayer.isHost = false;
         multiplayer.started = false;
+        multiplayer.joinAccepted = false;
+        multiplayer.connectionStatus = "dialing";
+        multiplayer.pendingJoin = { attemptId, name: name || "Commander" };
         multiplayer.players = [];
         multiplayer.presences = {};
 
@@ -3136,16 +3225,15 @@
         multiplayer.hostConnection = connection;
         setMenuView(MENU_VIEW.lobby);
         updateLobbySummary("Linking to host...");
+        if (connection.open) beginJoinRequestLoop(connection, attemptId);
 
-        connection.on("open", () => {
-          sendConnection(connection, "join-request", {
-            player: {
-              id: multiplayer.selfId,
-              name: name || "Commander",
-              profile: normalizeProfile(multiplayer.profile)
-            }
-          });
-        });
+        multiplayer.joinTimer = setTimeout(() => {
+          if (attemptId !== multiplayer.joinAttemptId || multiplayer.joinAccepted) return;
+          handleMultiplayerDisconnect("", false);
+          showMenuUi();
+          setMenuView(MENU_VIEW.join);
+          setMenuError("No host answered that code. Check that the host is still on the lobby screen and try again.");
+        }, 9000);
       } catch (error) {
         handleMultiplayerDisconnect("", false);
         setMenuView(MENU_VIEW.join);
@@ -3158,6 +3246,10 @@
       if (Array.isArray(packet.players)) multiplayer.players = packet.players.map((player) => ({ ...player, profile: normalizeProfile(player.profile) }));
       if (packet.presences) multiplayer.presences = { ...packet.presences };
       multiplayer.started = Boolean(packet.started);
+      multiplayer.joinAccepted = true;
+      clearJoinTimers();
+      multiplayer.pendingJoin = null;
+      multiplayer.connectionStatus = "accepted";
       multiplayer.latestSnapshotAt = Date.now();
       multiplayer.nextCommandAt = 0;
       applyGameSnapshot(packet.snapshot);
@@ -3207,7 +3299,13 @@
       if (existing) Object.assign(existing, nextPlayer);
       else multiplayer.players.push(nextPlayer);
       multiplayer.connections.set(playerId, connection);
-      sendConnection(connection, "join-accepted", { roomCode: multiplayer.roomCode });
+      syncLocalPlayerRecord();
+      sendConnection(connection, "join-accepted", {
+        roomCode: multiplayer.roomCode,
+        room: { ...multiplayer.room },
+        started: multiplayer.started,
+        players: serializePlayers()
+      });
       broadcastLobbyState();
       if (multiplayer.started) sendConnection(connection, "start-game", snapshotPacket());
     }
@@ -3350,8 +3448,17 @@
       }
 
       if (message.type === "join-accepted") {
+        clearJoinTimers();
+        multiplayer.joinAccepted = true;
+        multiplayer.pendingJoin = null;
+        multiplayer.connectionStatus = "accepted";
+        multiplayer.roomCode = message.roomCode || multiplayer.roomCode;
+        multiplayer.room = { ...multiplayer.room, ...(message.room || {}) };
+        multiplayer.started = Boolean(message.started);
+        if (Array.isArray(message.players)) multiplayer.players = message.players.map((player) => ({ ...player, profile: normalizeProfile(player.profile) }));
         clearMenuError();
         lobbyStatus.textContent = "Connected. Waiting for the host to launch.";
+        updateLobbySummary();
         return;
       }
 
@@ -3366,6 +3473,10 @@
         multiplayer.roomCode = message.roomCode || multiplayer.roomCode;
         multiplayer.room = { ...multiplayer.room, ...(message.room || {}) };
         multiplayer.started = Boolean(message.started);
+        multiplayer.joinAccepted = true;
+        clearJoinTimers();
+        multiplayer.pendingJoin = null;
+        multiplayer.connectionStatus = "accepted";
         multiplayer.players = (message.players || []).map((player) => ({ ...player, profile: normalizeProfile(player.profile) }));
         updateLobbySummary();
         updateHud();
@@ -3388,7 +3499,7 @@
 
     function updateMultiplayer(deltaSeconds) {
       if (!isMultiplayerActive()) return;
-      syncLocalPlayerRecord();
+      if (multiplayer.isHost) syncLocalPlayerRecord();
       prunePresences();
 
       multiplayer.presenceClock += deltaSeconds;
@@ -3526,6 +3637,7 @@
         if (site && site.workerId === worker.id) site.workerId = null;
       }
       worker.socialId = null;
+      worker.dropoffId = null;
       worker.carry = null;
       worker.work = 0;
     }
@@ -3538,6 +3650,7 @@
       worker.state = "idle";
       worker.job = null;
       worker.targetId = null;
+      worker.dropoffId = null;
       worker.carry = null;
       worker.work = 0;
       worker.manual = false;
@@ -3547,10 +3660,12 @@
     }
 
     function assignWorkerToNode(worker, node, manual = true) {
+      if (!manual && targetClaimed(node.id, worker.id)) return false;
       clearWorkerAssignment(worker);
       worker.state = "travel";
       worker.job = node.type;
       worker.targetId = node.id;
+      worker.dropoffId = null;
       worker.carry = null;
       worker.work = 0;
       worker.manual = manual;
@@ -3560,13 +3675,16 @@
       if (manual) setLog(`${worker.name} dispatched for ${RESOURCE_META[node.type].name.toLowerCase()}.`);
       spawnRipple(worker.x, worker.y, 196, 0.5);
       if (manual) playDispatchSound();
+      return true;
     }
 
     function assignWorkerToBeacon(worker, beacon, manual = true) {
+      if (!manual && targetClaimed(beacon.id, worker.id)) return false;
       clearWorkerAssignment(worker);
       worker.state = "travel";
       worker.job = "scout";
       worker.targetId = beacon.id;
+      worker.dropoffId = null;
       worker.carry = null;
       worker.work = 0;
       worker.manual = manual;
@@ -3576,13 +3694,17 @@
       if (manual) setLog(`${worker.name} is scouting a beacon.`);
       spawnRipple(worker.x, worker.y, 270, 0.7);
       if (manual) playDispatchSound();
+      return true;
     }
 
     function assignWorkerToSite(worker, site, manual = true) {
+      const assigned = findById(game.workers, site.workerId);
+      if (!manual && assigned && assigned.id !== worker.id && assigned.job === "build" && assigned.targetId === site.id && !AUTONOMY_STATES.has(assigned.state)) return false;
       clearWorkerAssignment(worker);
       worker.state = "travel";
       worker.job = "build";
       worker.targetId = site.id;
+      worker.dropoffId = null;
       worker.carry = null;
       worker.work = 0;
       worker.manual = manual;
@@ -3593,6 +3715,7 @@
       if (manual) setLog(`${worker.name} is building ${site.name}.`);
       spawnRipple(worker.x, worker.y, 45, 0.7);
       if (manual) playDispatchSound();
+      return true;
     }
 
     function commandNearest(type, context = {}) {
@@ -3607,7 +3730,7 @@
       const targetY = Number.isFinite(context.viewY) ? context.viewY : worker.y;
 
       if (type === "scout") {
-        const beacon = nearestTarget(game.beacons, targetX, targetY);
+        const beacon = nearestTarget(claimableTargets(game.beacons, worker.id), targetX, targetY) || nearestTarget(game.beacons, targetX, targetY);
         if (!beacon) {
           setLog("No beacons to scout. Build an outpost or finish current work.");
           return;
@@ -3616,7 +3739,8 @@
         return;
       }
 
-      const node = nearestTarget(game.nodes.filter((item) => item.type === type && item.amount > 0), targetX, targetY);
+      const nodes = game.nodes.filter((item) => item.type === type && item.amount > 0);
+      const node = nearestTarget(claimableTargets(nodes, worker.id), targetX, targetY) || nearestTarget(nodes, targetX, targetY);
       if (!node) {
         setLog(`No ${RESOURCE_META[type].name.toLowerCase()} node in range. Scout more space.`);
         return;
@@ -3629,6 +3753,79 @@
         const dist = distanceXY(x, y, item.x, item.y);
         return !best || dist < best.dist ? { item, dist } : best;
       }, null)?.item;
+    }
+
+    function targetClaimed(targetId, excludeWorkerId = null) {
+      return game.workers.some((worker) => (
+        worker.id !== excludeWorkerId
+        && worker.targetId === targetId
+        && !AUTONOMY_STATES.has(worker.state)
+      ));
+    }
+
+    function claimableTargets(items, excludeWorkerId = null) {
+      return items.filter((item) => !targetClaimed(item.id, excludeWorkerId));
+    }
+
+    function nearestClaimableNodeForTypes(types, worker) {
+      for (const type of types) {
+        const nodes = claimableTargets(game.nodes.filter((item) => item.type === type && item.amount > 0), worker.id);
+        const node = nearestTarget(nodes, worker.x, worker.y);
+        if (node) return node;
+      }
+      return null;
+    }
+
+    function nearestBuildingOfKinds(kinds, x, y) {
+      const allowed = new Set(kinds);
+      return nearestTarget(game.buildings.filter((building) => allowed.has(building.kind)), x, y);
+    }
+
+    function nearestPreferredBuilding(kinds, fallbackKinds, x, y) {
+      return nearestBuildingOfKinds(kinds, x, y)
+        || nearestBuildingOfKinds(fallbackKinds, x, y)
+        || game.buildings[0];
+    }
+
+    function buildingForResourceDropoff(type, x, y) {
+      if (type === "ore") return nearestPreferredBuilding(["refinery", "dock"], ["outpost", "hub"], x, y);
+      if (type === "food") return nearestPreferredBuilding(["garden", "terraformer", "habitat", "commons"], ["outpost", "hub"], x, y);
+      if (type === "crystal") return nearestPreferredBuilding(["lab", "observatory", "archive", "loom", "gate"], ["outpost", "hub"], x, y);
+      return nearestHubTo(x, y);
+    }
+
+    function buildingForActivity(activity, worker) {
+      if (activity === "socialize") return nearestPreferredBuilding(["commons", "garden", "habitat", "spire"], ["outpost", "hub"], worker.x, worker.y);
+      if (activity === "rest") return nearestPreferredBuilding(["habitat", "garden", "commons", "shield", "spire"], ["outpost", "hub"], worker.x, worker.y);
+      if (activity === "food") return nearestPreferredBuilding(["garden", "terraformer", "commons", "habitat"], ["outpost", "hub"], worker.x, worker.y);
+      if (activity === "research") return nearestPreferredBuilding(["lab", "observatory", "archive", "loom", "gate", "spire"], ["outpost", "hub"], worker.x, worker.y);
+      if (activity === "industry") return nearestPreferredBuilding(["refinery", "reactor", "dock", "solar", "shield"], ["outpost", "hub"], worker.x, worker.y);
+      return nearestTarget(game.buildings, worker.x, worker.y) || game.buildings[0];
+    }
+
+    function pointAroundBuilding(building, worker, radiusScale = 1) {
+      worker.orbit = (worker.orbit || 0) + rand(0.2, 0.9);
+      const radius = Math.max(30, (building.size || 34) * radiusScale);
+      return {
+        x: building.x + Math.cos(worker.orbit) * radius,
+        y: building.y + Math.sin(worker.orbit * 0.82) * radius * 0.68
+      };
+    }
+
+    function orbitTaskTarget(worker, target, deltaSeconds, radius = 34, speed = 0.55) {
+      worker.orbit = (worker.orbit || 0) + deltaSeconds * (1.7 + worker.personality * 0.35);
+      const wobble = Math.sin(worker.orbit * 1.8) * 5;
+      worker.tx = target.x + Math.cos(worker.orbit) * (radius + wobble);
+      worker.ty = target.y + Math.sin(worker.orbit * 0.88) * (radius * 0.68 + wobble * 0.4);
+      moveWorker(worker, deltaSeconds, speed);
+    }
+
+    function setWorkerOrbitAroundBuilding(worker, building, deltaSeconds, radiusScale = 1) {
+      worker.orbit = (worker.orbit || 0) + deltaSeconds * (0.48 + worker.personality * 0.16);
+      const radius = Math.max(28, (building.size || 34) * radiusScale);
+      worker.tx = building.x + Math.cos(worker.orbit) * radius;
+      worker.ty = building.y + Math.sin(worker.orbit * 0.82) * radius * 0.68;
+      return distanceXY(worker.x, worker.y, building.x, building.y) < radius + 32;
     }
 
     function findOpenPoint(cx, cy, minRadius, maxRadius, minGap = 130, tries = 42, blockers = null) {
@@ -3940,8 +4137,8 @@
     function workerStatus(worker) {
       if (AUTONOMY_STATES.has(worker.state)) return worker.activity || "choosing their own task";
       if (worker.state === "return") return `returning with ${worker.carry?.type || "cargo"}`;
-      if (worker.job === "build") return "building";
-      if (worker.job === "scout") return "scouting";
+      if (worker.job === "build") return worker.activity || "building";
+      if (worker.job === "scout") return worker.activity || "scouting";
       return `gathering ${worker.job}`;
     }
 
@@ -3950,7 +4147,7 @@
       if (kind === "solar") game.resources.energy += 26;
       if (kind === "habitat") {
         game.housing += 4;
-        if (game.workers.length < game.housing) game.workers.push(makeWorker(game.workers.length, nearestHubTo(building.x, building.y)));
+        if (game.workers.length < game.housing) game.workers.push(makeWorker(game.workers.length, building));
       }
       if (kind === "garden") {
         game.resources.food += 34;
@@ -3971,7 +4168,7 @@
       }
       if (kind === "dock") {
         game.housing += 2;
-        game.workers.push(makeWorker(game.workers.length, nearestHubTo(building.x, building.y)));
+        game.workers.push(makeWorker(game.workers.length, building));
       }
       if (kind === "reactor") game.resources.energy += 160;
       if (kind === "archive") {
@@ -4072,7 +4269,14 @@
 
       if (worker.state === "socialize") {
         const buddy = findById(game.workers, worker.socialId);
-        if (buddy && buddy.id !== worker.id) {
+        const socialSpot = findById(game.buildings, worker.targetId);
+        if (socialSpot) {
+          const nearSpot = setWorkerOrbitAroundBuilding(worker, socialSpot, deltaSeconds, 1.1);
+          if (nearSpot) {
+            worker.mood = clamp(worker.mood + deltaSeconds * 1.25, 35, 100);
+            game.morale = clamp(game.morale + deltaSeconds * 0.04, 18, 100);
+          }
+        } else if (buddy && buddy.id !== worker.id) {
           worker.tx = buddy.x + Math.cos(worker.orbit) * 28;
           worker.ty = buddy.y + Math.sin(worker.orbit) * 20;
           if (distanceXY(worker.x, worker.y, buddy.x, buddy.y) < 48) {
@@ -4082,14 +4286,24 @@
         }
       }
 
-      if (worker.state === "maintain" && distanceXY(worker.x, worker.y, worker.tx, worker.ty) < 36) {
-        game.resources.energy = clamp(game.resources.energy + deltaSeconds * 0.035, 0, 9999);
-        worker.mood = clamp(worker.mood + deltaSeconds * 0.35, 35, 100);
-        if (Math.random() < 0.08) spawnConstructionSparks(worker.x, worker.y);
+      if (worker.state === "maintain") {
+        const building = findById(game.buildings, worker.targetId);
+        const nearBuilding = building
+          ? setWorkerOrbitAroundBuilding(worker, building, deltaSeconds, 1.04)
+          : distanceXY(worker.x, worker.y, worker.tx, worker.ty) < 36;
+        if (nearBuilding) {
+          game.resources.energy = clamp(game.resources.energy + deltaSeconds * 0.035, 0, 9999);
+          worker.mood = clamp(worker.mood + deltaSeconds * 0.35, 35, 100);
+          if (Math.random() < 0.08) spawnConstructionSparks(worker.x, worker.y);
+        }
       }
 
-      if (worker.state === "rest" && distanceXY(worker.x, worker.y, worker.tx, worker.ty) < 34) {
-        worker.mood = clamp(worker.mood + deltaSeconds * 1.8, 35, 100);
+      if (worker.state === "rest") {
+        const restStop = findById(game.buildings, worker.targetId);
+        const nearRest = restStop
+          ? setWorkerOrbitAroundBuilding(worker, restStop, deltaSeconds, 0.86)
+          : distanceXY(worker.x, worker.y, worker.tx, worker.ty) < 34;
+        if (nearRest) worker.mood = clamp(worker.mood + deltaSeconds * 1.8, 35, 100);
       }
 
       if (worker.state === "roam") {
@@ -4104,7 +4318,7 @@
 
     function chooseAutonomousAction(worker) {
       if (game.directive === "explore" && game.beacons.length && Math.random() < 0.28 + game.autoWorkBonus * 0.25) {
-        const beacon = nearestTarget(game.beacons, worker.x, worker.y);
+        const beacon = nearestTarget(claimableTargets(game.beacons, worker.id), worker.x, worker.y);
         if (beacon) {
           assignWorkerToBeacon(worker, beacon, false);
           return;
@@ -4118,7 +4332,7 @@
         : 0;
       if (Math.random() < autoWorkChance) {
         const type = chooseNeededResource();
-        const node = nearestTarget(game.nodes.filter((item) => item.type === type && item.amount > 0), worker.x, worker.y);
+        const node = nearestClaimableNodeForTypes([type, ...Object.keys(RESOURCE_META).filter((key) => key !== type)], worker);
         if (node) {
           assignWorkerToNode(worker, node, false);
           return;
@@ -4131,36 +4345,49 @@
       const maintainBias = game.directive === "industry" ? 0.12 : 0;
       if (roll < 0.28 + leisureBias && game.workers.length > 1) {
         const buddy = nearestTarget(game.workers.filter((item) => item.id !== worker.id), worker.x, worker.y);
+        const socialSpot = buildingForActivity("socialize", worker) || home;
+        const point = pointAroundBuilding(socialSpot, worker, 1.2);
         worker.state = "socialize";
         worker.socialId = buddy?.id || null;
-        worker.activity = buddy ? `chatting with ${buddy.name}` : "looking for a friend";
-        worker.tx = (buddy?.x || home.x) + rand(-34, 34);
-        worker.ty = (buddy?.y || home.y) + rand(-28, 28);
+        worker.targetId = socialSpot.id;
+        worker.activity = buddy ? `chatting with ${buddy.name} at ${socialSpot.name}` : `visiting ${socialSpot.name}`;
+        worker.tx = point.x;
+        worker.ty = point.y;
         worker.agendaTimer = rand(4.5, 9.5);
       } else if (roll < 0.54 + maintainBias) {
-        const building = game.buildings[Math.floor(rand(0, game.buildings.length))] || home;
+        const focus = game.directive === "research" ? "research" : game.directive === "growth" ? "food" : game.directive === "industry" ? "industry" : ["industry", "research", "food", "rest"][Math.floor(rand(0, 4))];
+        const building = buildingForActivity(focus, worker) || home;
+        const point = pointAroundBuilding(building, worker, focus === "rest" ? 0.9 : 1.05);
         worker.state = "maintain";
         worker.socialId = null;
-        worker.activity = `tuning ${building.name}`;
-        worker.tx = building.x + rand(-building.size * 0.8, building.size * 0.8);
-        worker.ty = building.y + rand(-building.size * 0.8, building.size * 0.8);
+        worker.targetId = building.id;
+        worker.activity = focus === "research"
+          ? `running scans at ${building.name}`
+          : focus === "food"
+          ? `helping at ${building.name}`
+          : `tuning ${building.name}`;
+        worker.tx = point.x;
+        worker.ty = point.y;
         worker.agendaTimer = rand(4.5, 8.5);
       } else if (roll < 0.78) {
         const anchor = getColonyCenter();
         const point = findOpenPoint(anchor.x, anchor.y, 80, 260, 70, 16);
         worker.state = "roam";
         worker.socialId = null;
+        worker.targetId = null;
         worker.activity = "taking a zero-g walk";
         worker.tx = point.x;
         worker.ty = point.y;
         worker.agendaTimer = rand(4, 8);
       } else {
-        const restStop = nearestTarget(game.buildings.filter((building) => building.kind === "habitat" || building.kind === "garden" || building.kind === "hub"), worker.x, worker.y) || home;
+        const restStop = buildingForActivity("rest", worker) || home;
+        const point = pointAroundBuilding(restStop, worker, 0.86);
         worker.state = "rest";
         worker.socialId = null;
-        worker.activity = `resting near ${restStop.name}`;
-        worker.tx = restStop.x + rand(-54, 54);
-        worker.ty = restStop.y + rand(-42, 42);
+        worker.targetId = restStop.id;
+        worker.activity = restStop.kind === "habitat" ? `going home to ${restStop.name}` : `resting near ${restStop.name}`;
+        worker.tx = point.x;
+        worker.ty = point.y;
         worker.agendaTimer = rand(5.5, 10.5);
       }
     }
@@ -4182,6 +4409,8 @@
           continue;
         }
 
+        worker.bob += deltaSeconds * (5.8 + worker.personality);
+
         if (worker.state === "travel") {
           const arrived = moveWorker(worker, deltaSeconds, 1);
           if (arrived) {
@@ -4194,23 +4423,35 @@
         if (worker.state === "work") {
           worker.work += deltaSeconds * (game.morale / 90);
           if (worker.job === "scout") {
-            if (worker.work >= 4.2) finishScout(worker);
+            const beacon = findById(game.beacons, worker.targetId);
+            if (!beacon) {
+              resetWorkerToIdle(worker, "lost the beacon signal");
+            } else {
+              orbitTaskTarget(worker, beacon, deltaSeconds, beacon.size + 38, 0.58);
+              if (worker.work >= 4.2) finishScout(worker);
+            }
           } else {
             const node = findById(game.nodes, worker.targetId);
             if (!node || node.amount <= 0) {
               resetWorkerToIdle(worker, "noticed that node ran dry");
               setLog("A resource node ran dry.");
-            } else if (worker.work >= 3.1) {
-              const meta = RESOURCE_META[node.type];
-              const amount = Math.min(node.amount, meta.yield + game.cargoBonus + Math.floor(game.level * 1.1));
-              node.amount -= amount;
-              worker.carry = { type: node.type, amount };
-              const hub = nearestHubTo(worker.x, worker.y);
-              worker.tx = hub.x;
-              worker.ty = hub.y;
-              worker.state = "return";
-              worker.work = 0;
-              if (node.amount <= 0) spawnRipple(node.x, node.y, 45, 0.7);
+            } else {
+              orbitTaskTarget(worker, node, deltaSeconds, node.size + 30, 0.52);
+              if (worker.work >= 3.1) {
+                const meta = RESOURCE_META[node.type];
+                const amount = Math.min(node.amount, meta.yield + game.cargoBonus + Math.floor(game.level * 1.1));
+                node.amount -= amount;
+                worker.carry = { type: node.type, amount };
+                const dropoff = buildingForResourceDropoff(node.type, worker.x, worker.y);
+                const point = pointAroundBuilding(dropoff, worker, 0.55);
+                worker.dropoffId = dropoff.id;
+                worker.tx = point.x;
+                worker.ty = point.y;
+                worker.state = "return";
+                worker.work = 0;
+                worker.activity = `hauling ${node.type} to ${dropoff.name}`;
+                if (node.amount <= 0) spawnRipple(node.x, node.y, 45, 0.7);
+              }
             }
           }
           continue;
@@ -4223,8 +4464,10 @@
             continue;
           }
 
+          orbitTaskTarget(worker, site, deltaSeconds, 48, 0.5);
           site.progress += deltaSeconds * (0.72 + game.morale / 190 + game.buildSpeedBonus);
           spawnConstructionSparks(site.x, site.y);
+          if (Math.random() < 0.18) spawnConstructionSparks(worker.x, worker.y);
           if (site.progress >= site.needed) finishSite(site, worker);
           continue;
         }
@@ -4268,13 +4511,16 @@
     }
 
     function finishReturn(worker) {
+      const dropoff = findById(game.buildings, worker.dropoffId);
       if (worker.carry) {
         game.resources[worker.carry.type] += worker.carry.amount;
         spawnRipple(worker.x, worker.y, worker.carry.type === "ore" ? 45 : worker.carry.type === "food" ? 126 : 190, 0.8);
         if (worker.manual) playDropoffSound(worker.carry.type);
-        if (worker.manual || Math.random() < 0.18) setLog(`${worker.name} delivered ${worker.carry.amount} ${worker.carry.type}.`);
+        if (worker.manual || Math.random() < 0.18) {
+          setLog(`${worker.name} delivered ${worker.carry.amount} ${worker.carry.type}${dropoff ? ` to ${dropoff.name}` : ""}.`);
+        }
       }
-      resetWorkerToIdle(worker, "looking proud after a delivery");
+      resetWorkerToIdle(worker, dropoff ? `leaving ${dropoff.name} after a delivery` : "looking proud after a delivery");
     }
 
     function finishScout(worker) {
@@ -4310,7 +4556,9 @@
       const building = makeBuilding(site.kind, site.x, site.y);
       game.buildings.push(building);
       applyBuildingEffect(building);
-      worker.homeId = nearestHubTo(site.x, site.y).id;
+      worker.homeId = ["habitat", "commons", "garden", "dock"].includes(building.kind)
+        ? building.id
+        : nearestHubTo(site.x, site.y).id;
       resetWorkerToIdle(worker, `admiring the new ${site.name}`);
       spawnRipple(site.x, site.y, site.kind === "outpost" ? 45 : 195, 1.8);
       spawnParticles(site.x, site.y, 40, 210, 28);
@@ -4336,7 +4584,12 @@
     function updateSites() {
       for (const site of game.sites) {
         const assigned = findById(game.workers, site.workerId);
-        if (!site.workerId || !assigned || AUTONOMY_STATES.has(assigned.state)) {
+        const activeBuilder = assigned
+          && assigned.job === "build"
+          && assigned.targetId === site.id
+          && !AUTONOMY_STATES.has(assigned.state);
+        if (!activeBuilder) {
+          site.workerId = null;
           const worker = findIdleWorker();
           if (worker) assignWorkerToSite(worker, site, false);
         }
