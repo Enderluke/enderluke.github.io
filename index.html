@@ -1435,6 +1435,12 @@
         desc: "Spend 35 science to seed rich resources.",
         cost: { science: 35, energy: 20 },
         cooldown: 35
+      },
+      deleteBuilding: {
+        name: "Delete Building",
+        desc: "Select a building to reclaim materials.",
+        cost: {},
+        cooldown: 0
       }
     };
 
@@ -2080,6 +2086,20 @@
       return entries.map(([key, amount]) => `${formatNumber(amount)} ${key}`).join(", ");
     }
 
+    function refundCostText(cost) {
+      const refund = refundableCost(cost);
+      return Object.keys(refund).length ? costText(refund) : "No material refund";
+    }
+
+    function refundableCost(cost = {}) {
+      return Object.fromEntries(
+        Object.entries(cost)
+          .filter(([key]) => key !== "science" && key !== "energy")
+          .map(([key, amount]) => [key, Math.floor(amount * 0.6)])
+          .filter(([, amount]) => amount > 0)
+      );
+    }
+
     function createButton(label, sub, className, attrs) {
       const button = document.createElement("button");
       button.className = className;
@@ -2162,9 +2182,22 @@
         const key = button.dataset.action;
         const def = ACTIONS[key];
         const cooldown = game.actionCooldowns[key] || 0;
+        if (key === "deleteBuilding") {
+          const building = selectedObject?.kind && selectedObject.kind !== "hub" ? selectedObject : null;
+          const ready = Boolean(building);
+          button.disabled = !ready;
+          button.classList.toggle("ready", ready);
+          button.classList.toggle("locked", !ready);
+          button.innerHTML = ready
+            ? `${def.name}<br />Refund ${refundCostText(BUILDINGS[building.kind]?.cost)}`
+            : `${def.name}<br />Select a non-hub building`;
+          return;
+        }
+
         const ready = cooldown <= 0 && canAfford(def.cost);
         button.disabled = !ready;
         button.classList.toggle("ready", ready);
+        button.classList.toggle("locked", false);
         button.innerHTML = cooldown > 0
           ? `${def.name}<br />Cooldown ${cooldownText(key)}`
           : `${def.name}<br />${costText(def.cost)}`;
@@ -2277,7 +2310,8 @@
       }
       if (selectedObject.kind) {
         const def = selectedObject.kind === "hub" ? { desc: "The colony's heart." } : BUILDINGS[selectedObject.kind];
-        inspectorLine.textContent = `${selectedObject.name}: ${def?.desc || "online"}`;
+        const refund = selectedObject.kind === "hub" ? "" : ` Delete refund: ${refundCostText(def?.cost || {})}.`;
+        inspectorLine.textContent = `${selectedObject.name}: ${def?.desc || "online"}${refund}`;
         return;
       }
       inspectorLine.textContent = "Beacon: scout it to reveal space, science, and new fields.";
@@ -3869,6 +3903,21 @@
       return null;
     }
 
+    function rerouteWorkerFromDryNode(worker) {
+      if (!RESOURCE_META[worker.job]) return false;
+      const replacement = nearestClaimableNodeForTypes([worker.job], worker);
+      if (!replacement) return false;
+      const wasManual = worker.manual;
+      const assigned = assignWorkerToNode(worker, replacement, false);
+      if (!assigned) return false;
+      worker.manual = wasManual;
+      worker.activity = wasManual
+        ? `rerouting to fresh ${RESOURCE_META[worker.job].name.toLowerCase()}`
+        : `found fresh ${RESOURCE_META[worker.job].name.toLowerCase()}`;
+      if (wasManual) setLog(`${worker.name} rerouted to a fresh ${RESOURCE_META[worker.job].name.toLowerCase()} field.`);
+      return true;
+    }
+
     function nearestBuildingOfKinds(kinds, x, y) {
       const allowed = new Set(kinds);
       return nearestTarget(game.buildings.filter((building) => allowed.has(building.kind)), x, y);
@@ -3994,6 +4043,67 @@
       return getColonyCenter(context.viewX, context.viewY);
     }
 
+    function buildSpacing(kind) {
+      const def = BUILDINGS[kind];
+      if (kind === "outpost") return 920;
+      const builtCount = game.buildings.filter((building) => building.kind !== "hub").length + game.sites.length;
+      return clamp(def.sprawl * 0.76 + builtCount * 7 + Math.max(0, game.level - 6) * 14, 280, 620);
+    }
+
+    function buildSearchAnchors(kind, context = {}) {
+      const selectedAnchor = resolveSelectedRef(context.selectedRef) || (selectedObject && selectedObject.kind ? selectedObject : null);
+      const hubs = game.buildings.filter((building) => building.kind === "hub" || building.kind === "outpost");
+      const ordered = [];
+
+      if (selectedAnchor?.kind) ordered.push(selectedAnchor);
+      if (Number.isFinite(context.viewX) && Number.isFinite(context.viewY)) {
+        hubs
+          .map((hub) => ({ hub, dist: distanceXY(context.viewX, context.viewY, hub.x, hub.y) }))
+          .sort((a, b) => a.dist - b.dist)
+          .forEach(({ hub }) => ordered.push(hub));
+      }
+      if (kind !== "outpost") ordered.push(...hubs.filter((hub) => hub.kind === "outpost"));
+      ordered.push(getColonyCenter(context.viewX, context.viewY));
+
+      return ordered.filter((anchor, index, list) => anchor && list.findIndex((item) => item.id === anchor.id) === index);
+    }
+
+    function findBuildSitePoint(kind, context = {}) {
+      const def = BUILDINGS[kind];
+      const minGap = buildSpacing(kind);
+      const blockers = buildBlockers();
+      const anchors = buildSearchAnchors(kind, context);
+      let best = null;
+
+      const tryPoint = (anchor, centerX, centerY, minRadius, maxRadius, requiredGap = minGap) => {
+        const point = findOpenPoint(centerX, centerY, minRadius, maxRadius, requiredGap, 82, blockers);
+        if (!best || point.score > best.point.score) best = { anchor, point, minGap: requiredGap };
+        return point.score >= requiredGap * 0.62 ? { anchor, point, minGap: requiredGap } : null;
+      };
+
+      if (Number.isFinite(context.viewX) && Number.isFinite(context.viewY)) {
+        const anchor = anchors[0] || getColonyCenter(context.viewX, context.viewY);
+        const fromView = tryPoint(anchor, context.viewX, context.viewY, 70, kind === "outpost" ? 840 : 640, minGap);
+        if (fromView) return fromView;
+      }
+
+      for (const anchor of anchors) {
+        const baseIndex = game.sites.length + game.buildings.length;
+        const baseRadius = kind === "outpost" ? rand(1320, 1900) : rand(def.sprawl * 0.88, def.sprawl * 1.55);
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const angle = baseIndex * 1.42 + attempt * Math.PI * 0.72 + rand(-0.14, 0.14);
+          const radius = baseRadius + attempt * (kind === "outpost" ? 150 : 70);
+          const centerX = anchor.x + Math.cos(angle) * radius;
+          const centerY = anchor.y + Math.sin(angle) * radius;
+          const found = tryPoint(anchor, centerX, centerY, 0, kind === "outpost" ? 900 : 620, minGap);
+          if (found) return found;
+        }
+      }
+
+      if (best && best.point.score >= minGap * 0.48) return best;
+      return null;
+    }
+
     function createSite(kind, context = {}) {
       const def = BUILDINGS[kind];
       if (!def) return;
@@ -4007,31 +4117,17 @@
         return;
       }
 
-      const anchor = chooseBuildAnchor(kind, context);
-      const index = game.sites.length + game.buildings.length;
-      const angle = index * 1.42 + rand(-0.18, 0.18);
-      const radius = kind === "outpost" ? rand(1360, 1860) : rand(def.sprawl * 0.86, def.sprawl * 1.45);
-      const minGap = kind === "outpost"
-        ? 920
-        : clamp(def.sprawl * 0.82 + game.buildings.length * 10 + Math.max(0, game.level - 6) * 20, 300, 740);
-      const point = findOpenPoint(
-        anchor.x + Math.cos(angle) * radius,
-        anchor.y + Math.sin(angle) * radius,
-        0,
-        kind === "outpost" ? 740 : 420,
-        minGap,
-        110,
-        buildBlockers()
-      );
-      if (point.score < minGap * 0.62) {
+      const placement = findBuildSitePoint(kind, context);
+      if (!placement) {
         Object.entries(def.cost).forEach(([key, amount]) => {
           game.resources[key] += amount;
         });
-        setLog(`${def.name} needs more open space. Pan to a clearer area or build an outpost.`);
+        setLog(`${def.name} needs a clearer build lane. Pan to open space or select an outpost.`);
         capResources();
         updateHud();
         return;
       }
+      const { anchor, point } = placement;
       const site = {
         id: cryptoRandomId(),
         kind,
@@ -4082,6 +4178,11 @@
     }
 
     function useAction(key, context = {}) {
+      if (key === "deleteBuilding") {
+        deleteSelectedBuilding(context);
+        return;
+      }
+
       const action = ACTIONS[key];
       if (!action) return;
       if ((game.actionCooldowns[key] || 0) > 0) {
@@ -4098,6 +4199,78 @@
       if (key === "rally") runRallyCrew();
       if (key === "cleanup") runCleanup();
       if (key === "prospect") runProspectorBurst(context);
+      updateHud();
+    }
+
+    function reverseBuildingEffect(building) {
+      const kind = building.kind;
+      if (kind === "habitat") game.housing = Math.max(1, game.housing - 4);
+      if (kind === "commons") game.housing = Math.max(1, game.housing - 1);
+      if (kind === "refinery") game.cargoBonus = Math.max(0, game.cargoBonus - 2);
+      if (kind === "observatory") game.scoutBonus = Math.max(0, game.scoutBonus - 1);
+      if (kind === "dock") game.housing = Math.max(1, game.housing - 2);
+      if (kind === "archive") game.storageBonus = Math.max(0, game.storageBonus - 180);
+      if (kind === "shield") game.storageBonus = Math.max(0, game.storageBonus - 260);
+      if (kind === "loom") game.beaconBonus = Math.max(0, game.beaconBonus - 0.12);
+      if (kind === "gate") game.workerSpeed = Math.max(40, game.workerSpeed - 24);
+      if (kind === "spire") game.storageBonus = Math.max(0, game.storageBonus - 620);
+      if (kind === "outpost") game.housing = Math.max(1, game.housing - 2);
+    }
+
+    function releaseBuildingPermit(building) {
+      if (building.kind === "hub" || building.kind === "outpost" || building.frontierGift) return;
+      const level = Number.isFinite(building.permitLevel) ? building.permitLevel : game.level;
+      game.buildPermitsUsed[level] = Math.max(0, (game.buildPermitsUsed[level] || 0) - 1);
+    }
+
+    function redirectWorkersFromDeletedBuilding(building) {
+      for (const worker of game.workers) {
+        if (worker.homeId === building.id) worker.homeId = nearestHubTo(worker.x, worker.y).id;
+
+        if (worker.dropoffId === building.id && worker.carry) {
+          const dropoff = buildingForResourceDropoff(worker.carry.type, worker.x, worker.y);
+          const point = pointAroundBuilding(dropoff, worker, 0.55);
+          worker.dropoffId = dropoff.id;
+          worker.tx = point.x;
+          worker.ty = point.y;
+          worker.activity = `hauling ${worker.carry.type} to ${dropoff.name}`;
+          continue;
+        }
+
+        if (worker.targetId === building.id && AUTONOMY_STATES.has(worker.state)) {
+          resetWorkerToIdle(worker, `leaving the old ${building.name} site`);
+        }
+      }
+    }
+
+    function deleteSelectedBuilding(context = {}) {
+      const building = resolveSelectedRef(context.selectedRef) || (selectedObject?.kind ? selectedObject : null);
+      if (!building || !game.buildings.includes(building)) {
+        setLog("Select a building before deleting.");
+        updateHud();
+        return;
+      }
+      if (building.kind === "hub") {
+        setLog("The Command Hub cannot be deleted.");
+        updateHud();
+        return;
+      }
+
+      const def = BUILDINGS[building.kind];
+      const refund = refundableCost(def?.cost || {});
+      Object.entries(refund).forEach(([key, amount]) => {
+        game.resources[key] += amount;
+      });
+      releaseBuildingPermit(building);
+      reverseBuildingEffect(building);
+      game.buildings = game.buildings.filter((item) => item.id !== building.id);
+      redirectWorkersFromDeletedBuilding(building);
+      if (selectedObject === building) selectedObject = null;
+      capResources();
+      spawnRipple(building.x, building.y, 18, 1.2);
+      spawnParticles(building.x, building.y, 18, 52, 18);
+      playBuildSound();
+      setLog(`${building.name} deleted. Recovered ${refundCostText(def?.cost || {})}.`);
       updateHud();
     }
 
@@ -4505,6 +4678,18 @@
         worker.bob += deltaSeconds * (5.8 + worker.personality);
 
         if (worker.state === "travel") {
+          if (RESOURCE_META[worker.job]) {
+            const jobType = worker.job;
+            const node = findById(game.nodes, worker.targetId);
+            if (!node || node.amount <= 0) {
+              if (!rerouteWorkerFromDryNode(worker)) {
+                resetWorkerToIdle(worker, `waiting for a fresh ${RESOURCE_META[jobType].name.toLowerCase()} field`);
+                setLog(`${worker.name} stopped chasing a depleted ${RESOURCE_META[jobType].name.toLowerCase()} field.`);
+              }
+              continue;
+            }
+          }
+
           const arrived = moveWorker(worker, deltaSeconds, 1);
           if (arrived) {
             if (worker.job === "build") worker.state = "build";
@@ -4526,8 +4711,10 @@
           } else {
             const node = findById(game.nodes, worker.targetId);
             if (!node || node.amount <= 0) {
-              resetWorkerToIdle(worker, "noticed that node ran dry");
-              setLog("A resource node ran dry.");
+              if (!rerouteWorkerFromDryNode(worker)) {
+                resetWorkerToIdle(worker, "noticed that node ran dry");
+                setLog("A resource node ran dry.");
+              }
             } else {
               orbitTaskTarget(worker, node, deltaSeconds, node.size + 30, 0.52);
               if (worker.work >= 3.1) {
@@ -4647,6 +4834,8 @@
     function finishSite(site, worker) {
       game.sites = game.sites.filter((item) => item.id !== site.id);
       const building = makeBuilding(site.kind, site.x, site.y);
+      building.permitLevel = site.permitLevel;
+      building.frontierGift = Boolean(site.frontierGift);
       game.buildings.push(building);
       applyBuildingEffect(building);
       worker.homeId = ["habitat", "commons", "garden", "dock"].includes(building.kind)
